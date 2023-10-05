@@ -33,3 +33,15 @@ type (
 		Indexes()     []Index
 	}
 )
+
+// // LookupField finds a field by key
+// func (coll Collection) LookupField(key string) *field.Spec {
+// 	fields := coll.Fields()
+// 	for _, field := range fields {
+// 		if field.Spec().Name == key {
+// 			return field.Spec()
+// 		}
+// 	}
+	
+// 	return nil
+// }

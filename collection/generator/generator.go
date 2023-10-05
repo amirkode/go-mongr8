@@ -16,30 +16,60 @@ import (
 	"internal/util"
 )
 
-type TemplateVar struct {
+const (
+	tplCollection           = "collection"
+	tplCombainedCollections = "combined_collections"
+)
+
+type CollectionTemplateVar struct {
 	CreateDate string
-	Entity string
+	Entity     string
 	Collection string
 }
 
-func getTemplateVar(collectionName string) (*TemplateVar, error) {
+type CombinedCollectionsTemplateVar struct {
+	CreateDate  string
+	ModuleName  string
+	Collections []string
+}
+
+func getCollectionTemplateVar(collectionName string) (*CollectionTemplateVar, error) {
 	if len(collectionName) == 0 {
 		return nil, errors.New("An empty string provided")
 	}
-	
+
 	createDate := time.Now().Format("2006-01-02")
 	entityName := util.ToCapitalizedCamelCase(collectionName)
-	templateVar := &TemplateVar{
+	templateVar := &CollectionTemplateVar{
 		CreateDate: createDate,
-		Entity: entityName,
+		Entity:     entityName,
 		Collection: collectionName,
 	}
 
 	return templateVar, nil
 }
 
+func getCombinedCollectionsTemplateVar(rootPath string) (*CombinedCollectionsTemplateVar, error) {
+	createDate := time.Now().Format("2006-01-02")
+	moduleName := config.GetProjectRootModuleName(rootPath)
+
+	existingCollections := getAllCollectionStructs()
+	collections := []string{}
+	for _, coll := range existingCollections {
+		collections = append(collections, fmt.Sprintf("Instance%s", coll))
+	}
+
+	templateVar := &CombinedCollectionsTemplateVar{
+		CreateDate:  createDate,
+		ModuleName:  moduleName,
+		Collections: collections,
+	}
+
+	return templateVar, nil
+}
+
 func GenerateMigrationTemplate(collectionName string) error {
-	templateVar, err := getTemplateVar(collectionName)
+	collTemplateVar, err := getCollectionTemplateVar(collectionName)
 	if err != nil {
 		return err
 	}
@@ -51,7 +81,18 @@ func GenerateMigrationTemplate(collectionName string) error {
 	}
 
 	tplPath := fmt.Sprintf("%s/collection/generator/template.tpl", *packagePath)
-	outputPath := fmt.Sprintf("%s/mongr8/collection/%s.go", *rootPath, collectionName)
 
-	return util.GenerateTemplate(tplPath, outputPath, templateVar)
+	// genenrate collection
+	outputPath := fmt.Sprintf("%s/mongr8/collection/%s.go", *rootPath, collectionName)
+	err = util.GenerateTemplate(tplCollection, tplPath, outputPath, collTemplateVar)
+
+	// generate combined collections
+	combinedCollsTemplateVar, err := getCombinedCollectionsTemplateVar(*rootPath)
+	if err != nil {
+		return err
+	}
+
+	outputPath = fmt.Sprintf("%s/mongr8/collection/no_edit/combined_collections.go", *rootPath)
+
+	return util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, combinedCollsTemplateVar)
 }

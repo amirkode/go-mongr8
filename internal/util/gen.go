@@ -16,14 +16,14 @@ import (
 	"text/template"
 )
 
-func GenerateTemplate(tplPath, outputPath string, tplVar interface {}) error {
+func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface {}) error {
 	fmt.Println("file path: " + tplPath)
 	data, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return err
 	}
 
-	t, err := template.New("").Parse(string(data))
+	t, err := template.New(tplName).Parse(string(data))
 	if err != nil {
 		return err
 	}

@@ -18,6 +18,12 @@ import (
 	"github.com/amirkode/go-mongr8/migration"
 )
 
+const (
+	tplMongr8               = "mongr8_info"
+	tplConfig               = "config"
+	tplCombainedCollections = "combined_collections"
+)
+
 // init mongr8 migration structure
 // this will generate all required folders for mongr8
 // project-root/
@@ -53,13 +59,22 @@ func InitMigration(applyRootDirValidation bool) error {
 	}
 
 	// init folder structure
-	if err = initFolderStructure(*projectPath, applyRootDirValidation); err != nil { return err }
+	if err = initFolderStructure(*projectPath, applyRootDirValidation); err != nil {
+		return err
+	}
 
 	// init mongr8.info file
-	if err = initMongr8Info(*projectPath, *packagePath); err != nil { return err }
+	if err = initMongr8Info(*projectPath, *packagePath); err != nil {
+		return err
+	}
 
 	// init config file
-	err = initConfig(*projectPath, *packagePath)
+	if err = initConfig(*projectPath, *packagePath); err != nil {
+		return err
+	}
+
+	// init combined collections
+	err = initCombinedCollections(*packagePath, *packagePath)
 
 	// TODO: might add something in the future
 
@@ -74,7 +89,7 @@ func initFolderStructure(projectPath string, applyRootDirValidation bool) error 
 	}
 
 	childrenDir := []string{
-		fmt.Sprintf("%s/collection", mainDir),
+		fmt.Sprintf("%s/collection/no_edit", mainDir),
 		fmt.Sprintf("%s/migration", mainDir),
 		fmt.Sprintf("%s/config", mainDir),
 	}
@@ -99,10 +114,10 @@ func initMongr8Info(projectPath, packagePath string) error {
 		Version:    migration.Mongr8Version,
 	}
 
-	tplPath := fmt.Sprintf("%s/migration/init/mongr8.tpl", packagePath)
+	tplPath := fmt.Sprintf("%s/migration/init/template.tpl", packagePath)
 	outputPath := fmt.Sprintf("%s/mongr8/mongr8.info", projectPath)
 
-	return util.GenerateTemplate(tplPath, outputPath, tplVar)
+	return util.GenerateTemplate(tplMongr8, tplPath, outputPath, tplVar)
 }
 
 func initConfig(projectPath, packagePath string) error {
@@ -112,8 +127,21 @@ func initConfig(projectPath, packagePath string) error {
 		CreateDate: time.Now().Format("2006-01-02"),
 	}
 
-	tplPath := fmt.Sprintf("%s/migration/init/config/config.tpl", packagePath)
+	tplPath := fmt.Sprintf("%s/migration/init/template.tpl", packagePath)
 	outputPath := fmt.Sprintf("%s/mongr8/config/config.go", projectPath)
 
-	return util.GenerateTemplate(tplPath, outputPath, tplVar)
+	return util.GenerateTemplate(tplConfig, tplPath, outputPath, tplVar)
+}
+
+func initCombinedCollections(projectPath, packagePath string) error {
+	tplVar := struct {
+		CreateDate string
+	}{
+		CreateDate: time.Now().Format("2006-01-02"),
+	}
+
+	tplPath := fmt.Sprintf("%s/migration/init/template.tpl", packagePath)
+	outputPath := fmt.Sprintf("%s/mongr8/collection/no_edit/combined_collections.go", projectPath)
+
+	return util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, tplVar)
 }

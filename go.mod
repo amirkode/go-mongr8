@@ -3,8 +3,8 @@ module github.com/amirkode/go-mongr8
 go 1.20
 
 // internal module
-require internal v0.0.0
-replace internal => ./internal
+// require internal v0.0.0
+// replace internal => ./internal
 
 // external depedencies
 require (
