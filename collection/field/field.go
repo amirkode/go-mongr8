@@ -11,10 +11,14 @@ type Spec struct {
 	Name string
 	// Type of the field
 	Type FieldType
-	// Array item, if current type is an array
-	ArrayField *Spec
+	
+	// Array items, if current type is an array
+	// this can be any field type
+	ArrayFields *[]Spec
+	
 	// Children of object, if current type is an object
 	Object *[]Spec
+	
 	// Nullable flag
 	Nullable bool
 }
@@ -27,8 +31,18 @@ func (b *BaseSpec) Spec() *Spec {
 	return b.spec
 }
 
-func (b *BaseSpec) SetArrayField(s *BaseSpec) *BaseSpec {
-	b.spec.ArrayField = s.spec
+func (b *BaseSpec) AddArrayField(s *BaseSpec) *BaseSpec {
+	if b.spec.ArrayFields == nil {
+		// init slice of array fields
+		arrFields := []Spec{}
+		b.spec.ArrayFields = &arrFields
+	}
+
+	currArr := *b.spec.ArrayFields
+	currArr = append(currArr, *s.Spec())
+
+	b.spec.ArrayFields = &currArr
+
 	return b
 }
 
@@ -59,6 +73,12 @@ func baseField(name string, fieldType FieldType) *BaseSpec {
 	}
 
 	return field
+}
+
+func FromFieldSpec(spec *Spec) *BaseSpec {
+	return &BaseSpec{
+		spec,
+	}
 }
 
 func StringField(name string) *BaseSpec {

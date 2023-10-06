@@ -20,31 +20,38 @@ type (
 
 	// translated field to bson.M doc
 	// @ee field_impl.go for implementation
-	TranslatedField struct {
-
+	TranslatedFieldIf interface {
+		getObject() bson.M
+		getArray() bson.A
+		getItem() interface {}
 	}
 
 	// translated field to bson.M doc
 	// @ee index_impl.go for implementation
+	TranslatedIndexIf interface {
+		getObject() bson.M
+	}
+
 	TranslatedIndex struct {
-		
+		TranslatedIndexIf
+		index collection.Index
 	}
 
 	DictIf interface {
 		initValidateFuncs()
 		setSchemaValidation()
 		// Translated Properties
-		Fields() []TranslatedField
-		Indexes() []TranslatedField
+		Fields() []TranslatedFieldIf
+		Indexes() []TranslatedFieldIf
+		GetDocument() bson.M
 	}
-
 
 	Dictionary struct {
 		DictIf
 		// raw collection data
-		Collection       collection.Collection
+		Collection collection.Collection
 
-		validateFuncs    []func() error
+		validateFuncs []func() error
 
 		// if schema validation exists, should be added to validateFuncs on setSchemaValidation
 		// this is also used to describe current schma validation
@@ -80,7 +87,7 @@ func (dict Dictionary) getPrimaryKey() {
 }
 
 func (dict Dictionary) GetCollectionDoc() bson.M {
-	res := bson.M{}	
+	res := bson.M{}
 
 	return res
 }

@@ -22,6 +22,8 @@ const (
 	tplMongr8               = "mongr8_info"
 	tplConfig               = "config"
 	tplCombainedCollections = "combined_collections"
+	tplCmdMain              = "cmd_main"
+	tplCmdCall              = "cmd_call"
 )
 
 // init mongr8 migration structure
@@ -63,18 +65,26 @@ func InitMigration(applyRootDirValidation bool) error {
 		return err
 	}
 
+	// init templates
+	tplPath := fmt.Sprintf("%s/migration/init/template.tpl", *packagePath)
+
 	// init mongr8.info file
-	if err = initMongr8Info(*projectPath, *packagePath); err != nil {
+	if err = initMongr8Info(*projectPath, tplPath); err != nil {
 		return err
 	}
 
 	// init config file
-	if err = initConfig(*projectPath, *packagePath); err != nil {
+	if err = initConfig(*projectPath, tplPath); err != nil {
 		return err
 	}
 
 	// init combined collections
-	err = initCombinedCollections(*packagePath, *packagePath)
+	if err = initCombinedCollections(*packagePath, tplPath); err != nil {
+		return err
+	}
+
+	// init cmds
+	err = initCmd(*packagePath, tplPath)
 
 	// TODO: might add something in the future
 
@@ -89,6 +99,9 @@ func initFolderStructure(projectPath string, applyRootDirValidation bool) error 
 	}
 
 	childrenDir := []string{
+		fmt.Sprintf("%s/cmd/apply", mainDir),
+		fmt.Sprintf("%s/cmd/consolidate", mainDir),
+		fmt.Sprintf("%s/cmd/generate", mainDir),
 		fmt.Sprintf("%s/collection/no_edit", mainDir),
 		fmt.Sprintf("%s/migration", mainDir),
 		fmt.Sprintf("%s/config", mainDir),
@@ -105,7 +118,7 @@ func initFolderStructure(projectPath string, applyRootDirValidation bool) error 
 	return nil
 }
 
-func initMongr8Info(projectPath, packagePath string) error {
+func initMongr8Info(projectPath, tplPath string) error {
 	tplVar := struct {
 		CreateDate string
 		Version    string
@@ -114,34 +127,87 @@ func initMongr8Info(projectPath, packagePath string) error {
 		Version:    migration.Mongr8Version,
 	}
 
-	tplPath := fmt.Sprintf("%s/migration/init/template.tpl", packagePath)
 	outputPath := fmt.Sprintf("%s/mongr8/mongr8.info", projectPath)
 
 	return util.GenerateTemplate(tplMongr8, tplPath, outputPath, tplVar)
 }
 
-func initConfig(projectPath, packagePath string) error {
+func initConfig(projectPath, tplPath string) error {
 	tplVar := struct {
 		CreateDate string
 	}{
 		CreateDate: time.Now().Format("2006-01-02"),
 	}
 
-	tplPath := fmt.Sprintf("%s/migration/init/template.tpl", packagePath)
 	outputPath := fmt.Sprintf("%s/mongr8/config/config.go", projectPath)
 
 	return util.GenerateTemplate(tplConfig, tplPath, outputPath, tplVar)
 }
 
-func initCombinedCollections(projectPath, packagePath string) error {
+func initCombinedCollections(projectPath, tplPath string) error {
 	tplVar := struct {
 		CreateDate string
 	}{
 		CreateDate: time.Now().Format("2006-01-02"),
 	}
 
-	tplPath := fmt.Sprintf("%s/migration/init/template.tpl", packagePath)
 	outputPath := fmt.Sprintf("%s/mongr8/collection/no_edit/combined_collections.go", projectPath)
 
 	return util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, tplVar)
+}
+
+func initCmd(projectPath, tplPath string) error {
+	createDate := time.Now().Format("2006-01-02")
+	moduleName := config.GetProjectRootModuleName(projectPath)
+
+	// generate /mongr8/cmd/cmd.go
+	tplCmdMainVar := struct {
+		CreateDate string
+		ModuleName string
+	}{
+		CreateDate: createDate,
+		ModuleName: moduleName,
+	}
+	outputPath := fmt.Sprintf("%s/mongr8/cmd/cmd.go", projectPath)
+	err := util.GenerateTemplate(tplCmdMain, tplPath, outputPath, tplCmdMainVar)
+	if err != nil {
+		return err
+	}
+
+	// generate /mongr8/cmd/[operation]/main.go
+	outputs := []struct {
+		operation string
+		funcName  string
+	}{
+		{
+			operation: "apply",
+			funcName:  "CmdApplyMigration",
+		},
+		{
+			operation: "consolidate",
+			funcName:  "CmdConsolidateMigration",
+		},
+		{
+			operation: "generate",
+			funcName:  "CmdGenerateMigration",
+		},
+	}
+	for _, output := range outputs {
+		tplCmdCallVar := struct {
+			CreateDate string
+			ModuleName string
+			FuncName   string
+		}{
+			CreateDate: createDate,
+			ModuleName: moduleName,
+			FuncName:   output.funcName,
+		}
+		outputPath = fmt.Sprintf("%s/mongr8/cmd/%s/main.go", projectPath, output.operation)
+		err := util.GenerateTemplate(tplCmdCall, tplPath, outputPath, tplCmdCallVar)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
