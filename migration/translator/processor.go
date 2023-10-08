@@ -9,8 +9,11 @@ import (
 )
 
 type (
+
 	ProcessorIf interface {
-		lnitDictionary()
+		initDictionary(collections []collection.Collection)
+		GetTranslateDictionaries() (*[]dictionary.Dictionary, error)
+		Proceed(collections []collection.Collection)
 	}
 
 	Processor struct {
@@ -19,6 +22,10 @@ type (
 		Init bool
 	}
 )
+
+func (p Processor) Proceed(collections []collection.Collection) {
+	p.initDictionary(collections)
+}
 
 func (p Processor) initDictionary(collections []collection.Collection) {
 	p.Dictionaries = make([]dictionary.Dictionary, len(collections))
@@ -33,21 +40,17 @@ func (p Processor) initDictionary(collections []collection.Collection) {
 	}
 }
 
-// global processor
-var processor Processor
-
-func Proceed(collections []collection.Collection) {
-	processor = Processor{
-		Init: true,
-	}
-	processor.initDictionary(collections)
-}
-
 // this would be consumed any migrator operation
-func GetTranslateDictionaries() (*[]dictionary.Dictionary, error) {
-	if !processor.Init {
+func (p Processor) GetTranslateDictionaries() (*[]dictionary.Dictionary, error) {
+	if !p.Init {
 		return nil, fmt.Errorf("Translation processor has not been initialized.")
 	}
 
-	return &processor.Dictionaries, nil
+	return &p.Dictionaries, nil
+}
+
+func NewProcessor() ProcessorIf {
+	return Processor{
+		Init: true,
+	}	
 }

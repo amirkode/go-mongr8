@@ -130,12 +130,13 @@ package cmd
 
 import (
 	"{{ .ModuleName}}/mongr8/collection/no_edit"
+	"github.com/amirkode/go-mongr8/mongr8/config"
 	"github.com/amirkode/go-mongr8/migration"
 )
 
 func CmdGenerateMigration() {
 	collections := no_edit.GetAllCollections()
-	migration := migration.NewMigration()
+	migration := migration.NewMigration(config.Database())
 	err := migration.GenerateMigration(collections)
 	if err != nil {
 
@@ -143,7 +144,7 @@ func CmdGenerateMigration() {
 }
 
 func CmdApplyMigration() {
-	migration := migration.NewMigration()
+	migration := migration.NewMigration(config.Database())
 	err := migration.ApplyMigration()
 	if err != nil {
 		
@@ -152,7 +153,7 @@ func CmdApplyMigration() {
 
 func CmdConsolidateMigration() {
 	collections := no_edit.GetAllCollections()
-	migration := migration.NewMigration()
+	migration := migration.NewMigration(config.Database())
 	err := migration.ConsolidateMigration(collections)
 	if err != nil {
 

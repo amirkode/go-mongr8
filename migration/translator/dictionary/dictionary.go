@@ -21,26 +21,31 @@ type (
 	// translated field to bson.M doc
 	// @ee field_impl.go for implementation
 	TranslatedFieldIf interface {
-		getObject() bson.M
+		// still not find the proper usecase
+		// for getArray()
 		getArray() bson.A
+
+		// get object of current field
+		getObject() bson.M
+
+		// get value of current field
 		getItem() interface {}
 	}
 
 	// translated field to bson.M doc
 	// @ee index_impl.go for implementation
 	TranslatedIndexIf interface {
+		// get object of indexes
 		getObject() bson.M
-	}
-
-	TranslatedIndex struct {
-		TranslatedIndexIf
-		index collection.Index
+		// get rules
+		getRules() *bson.M
 	}
 
 	DictIf interface {
 		initValidateFuncs()
 		setSchemaValidation()
 		// Translated Properties
+		GetPrimaryKey()
 		Fields() []TranslatedFieldIf
 		Indexes() []TranslatedFieldIf
 		GetDocument() bson.M
@@ -79,7 +84,7 @@ func (dict Dictionary) setValidateFuncs(funcs ...func() error) {
 	}
 }
 
-func (dict Dictionary) getPrimaryKey() {
+func (dict Dictionary) GetPrimaryKey() {
 	// pkField := dict.Collection.LookupField("_id")
 	// if pkField != nil {
 	// 	//

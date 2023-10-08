@@ -11,8 +11,7 @@ import (
 type (
 	TranslatedField struct {
 		TranslatedFieldIf
-		field   collection.Field
-		isArray bool
+		field collection.Field
 	}
 
 	translatedString struct {
@@ -76,7 +75,11 @@ type (
 		translatedGeoJSON
 	}
 
-	translatedGeoJSONGeoCollection struct {
+	translatedGeoJSONMultiPolygon struct {
+		translatedGeoJSON
+	}
+
+	translatedGeoJSONGeometryCollection struct {
 		translatedGeoJSON
 	}
 
@@ -86,11 +89,8 @@ type (
 )
 
 func (t TranslatedField) getItem() interface{} {
-	if t.isArray {
-		return t.getArray()
-	}
-
-	return t.getObject()
+	key := t.field.Spec().Name
+	return t.getObject()[key]
 }
 
 // translation for string field type
@@ -198,16 +198,12 @@ func newTranslatedArray(field collection.Field) translatedArray {
 	return translatedArray{
 		TranslatedField{
 			field: field,
-			isArray: true,
 		},
 	}
 }
 
 func (t translatedArray) getOject() bson.M {
-	return bson.M{}
-}
-
-func (t translatedArray) getArray() bson.A {
+	key := t.field.Spec().Name
 	arrayFields := t.field.Spec().ArrayFields
 	res := bson.A{}
 	for _, _field := range *arrayFields {
@@ -215,7 +211,13 @@ func (t translatedArray) getArray() bson.A {
 		res = append(res, item)
 	}
 
-	return res
+	return bson.M{
+		key: res,
+	}
+}
+
+func (t translatedArray) getArray() bson.A {
+	return bson.A{}
 }
 
 // translation for object field type
@@ -261,10 +263,10 @@ func (t translatedTimestamp) getArray() bson.A {
 }
 
 // Geo JSON Section
-func (t translatedGeoJSON) getCoordinateObject(key, _type string, child interface {}) bson.M {
+func (t translatedGeoJSON) getCoordinateObject(key, _type string, child interface{}) bson.M {
 	return bson.M{
 		key: bson.M{
-			"type": _type,
+			"type":        _type,
 			"coordinates": child,
 		},
 	}
@@ -306,10 +308,160 @@ func (t translatedGeoJSONLineString) getObject() bson.M {
 	return t.getCoordinateObject(key, "LineString", bson.A{bson.A{float64(0)}})
 }
 
-// TODO: continue
+func (t translatedGeoJSONLineString) getArray() bson.A {
+	return bson.A{}
+}
+
+// translation for geo json polygon single ring
+func newTranslatedGeoJSONPolygonSingleRing(field collection.Field) translatedGeoJSONPolygonSingleRing {
+	return translatedGeoJSONPolygonSingleRing{
+		translatedGeoJSON{
+			TranslatedField{
+				field: field,
+			},
+		},
+	}
+}
+
+func (t translatedGeoJSONPolygonSingleRing) getObject() bson.M {
+	key := t.field.Spec().Name
+	return t.getCoordinateObject(key, "Polygon", bson.A{bson.A{bson.A{float64(0)}}})
+}
+
+func (t translatedGeoJSONPolygonSingleRing) getArray() bson.A {
+	return bson.A{}
+}
+
+// translation for geo json polygon multiple ring
+func newTranslatedGeoJSONPolygonMultipleRing(field collection.Field) translatedGeoJSONPolygonMultipleRing {
+	return translatedGeoJSONPolygonMultipleRing{
+		translatedGeoJSON{
+			TranslatedField{
+				field: field,
+			},
+		},
+	}
+}
+
+func (t translatedGeoJSONPolygonMultipleRing) getObject() bson.M {
+	key := t.field.Spec().Name
+	return t.getCoordinateObject(key, "Polygon", bson.A{bson.A{bson.A{float64(0)}}, bson.A{bson.A{float64(0)}}})
+}
+
+func (t translatedGeoJSONPolygonMultipleRing) getArray() bson.A {
+	return bson.A{}
+}
+
+// translation for geo json multi point
+func newTranslatedGeoJSONMultiPoint(field collection.Field) translatedGeoJSONMultiPoint {
+	return translatedGeoJSONMultiPoint{
+		translatedGeoJSON{
+			TranslatedField{
+				field: field,
+			},
+		},
+	}
+}
+
+func (t translatedGeoJSONMultiPoint) getObject() bson.M {
+	key := t.field.Spec().Name
+	return t.getCoordinateObject(key, "MultiPoint", bson.A{bson.A{float64(0), float64(0)}})
+}
+
+func (t translatedGeoJSONMultiPoint) getArray() bson.A {
+	return bson.A{}
+}
+
+// translation for geo json multi line string
+func newTranslatedGeoJSONMultiLineString(field collection.Field) translatedGeoJSONMultiLineString {
+	return translatedGeoJSONMultiLineString{
+		translatedGeoJSON{
+			TranslatedField{
+				field: field,
+			},
+		},
+	}
+}
+
+func (t translatedGeoJSONMultiLineString) getObejct() bson.M {
+	key := t.field.Spec().Name
+	return t.getCoordinateObject(key, "MultiLineString", bson.A{bson.A{bson.A{float64(0), float64(0)}}})
+}
+
+func (t translatedGeoJSONMultiLineString) getArray() bson.A {
+	return bson.A{}
+}
+
+// translation for geo json multi polygon
+func newTranslatedGeoJSONMultiPolygon(field collection.Field) translatedGeoJSONMultiPolygon {
+	return translatedGeoJSONMultiPolygon{
+		translatedGeoJSON{
+			TranslatedField{
+				field: field,
+			},
+		},
+	}
+}
+
+func (t translatedGeoJSONMultiPolygon) getObject() bson.M {
+	key := t.field.Spec().Name
+	return t.getCoordinateObject(key, "MultiPolygon", bson.A{
+		bson.A{bson.A{bson.A{float64(0), float64(0)}}},
+		bson.A{bson.A{bson.A{float64(0), float64(0)}}},
+	})
+}
+
+func (t translatedGeoJSONMultiPolygon) getArray() bson.A {
+	return bson.A{}
+}
+
+// translation for geo json geometry collection
+func newTranslatedGeoJSONGeometryCollection(field collection.Field) translatedGeoJSONGeometryCollection {
+	return translatedGeoJSONGeometryCollection{
+		translatedGeoJSON{
+			TranslatedField{
+				field: field,
+			},
+		},
+	}
+}
+
+func (t translatedGeoJSONGeometryCollection) getObject() bson.M {
+	key := t.field.Spec().Name
+	arrayFields := t.field.Spec().ArrayFields
+	collections := bson.A{}
+	for _, _field := range *arrayFields {
+		item := getTranslatedField(field.FromFieldSpec(&_field)).getObject()
+		collections = append(collections, item)
+	}
+
+	return bson.M{
+		key: bson.M{
+			"type":       "GeometryCollection",
+			"geometries": collections,
+		},
+	}
+}
+
+// translation for legacy coordinate field
+func newTranslatedLegacyCoordinate(field collection.Field) translatedLegacyCoordinate {
+	return translatedLegacyCoordinate{
+		TranslatedField{
+			field: field,
+		},
+	}
+}
+
+func (t translatedLegacyCoordinate) getObject() bson.M {
+	return bson.M{}
+}
+
+func (t translatedLegacyCoordinate) getArray() bson.A {
+	return bson.A{}
+}
 
 // map field to correct translated field
-func  getTranslatedField(_field collection.Field) TranslatedFieldIf {
+func getTranslatedField(_field collection.Field) TranslatedFieldIf {
 	switch _field.Spec().Type {
 	case field.TypeString:
 		return newTranslatedString(_field)
@@ -321,6 +473,28 @@ func  getTranslatedField(_field collection.Field) TranslatedFieldIf {
 		return newTranslatedDouble(_field)
 	case field.TypeBoolean:
 		return newTranslatedBoolean(_field)
+	case field.TypeArray:
+		return newTranslatedArray(_field)
+	case field.TypeObject:
+		return newTranslatedObject(_field)
+	case field.TypeTimestamp:
+		return newTranslatedTimestamp(_field)
+	case field.TypeGeoJSONPoint:
+		return newTranslatedGeoJSONPoint(_field)
+	case field.TypeGeoJSONLineString:
+		return newTranslatedGeoJSONLineString(_field)
+	case field.TypeGeoJSONPolygonSingleRing:
+		return newTranslatedGeoJSONPolygonSingleRing(_field)
+	case field.TypeGeoJSONPolygonMultipleRing:
+		return newTranslatedGeoJSONPolygonMultipleRing(_field)
+	case field.TypeGeoJSONMultiPoint:
+		return newTranslatedGeoJSONMultiPoint(_field)
+	case field.TypeGeoJSONMultiLineString:
+		return newTranslatedGeoJSONMultiLineString(_field)
+	case field.TypeGeoJSONMultiPolygon:
+		return newTranslatedGeoJSONMultiPolygon(_field)
+	case field.TypeGeoJSONGeometryCollection:
+		return newTranslatedGeoJSONGeometryCollection(_field)
 	}
 
 	return TranslatedField{}

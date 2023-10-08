@@ -6,6 +6,8 @@ import (
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/migration/migrator/generate"
 	"github.com/amirkode/go-mongr8/migration/translator"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const (
@@ -21,12 +23,14 @@ type (
 
 	Migration struct {
 		Cmd
+		db   *mongo.Database
 		date string
 	}
 )
 
-func NewMigration() Cmd {
+func NewMigration(db *mongo.Database) Cmd {
 	return Migration{
+		db:   db,
 		date: time.Now().Format("2006-01-02"),
 	}
 }
@@ -40,13 +44,13 @@ func (Migration) ConsolidateMigration(collections []collection.Collection) error
 }
 
 func (Migration) GenerateMigration(collections []collection.Collection) error {
-	translator.Proceed(collections)
+	processor := translator.NewProcessor()
+	processor.Proceed(collections)
 	// get translated dictionary
-	translatedDictionaries, err := translator.GetTranslateDictionaries()
+	translatedDictionaries, err := processor.GetTranslateDictionaries()
 	if err != nil {
 		return err
 	}
 
 	return generate.Run(*translatedDictionaries)
 }
-

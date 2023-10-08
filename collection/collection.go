@@ -14,6 +14,8 @@ import (
 )
 
 type (
+	// stores basic informations of a collection
+	// this also holds type of usage: collection or view
 	Metadata interface {
 		Spec() *metadata.Spec
 	}
