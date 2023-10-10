@@ -1,6 +1,14 @@
-package action
+package api_interpreter
 
 // import "github.com/amirkode/go-mongr8/migration/translator/dictionary"
+
+const (
+	VarNameDatabase      = "db"
+	VarNameCollection    = "collection"
+	VarNameCreateOptions = "createOptions"
+	VarNameError         = "err"
+	VarNameContext       = "ctx"
+)
 
 type (
 	actionCreateCollection struct {
@@ -27,4 +35,3 @@ type (
 		Action
 	}
 )
-

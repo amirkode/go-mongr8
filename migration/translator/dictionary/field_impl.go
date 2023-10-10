@@ -5,7 +5,6 @@ import (
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 type (
@@ -102,15 +101,15 @@ func newTranslatedString(field collection.Field) translatedString {
 	}
 }
 
-func (t translatedString) getObject() bson.M {
+func (t translatedString) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return bson.M{
-		key: "",
+	return map[string]interface{}{
+		key: String(""),
 	}
 }
 
-func (t translatedString) getArray() bson.A {
-	return bson.A{}
+func (t translatedString) getArray() []interface{} {
+	return Array()
 }
 
 // translation for int32 field type
@@ -122,15 +121,15 @@ func newTranslatedInt32(field collection.Field) translatedInt32 {
 	}
 }
 
-func (t translatedInt32) getObject() bson.M {
+func (t translatedInt32) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return bson.M{
-		key: int32(0),
+	return map[string]interface{}{
+		key: Int32(0),
 	}
 }
 
-func (t translatedInt32) getArray() bson.A {
-	return bson.A{}
+func (t translatedInt32) getArray() []interface{} {
+	return Array()
 }
 
 // translation for int64 field type
@@ -142,15 +141,15 @@ func newTranslatedInt64(field collection.Field) translatedInt64 {
 	}
 }
 
-func (t translatedInt64) getObject() bson.M {
+func (t translatedInt64) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return bson.M{
-		key: int64(0),
+	return map[string]interface{}{
+		key: Int64(0),
 	}
 }
 
-func (t translatedInt64) getArray() bson.A {
-	return bson.A{}
+func (t translatedInt64) getArray() []interface{} {
+	return Array()
 }
 
 // translation for double field type
@@ -162,15 +161,15 @@ func newTranslatedDouble(field collection.Field) translatedDouble {
 	}
 }
 
-func (t translatedDouble) getObject() bson.M {
+func (t translatedDouble) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return bson.M{
-		key: float64(0),
+	return map[string]interface{}{
+		key: Float64(0),
 	}
 }
 
-func (t translatedDouble) getArray() bson.A {
-	return bson.A{}
+func (t translatedDouble) getArray() []interface{} {
+	return Array()
 }
 
 // translation for boolean field type
@@ -182,15 +181,15 @@ func newTranslatedBoolean(field collection.Field) translatedBoolean {
 	}
 }
 
-func (t translatedBoolean) getObject() bson.M {
+func (t translatedBoolean) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return bson.M{
-		key: false,
+	return map[string]interface{}{
+		key: Boolean(false),
 	}
 }
 
-func (t translatedBoolean) getArray() bson.A {
-	return bson.A{}
+func (t translatedBoolean) getArray() []interface{} {
+	return Array()
 }
 
 // translation for array field type
@@ -202,22 +201,22 @@ func newTranslatedArray(field collection.Field) translatedArray {
 	}
 }
 
-func (t translatedArray) getOject() bson.M {
+func (t translatedArray) getOject() map[string]interface{} {
 	key := t.field.Spec().Name
 	arrayFields := t.field.Spec().ArrayFields
-	res := bson.A{}
+	res := []interface{}{}
 	for _, _field := range *arrayFields {
 		item := getTranslatedField(field.FromFieldSpec(&_field)).getItem()
 		res = append(res, item)
 	}
 
-	return bson.M{
+	return map[string]interface{}{
 		key: res,
 	}
 }
 
-func (t translatedArray) getArray() bson.A {
-	return bson.A{}
+func (t translatedArray) getArray() []interface{} {
+	return Array()
 }
 
 // translation for object field type
@@ -229,8 +228,8 @@ func newTranslatedObject(field collection.Field) translatedObject {
 	}
 }
 
-func (t translatedObject) getObject() bson.M {
-	res := bson.M{}
+func (t translatedObject) getObject() map[string]interface{} {
+	res := map[string]interface{}{}
 	for _, _field := range *t.field.Spec().Object {
 		res[_field.Name] = getTranslatedField(field.FromFieldSpec(&_field)).getItem()
 	}
@@ -238,8 +237,8 @@ func (t translatedObject) getObject() bson.M {
 	return res
 }
 
-func (t translatedObject) getArray() bson.A {
-	return bson.A{}
+func (t translatedObject) getArray() []interface{} {
+	return Array()
 }
 
 // translation for timestamp field type
@@ -251,21 +250,21 @@ func newTranslatedTimestamp(field collection.Field) translatedTimestamp {
 	}
 }
 
-func (t translatedTimestamp) getObject() bson.M {
+func (t translatedTimestamp) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return bson.M{
-		key: time.Now(),
+	return map[string]interface{}{
+		key: Time(time.Now()),
 	}
 }
 
-func (t translatedTimestamp) getArray() bson.A {
-	return bson.A{}
+func (t translatedTimestamp) getArray() []interface{} {
+	return Array()
 }
 
 // Geo JSON Section
-func (t translatedGeoJSON) getCoordinateObject(key, _type string, child interface{}) bson.M {
-	return bson.M{
-		key: bson.M{
+func (t translatedGeoJSON) getCoordinateObject(key, _type string, child interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		key: map[string]interface{}{
 			"type":        _type,
 			"coordinates": child,
 		},
@@ -283,13 +282,13 @@ func newTranslatedGeoJSONPoint(field collection.Field) translatedGeoJSONPoint {
 	}
 }
 
-func (t translatedGeoJSONPoint) getObject() bson.M {
+func (t translatedGeoJSONPoint) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return t.getCoordinateObject(key, "Point", bson.A{float64(0)})
+	return t.getCoordinateObject(key, "Point", Array(Float64(0)))
 }
 
-func (t translatedGeoJSONPoint) getArray() bson.A {
-	return bson.A{}
+func (t translatedGeoJSONPoint) getArray() []interface{} {
+	return []interface{}{}
 }
 
 // translation for geo json line string field type
@@ -303,13 +302,13 @@ func newTranslatedGeoJSONLineString(field collection.Field) translatedGeoJSONLin
 	}
 }
 
-func (t translatedGeoJSONLineString) getObject() bson.M {
+func (t translatedGeoJSONLineString) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return t.getCoordinateObject(key, "LineString", bson.A{bson.A{float64(0)}})
+	return t.getCoordinateObject(key, "LineString", Array(Array(Float64(0))))
 }
 
-func (t translatedGeoJSONLineString) getArray() bson.A {
-	return bson.A{}
+func (t translatedGeoJSONLineString) getArray() []interface{} {
+	return Array()
 }
 
 // translation for geo json polygon single ring
@@ -323,13 +322,13 @@ func newTranslatedGeoJSONPolygonSingleRing(field collection.Field) translatedGeo
 	}
 }
 
-func (t translatedGeoJSONPolygonSingleRing) getObject() bson.M {
+func (t translatedGeoJSONPolygonSingleRing) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return t.getCoordinateObject(key, "Polygon", bson.A{bson.A{bson.A{float64(0)}}})
+	return t.getCoordinateObject(key, "Polygon", Array(Array(Array(Float64(0)))))
 }
 
-func (t translatedGeoJSONPolygonSingleRing) getArray() bson.A {
-	return bson.A{}
+func (t translatedGeoJSONPolygonSingleRing) getArray() []interface{} {
+	return Array()
 }
 
 // translation for geo json polygon multiple ring
@@ -343,13 +342,13 @@ func newTranslatedGeoJSONPolygonMultipleRing(field collection.Field) translatedG
 	}
 }
 
-func (t translatedGeoJSONPolygonMultipleRing) getObject() bson.M {
+func (t translatedGeoJSONPolygonMultipleRing) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return t.getCoordinateObject(key, "Polygon", bson.A{bson.A{bson.A{float64(0)}}, bson.A{bson.A{float64(0)}}})
+	return t.getCoordinateObject(key, "Polygon", Array(Array(Array(Float64(0))), Array(Array(Float64(0)))))
 }
 
-func (t translatedGeoJSONPolygonMultipleRing) getArray() bson.A {
-	return bson.A{}
+func (t translatedGeoJSONPolygonMultipleRing) getArray() []interface{} {
+	return Array()
 }
 
 // translation for geo json multi point
@@ -363,13 +362,13 @@ func newTranslatedGeoJSONMultiPoint(field collection.Field) translatedGeoJSONMul
 	}
 }
 
-func (t translatedGeoJSONMultiPoint) getObject() bson.M {
+func (t translatedGeoJSONMultiPoint) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return t.getCoordinateObject(key, "MultiPoint", bson.A{bson.A{float64(0), float64(0)}})
+	return t.getCoordinateObject(key, "MultiPoint", Array(Array(Float64(0), Float64(0))))
 }
 
-func (t translatedGeoJSONMultiPoint) getArray() bson.A {
-	return bson.A{}
+func (t translatedGeoJSONMultiPoint) getArray() []interface{} {
+	return Array()
 }
 
 // translation for geo json multi line string
@@ -383,13 +382,13 @@ func newTranslatedGeoJSONMultiLineString(field collection.Field) translatedGeoJS
 	}
 }
 
-func (t translatedGeoJSONMultiLineString) getObejct() bson.M {
+func (t translatedGeoJSONMultiLineString) getObejct() map[string]interface{} {
 	key := t.field.Spec().Name
-	return t.getCoordinateObject(key, "MultiLineString", bson.A{bson.A{bson.A{float64(0), float64(0)}}})
+	return t.getCoordinateObject(key, "MultiLineString", Array(Array(Array(Float64(0), Float64(0)))))
 }
 
-func (t translatedGeoJSONMultiLineString) getArray() bson.A {
-	return bson.A{}
+func (t translatedGeoJSONMultiLineString) getArray() []interface{} {
+	return Array()
 }
 
 // translation for geo json multi polygon
@@ -403,16 +402,16 @@ func newTranslatedGeoJSONMultiPolygon(field collection.Field) translatedGeoJSONM
 	}
 }
 
-func (t translatedGeoJSONMultiPolygon) getObject() bson.M {
+func (t translatedGeoJSONMultiPolygon) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	return t.getCoordinateObject(key, "MultiPolygon", bson.A{
-		bson.A{bson.A{bson.A{float64(0), float64(0)}}},
-		bson.A{bson.A{bson.A{float64(0), float64(0)}}},
-	})
+	return t.getCoordinateObject(key, "MultiPolygon", Array(
+		Array(Array(Array(Float64(0), Float64(0)))),
+		Array(Array(Array(Float64(0), Float64(0)))),
+	))
 }
 
-func (t translatedGeoJSONMultiPolygon) getArray() bson.A {
-	return bson.A{}
+func (t translatedGeoJSONMultiPolygon) getArray() []interface{} {
+	return Array()
 }
 
 // translation for geo json geometry collection
@@ -426,17 +425,17 @@ func newTranslatedGeoJSONGeometryCollection(field collection.Field) translatedGe
 	}
 }
 
-func (t translatedGeoJSONGeometryCollection) getObject() bson.M {
+func (t translatedGeoJSONGeometryCollection) getObject() map[string]interface{} {
 	key := t.field.Spec().Name
 	arrayFields := t.field.Spec().ArrayFields
-	collections := bson.A{}
+	collections := Array()
 	for _, _field := range *arrayFields {
 		item := getTranslatedField(field.FromFieldSpec(&_field)).getObject()
 		collections = append(collections, item)
 	}
 
-	return bson.M{
-		key: bson.M{
+	return map[string]interface{}{
+		key: map[string]interface{}{
 			"type":       "GeometryCollection",
 			"geometries": collections,
 		},
@@ -452,12 +451,12 @@ func newTranslatedLegacyCoordinate(field collection.Field) translatedLegacyCoord
 	}
 }
 
-func (t translatedLegacyCoordinate) getObject() bson.M {
-	return bson.M{}
+func (t translatedLegacyCoordinate) getObject() map[string]interface{} {
+	return map[string]interface{}{}
 }
 
-func (t translatedLegacyCoordinate) getArray() bson.A {
-	return bson.A{}
+func (t translatedLegacyCoordinate) getArray() []interface{} {
+	return Array()
 }
 
 // map field to correct translated field

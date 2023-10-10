@@ -6,6 +6,7 @@ import (
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/migration/translator/dictionary"
 	// "github.com/amirkode/go-mongr8/migration/translator/collection_loader"
+	"github.com/amirkode/go-mongr8/migration/translator/mongodb/api_interpreter"
 )
 
 type (
@@ -13,7 +14,8 @@ type (
 	ProcessorIf interface {
 		initDictionary(collections []collection.Collection)
 		GetTranslateDictionaries() (*[]dictionary.Dictionary, error)
-		Proceed(collections []collection.Collection)
+		Generate(collections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema)
+		Consolidate(collections []collection.Collection, dbCollections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema)
 	}
 
 	Processor struct {
@@ -23,8 +25,13 @@ type (
 	}
 )
 
-func (p Processor) Proceed(collections []collection.Collection) {
+func (p Processor) Generate(collections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema) {
 	p.initDictionary(collections)
+	// TODO: something  to find intersection of user-defined collections, migration-generated sub action schemas
+}
+
+func (p Processor)  Consolidate(collections []collection.Collection, dbCollections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema) {
+	// TODO: something tof ind consolidation resulting intersection of user-defined collections, db collections, migration-generated sub action schemas
 }
 
 func (p Processor) initDictionary(collections []collection.Collection) {

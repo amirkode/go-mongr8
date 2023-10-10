@@ -19,11 +19,12 @@ import (
 )
 
 const (
-	tplMongr8               = "mongr8_info"
-	tplConfig               = "config"
-	tplCombainedCollections = "combined_collections"
-	tplCmdMain              = "cmd_main"
-	tplCmdCall              = "cmd_call"
+	tplMongr8                    = "mongr8_info"
+	tplConfig                    = "config"
+	tplCombainedCollections      = "combined_collections"
+	tplCmdMain                   = "cmd_main"
+	tplCmdCall                   = "cmd_call"
+	tplMigrationSubActionSchemas = "migration_sub_action_schemas"
 )
 
 // init mongr8 migration structure
@@ -83,6 +84,11 @@ func InitMigration(applyRootDirValidation bool) error {
 		return err
 	}
 
+	// init migration sub action schemas
+	if err = initMigrationSubActionSchemas(*packagePath, tplPath); err != nil {
+		return err
+	}
+
 	// init cmds
 	err = initCmd(*packagePath, tplPath)
 
@@ -103,7 +109,7 @@ func initFolderStructure(projectPath string, applyRootDirValidation bool) error 
 		fmt.Sprintf("%s/cmd/consolidate", mainDir),
 		fmt.Sprintf("%s/cmd/generate", mainDir),
 		fmt.Sprintf("%s/collection/no_edit", mainDir),
-		fmt.Sprintf("%s/migration", mainDir),
+		fmt.Sprintf("%s/migration/no_edit", mainDir),
 		fmt.Sprintf("%s/config", mainDir),
 	}
 
@@ -154,6 +160,18 @@ func initCombinedCollections(projectPath, tplPath string) error {
 	outputPath := fmt.Sprintf("%s/mongr8/collection/no_edit/combined_collections.go", projectPath)
 
 	return util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, tplVar)
+}
+
+func initMigrationSubActionSchemas(projectPath, tplPath string) error {
+	tplVar := struct {
+		CreateDate string
+	}{
+		CreateDate: time.Now().Format("2006-01-02"),
+	}
+
+	outputPath := fmt.Sprintf("%s/mongr8/migration/no_edit/combined_sub_action_schemas.go", projectPath)
+
+	return util.GenerateTemplate(tplMigrationSubActionSchemas, tplPath, outputPath, tplVar)
 }
 
 func initCmd(projectPath, tplPath string) error {

@@ -2,16 +2,16 @@ package dictionary
 
 import (
 	"github.com/amirkode/go-mongr8/collection"
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/amirkode/go-mongr8/collection/metadata"
 )
 
 type (
 	SchemaValidationIf interface {
 		// serialize current schema to string
 		toJsonString()
-		// collection schema represented as a bson.M doc
+		// collection schema represented as a map doc
 		// the schema validation generated from collection.Fields()
-		getCollectionDoc() bson.M
+		getCollectionDoc() map[string]interface{}
 	}
 
 	SchemaValidation struct {
@@ -23,22 +23,22 @@ type (
 	TranslatedFieldIf interface {
 		// still not find the proper usecase
 		// for getArray()
-		getArray() bson.A
+		getArray() []interface{}
 
 		// get object of current field
-		getObject() bson.M
+		getObject() map[string]interface{}
 
 		// get value of current field
-		getItem() interface {}
+		getItem() interface{}
 	}
 
 	// translated field to bson.M doc
 	// @ee index_impl.go for implementation
 	TranslatedIndexIf interface {
 		// get object of indexes
-		getObject() bson.M
+		getObject() map[string]interface{}
 		// get rules
-		getRules() *bson.M
+		getRules() *map[string]interface{}
 	}
 
 	DictIf interface {
@@ -46,9 +46,10 @@ type (
 		setSchemaValidation()
 		// Translated Properties
 		GetPrimaryKey()
+		GetOptions() *map[metadata.CollectionOption]interface{}
 		Fields() []TranslatedFieldIf
 		Indexes() []TranslatedFieldIf
-		GetDocument() bson.M
+		GetDocument() map[string]interface{}
 	}
 
 	Dictionary struct {
@@ -91,8 +92,8 @@ func (dict Dictionary) GetPrimaryKey() {
 	// }
 }
 
-func (dict Dictionary) GetCollectionDoc() bson.M {
-	res := bson.M{}
+func (dict Dictionary) GetCollectionDoc() map[string]interface{} {
+	res := map[string]interface{}{}
 
 	return res
 }

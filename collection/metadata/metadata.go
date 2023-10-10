@@ -11,7 +11,7 @@ import "fmt"
 
 type Spec struct {
 	Name    string
-	Options *map[string]interface{}
+	Options *map[CollectionOption]interface{}
 	Type CollectionType
 }
 
@@ -23,15 +23,15 @@ func (s *MetadataSpec) Spec() *Spec {
 	return s.spec
 }
 
-func (s *MetadataSpec) Capped(size int) *MetadataSpec {
+func (s *MetadataSpec) Capped(size int64) *MetadataSpec {
 	if s.Spec().Options == nil {
-		s.Spec().Options = &map[string]interface{}{}
+		s.Spec().Options = &map[CollectionOption]interface{}{}
 	} else {
 		panic(fmt.Sprintf("Cannot add capped option, another option already exists on collection: %s", s.Spec().Name))
 	}
 
-	(*s.Spec().Options)["capped"] = true
-	(*s.Spec().Options)["size"] = true
+	(*s.Spec().Options)[CollectionOptionCapped] = true
+	(*s.Spec().Options)[CollectionOptionSize] = size
 
 	// set collection type to capped collection
 	s.Spec().Type = TypeCappedCollection
@@ -39,14 +39,14 @@ func (s *MetadataSpec) Capped(size int) *MetadataSpec {
 	return s
 }
 
-func (s *MetadataSpec) TTL(expiredAfter int) *MetadataSpec {
+func (s *MetadataSpec) TTL(expiredAfter int64) *MetadataSpec {
 	if s.Spec().Options == nil {
-		s.Spec().Options = &map[string]interface{}{}
+		s.Spec().Options = &map[CollectionOption]interface{}{}
 	} else {
 		panic(fmt.Sprintf("Cannot add TTL option, another option already exists on collection: %s", s.Spec().Name))
 	}
 
-	(*s.Spec().Options)["expiredAfterSeconds"] = expiredAfter
+	(*s.Spec().Options)[CollectionOptionExpiredAfterSeconds] = expiredAfter
 
 	// set collection type to ttl collection
 	s.Spec().Type = TypeTTLCollection

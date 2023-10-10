@@ -25,15 +25,15 @@ type Spec struct {
 	Nullable bool
 }
 
-type BaseSpec struct {
+type FieldSpec struct {
 	spec *Spec
 }
 
-func (b *BaseSpec) Spec() *Spec {
+func (b *FieldSpec) Spec() *Spec {
 	return b.spec
 }
 
-func (b *BaseSpec) AddArrayField(s *BaseSpec) *BaseSpec {
+func (b *FieldSpec) AddArrayField(s *FieldSpec) *FieldSpec {
 	if b.spec.ArrayFields == nil {
 		// init slice of array fields
 		arrFields := []Spec{}
@@ -48,7 +48,7 @@ func (b *BaseSpec) AddArrayField(s *BaseSpec) *BaseSpec {
 	return b
 }
 
-func (b *BaseSpec) AddObjectFields(fields *[]BaseSpec) *BaseSpec {
+func (b *FieldSpec) AddObjectFields(fields *[]FieldSpec) *FieldSpec {
 	if b.spec.Object == nil {
 		objects := []Spec{}
 		b.spec.Object = &objects
@@ -64,7 +64,7 @@ func (b *BaseSpec) AddObjectFields(fields *[]BaseSpec) *BaseSpec {
 	return b
 }
 
-func (b *BaseSpec) ObjectHasKey(key string) bool {
+func (b *FieldSpec) ObjectHasKey(key string) bool {
 	if b.spec.Object != nil {
 		for _, field := range *b.spec.Object {
 			if field.Name == key {
@@ -76,14 +76,14 @@ func (b *BaseSpec) ObjectHasKey(key string) bool {
 	return false
 }
 
-func (b *BaseSpec) SetNullable() *BaseSpec {
+func (b *FieldSpec) SetNullable() *FieldSpec {
 	b.spec.Nullable = true
 
 	return b
 }
 
-func baseField(name string, fieldType FieldType) *BaseSpec {
-	field := &BaseSpec{
+func baseField(name string, fieldType FieldType) *FieldSpec {
+	field := &FieldSpec{
 		&Spec{
 			Name:     name,
 			Type:     fieldType,
@@ -94,79 +94,79 @@ func baseField(name string, fieldType FieldType) *BaseSpec {
 	return field
 }
 
-func FromFieldSpec(spec *Spec) *BaseSpec {
-	return &BaseSpec{
+func FromFieldSpec(spec *Spec) *FieldSpec {
+	return &FieldSpec{
 		spec,
 	}
 }
 
-func StringField(name string) *BaseSpec {
+func StringField(name string) *FieldSpec {
 	return baseField(name, TypeString)
 }
 
-func Int64Field(name string) *BaseSpec {
+func Int64Field(name string) *FieldSpec {
 	return baseField(name, TypeInt64)
 }
 
-func Int32Field(name string) *BaseSpec {
+func Int32Field(name string) *FieldSpec {
 	return baseField(name, TypeInt32)
 }
 
-func DoubleField(name string) *BaseSpec {
+func DoubleField(name string) *FieldSpec {
 	return baseField(name, TypeDouble)
 }
 
-func ArrayField(name string) *BaseSpec {
+func ArrayField(name string) *FieldSpec {
 	return baseField(name, TypeArray)
 }
 
-func ObjectField(name string) *BaseSpec {
+func ObjectField(name string) *FieldSpec {
 	return baseField(name, TypeObject)
 }
 
-func TimestampField(name string) *BaseSpec {
+func TimestampField(name string) *FieldSpec {
 	return baseField(name, TypeTimestamp)
 }
 
-func GeoJSONPointField(name string) *BaseSpec {
+func GeoJSONPointField(name string) *FieldSpec {
 	return baseField(name, TypeGeoJSONPoint)
 }
 
-func GeoJSONLineStringField(name string) *BaseSpec {
+func GeoJSONLineStringField(name string) *FieldSpec {
 	return baseField(name, TypeGeoJSONLineString)
 }
 
-func GeoJSONPolygonSingleRingField(name string) *BaseSpec {
+func GeoJSONPolygonSingleRingField(name string) *FieldSpec {
 	return baseField(name, TypeGeoJSONPolygonSingleRing)
 }
 
-func GeoJSONPolygonMultipleRingField(name string) *BaseSpec {
+func GeoJSONPolygonMultipleRingField(name string) *FieldSpec {
 	return baseField(name, TypeGeoJSONPolygonMultipleRing)
 }
 
-func GeoJSONMultiPointField(name string) *BaseSpec {
+func GeoJSONMultiPointField(name string) *FieldSpec {
 	return baseField(name, TypeGeoJSONMultiPoint)
 }
 
-func GeoJSONMultiLineStringField(name string) *BaseSpec {
+func GeoJSONMultiLineStringField(name string) *FieldSpec {
 	return baseField(name, TypeGeoJSONMultiLineString)
 }
 
-func GeoJSONMultiPolygonField(name string) *BaseSpec {
+func GeoJSONMultiPolygonField(name string) *FieldSpec {
 	return baseField(name, TypeGeoJSONMultiPolygon)
 }
 
-func GeoJSONGeometryCollectionField(name string) *BaseSpec {
+func GeoJSONGeometryCollectionField(name string) *FieldSpec {
 	return baseField(name, TypeGeoJSONGeometryCollection)
 }
 
-func LegacyCoordinateArrayField(name string) *BaseSpec {
+func LegacyCoordinateArrayField(name string) *FieldSpec {
 	return baseField(name, TypeLegacyCoordinateArray)
 }
 
 // add additional functions for legacy coordinate embedded document
 type legacyCoordinateEmbeddedDocSpec struct {
-	BaseSpec
+	FieldSpec
 	xIsSet bool
 	yIsSet bool
 }
@@ -193,7 +193,7 @@ func (s *legacyCoordinateEmbeddedDocSpec) setCoordinateField(name string, isX bo
 		s.yIsSet = true
 	}
 
-	s.AddObjectFields(&[]BaseSpec{
+	s.AddObjectFields(&[]FieldSpec{
 		*DoubleField(name),
 	})
 }
@@ -213,7 +213,7 @@ func (s *legacyCoordinateEmbeddedDocSpec) SetCoordinateY(name string) *legacyCoo
 func LegacyCoordinateEmbeddedDocField(name string) *legacyCoordinateEmbeddedDocSpec {
 	baseField := baseField(name, TypeLegacyCoordinateEmbeddedDoc)
 	return &legacyCoordinateEmbeddedDocSpec{
-		BaseSpec: *baseField,
+		FieldSpec: *baseField,
 		xIsSet: false,
 		yIsSet: false,
 	}

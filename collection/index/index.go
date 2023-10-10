@@ -12,6 +12,19 @@ type IndexField struct {
 	Value interface{}
 }
 
+func Field(name string, value interface{}) IndexField {
+	return IndexField{
+		Key:   name,
+		Value: value,
+	}
+}
+
+func (f IndexField) NestedField(name string) IndexField {
+	f.Key += "." + name
+
+	return f
+}
+
 type Spec struct {
 	Type   IndexType
 	Fields []IndexField
@@ -19,26 +32,26 @@ type Spec struct {
 	Sparse bool
 }
 
-type BaseSpec struct {
+type IndexSpec struct {
 	spec *Spec
 }
 
-func (b *BaseSpec) Spec() *Spec {
+func (b *IndexSpec) Spec() *Spec {
 	return b.spec
 }
 
-func (b *BaseSpec) SetRules(rules map[string]interface{}) {
+func (b *IndexSpec) SetRules(rules map[string]interface{}) {
 	b.spec.Rules = &rules
 }
 
-func (b *BaseSpec) SetSparse(sparse bool) *BaseSpec {
+func (b *IndexSpec) SetSparse(sparse bool) *IndexSpec {
 	b.spec.Sparse = sparse
 
 	return b
 }
 
-func baseIndex(_type IndexType, fields []IndexField, rules *map[string]interface{}) *BaseSpec {
-	index := &BaseSpec{
+func baseIndex(_type IndexType, fields []IndexField, rules *map[string]interface{}) *IndexSpec {
+	index := &IndexSpec{
 		&Spec{
 			Type:   _type,
 			Fields: fields,
@@ -49,24 +62,17 @@ func baseIndex(_type IndexType, fields []IndexField, rules *map[string]interface
 	return index
 }
 
-func defaultIndex(_type IndexType, fields []string, rules *map[string]interface{}) *BaseSpec {
-	indexFields := make([]IndexField, len(fields))
-	for i, field := range fields {
-		indexFields[i] = IndexField{
-			Key: field,
-			Value: int(1),
-		}
-	}
-
-	return baseIndex(_type, indexFields, rules)
+func defaultIndex(_type IndexType, fields []IndexField, rules *map[string]interface{}) *IndexSpec {
+	// Some operation here (?)
+	return baseIndex(_type, fields, rules)
 }
 
-func customValueIndex(_type IndexType, fields map[string]interface{}, rules *map[string]interface{}) *BaseSpec {
+func customValueIndex(_type IndexType, fields map[string]interface{}, rules *map[string]interface{}) *IndexSpec {
 	indexFields := make([]IndexField, len(fields))
 	i := 0
 	for key, value := range fields {
 		indexFields[i] = IndexField{
-			Key: key,
+			Key:   key,
 			Value: value,
 		}
 		i++
@@ -75,29 +81,29 @@ func customValueIndex(_type IndexType, fields map[string]interface{}, rules *map
 	return baseIndex(_type, indexFields, rules)
 }
 
-func SingleFieldIndex(field string) *BaseSpec {
-	return defaultIndex(TypeSingleField, []string{field}, nil)
+func SingleFieldIndex(field IndexField) *IndexSpec {
+	return defaultIndex(TypeSingleField, []IndexField{field}, nil)
 }
 
-func CompoundIndex(fields []string) *BaseSpec {
+func CompoundIndex(fields ...IndexField) *IndexSpec {
 	return defaultIndex(TypeCompound, fields, nil)
 }
 
-func TextIndex(field string) *BaseSpec {
-	return defaultIndex(TypeText, []string{field}, nil)
+func TextIndex(field IndexField) *IndexSpec {
+	return defaultIndex(TypeText, []IndexField{field}, nil)
 }
 
-func Geospatial2dsphereIndex(field string) *BaseSpec {
-	return defaultIndex(TypeGeopatial2dsphere, []string{field}, nil)
+func Geospatial2dsphereIndex(field IndexField) *IndexSpec {
+	return defaultIndex(TypeGeopatial2dsphere, []IndexField{field}, nil)
 }
 
-func UniqueIndex(field string) *BaseSpec {
-	return defaultIndex(TypeUnique, []string{field}, nil)
+func UniqueIndex(field IndexField) *IndexSpec {
+	return defaultIndex(TypeUnique, []IndexField{field}, nil)
 }
 
 // partial index custom spec
 type partialIndexSpec struct {
-	BaseSpec
+	IndexSpec
 }
 
 func (s *partialIndexSpec) SetPartialExpression(partialExp map[string]interface{}) *partialIndexSpec {
@@ -115,20 +121,20 @@ func PartialIndex(fields map[string]interface{}) *partialIndexSpec {
 
 // collation index custom spec
 type collationIndexSpec struct {
-	BaseSpec
+	IndexSpec
 }
 
 func (s *collationIndexSpec) SetCollation(collation map[string]interface{}) {
 	s.SetRules(collation)
 }
 
-func CollationIndex(field string) *collationIndexSpec {
-	baseSpec := defaultIndex(TypeCollation, []string{field}, nil)
+func CollationIndex(field IndexField) *collationIndexSpec {
+	baseSpec := defaultIndex(TypeCollation, []IndexField{field}, nil)
 	return &collationIndexSpec{
 		*baseSpec,
 	}
 }
 
-func RawIndex(fields map[string]interface{}, rules *map[string]interface{}) *BaseSpec {
+func RawIndex(fields map[string]interface{}, rules *map[string]interface{}) *IndexSpec {
 	return customValueIndex(TypeRaw, fields, rules)
 }

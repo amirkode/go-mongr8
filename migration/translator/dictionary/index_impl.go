@@ -3,10 +3,7 @@ package dictionary
 import (
 	"fmt"
 
-	"internal/convert"
-
 	"github.com/amirkode/go-mongr8/collection"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 type (
@@ -60,19 +57,19 @@ func (t TranslatedIndex) mustProvideRulesValidation() {
 	}
 }
 
-func (t TranslatedIndex) getFieldsObject() bson.M {
-	res := bson.M{}
+func (t TranslatedIndex) getFieldsObject() map[string]interface{} {
+	res := map[string]interface{}{}
 	for _, field := range t.index.Spec().Fields {
-		res[field.Key] = field.Value
+		res[field.Key] = ConvertAnyToValueType(field.Value)
 	}
 
 	return res
 }
 
-func (t TranslatedIndex) getSparseObjectOrNil() *bson.M {
+func (t TranslatedIndex) getSparseObjectOrNil() *map[string]interface{} {
 	if t.index.Spec().Sparse {
-		return &bson.M{
-			"sparse": true,
+		return &map[string]interface{}{
+			"sparse": Boolean(true),
 		}
 	}
 
@@ -88,15 +85,14 @@ func newTranslatedSingleField(index collection.Index) translatedSingleField {
 	}
 }
 
-func (t translatedSingleField) getObject() bson.M {
+func (t translatedSingleField) getObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	return t.getFieldsObject()
 }
 
-func (t translatedSingleField) getRules() *bson.M { 
+func (t translatedSingleField) getRules() *map[string]interface{} {
 	return t.getSparseObjectOrNil()
 }
-
 
 // translation for compound index
 func newTranslatedCompound(index collection.Index) translatedCompound {
@@ -107,15 +103,14 @@ func newTranslatedCompound(index collection.Index) translatedCompound {
 	}
 }
 
-func (t translatedCompound) getObject() bson.M {
-	t.hasAtLeastFieldsLengthValidation(2)	
+func (t translatedCompound) getObject() map[string]interface{} {
+	t.hasAtLeastFieldsLengthValidation(2)
 	return t.getFieldsObject()
 }
 
-func (t translatedCompound) getRules() *bson.M { 
+func (t translatedCompound) getRules() *map[string]interface{} {
 	return t.getSparseObjectOrNil()
 }
-
 
 // translation for text index
 func newTranslatedText(index collection.Index) translatedText {
@@ -126,15 +121,15 @@ func newTranslatedText(index collection.Index) translatedText {
 	}
 }
 
-func (t translatedText) getObject() bson.M {
+func (t translatedText) getObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	field := t.index.Spec().Fields[0]
-	return bson.M{
-		field.Key: "text",
+	return map[string]interface{}{
+		field.Key: String("text"),
 	}
 }
 
-func (t translatedText) getRules() *bson.M {
+func (t translatedText) getRules() *map[string]interface{} {
 	return t.getSparseObjectOrNil()
 }
 
@@ -147,15 +142,15 @@ func newGeospatial2dsphere(index collection.Index) translatedGeospatial2dsphere 
 	}
 }
 
-func (t translatedGeospatial2dsphere) getOjbect() bson.M {
+func (t translatedGeospatial2dsphere) getOjbect() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	field := t.index.Spec().Fields[0]
-	return bson.M{
-		field.Key: "2dsphere",
+	return map[string]interface{}{
+		field.Key: String("2dsphere"),
 	}
 }
 
-func (t translatedGeospatial2dsphere) getRules() *bson.M {
+func (t translatedGeospatial2dsphere) getRules() *map[string]interface{} {
 	return t.getSparseObjectOrNil()
 }
 
@@ -168,17 +163,17 @@ func newTranslatedUnique(index collection.Index) translatedUnique {
 	}
 }
 
-func (t translatedUnique) getObject() bson.M {
+func (t translatedUnique) getObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	return t.getFieldsObject()
 }
 
-func (t translatedUnique) getRules() *bson.M {
-	res := bson.M{
-		"unique": true,
+func (t translatedUnique) getRules() *map[string]interface{} {
+	res := map[string]interface{}{
+		"unique": Boolean(true),
 	}
 	if t.index.Spec().Sparse {
-		res["sparse"] = true
+		res["sparse"] = Boolean(true)
 	}
 
 	return &res
@@ -193,19 +188,19 @@ func newTranslatedPartial(index collection.Index) translatedPartial {
 	}
 }
 
-func (t translatedPartial) getObject() bson.M {
+func (t translatedPartial) getObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	return t.getFieldsObject()
 }
 
-func (t translatedPartial) getRules() *bson.M {
+func (t translatedPartial) getRules() *map[string]interface{} {
 	t.mustProvideRulesValidation()
 
-	rules := bson.M{
-		"partialFilterExpression": convert.MapToBson(*t.index.Spec().Rules),
+	rules := map[string]interface{}{
+		"partialFilterExpression": ConvertAnyToValueType(*t.index.Spec().Rules),
 	}
 	if t.index.Spec().Sparse {
-		rules["sparse"] = true
+		rules["sparse"] = Boolean(true)
 	}
 
 	return &rules
@@ -220,19 +215,19 @@ func newCollation(index collection.Index) translatedCollation {
 	}
 }
 
-func (t translatedCollation) getObject() bson.M {
+func (t translatedCollation) getObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
-	return t.getFieldsObject()	
+	return t.getFieldsObject()
 }
 
-func (t translatedCollation) getRules() *bson.M {
+func (t translatedCollation) getRules() *map[string]interface{} {
 	t.mustProvideRulesValidation()
-	
-	rules := bson.M{
-		"collation": convert.MapToBson(*t.index.Spec().Rules),
+
+	rules := map[string]interface{}{
+		"collation": ConvertAnyToValueType(*t.index.Spec().Rules),
 	}
 	if t.index.Spec().Sparse {
-		rules["sparse"] = true
+		rules["sparse"] = Boolean(true)
 	}
 
 	return &rules
@@ -247,20 +242,20 @@ func newRaw(index collection.Index) translatedRaw {
 	}
 }
 
-func (t translatedRaw) getObject() bson.M {
+func (t translatedRaw) getObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 
 	return t.getFieldsObject()
 }
 
-func (t translatedRaw) getRules() *bson.M {
+func (t translatedRaw) getRules() *map[string]interface{} {
 	if t.index.Spec().Rules == nil {
 		return nil
 	}
 
-	rules := convert.MapToBson(*t.index.Spec().Rules)
+	rules := ConvertAnyToValueType(*t.index.Spec().Rules).(map[string]interface{})
 	if t.index.Spec().Sparse {
-		rules["sparse"] = true
+		rules["sparse"] = Boolean(true)
 	}
 
 	return &rules

@@ -1,9 +1,11 @@
-package action
+package api_interpreter
 
 import (
 	"fmt"
 
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/amirkode/go-mongr8/collection/field"
+	"github.com/amirkode/go-mongr8/collection/index"
+	"github.com/amirkode/go-mongr8/collection/metadata"
 )
 
 // TODO: NEED TO FIND BETTER APPROACH
@@ -12,16 +14,28 @@ import (
 // this supposed to generate raw string of MongoDB API statements
 
 type (
+	// SubActionSchema holds what are being changed/adjusted in the current SubAction
+	// this data will be used to compare the generated migration files schema
+	// with the higher level user-defined schema in /mongr8/collection
+	SubActionSchema struct {
+		// Collection must always be defined
+		// if Fields and Indexes are not defined, then it must be
+		// related to collection option, i.e: Create Collection
+		Collection metadata.MetadataSpec
+		Fields     *[]field.FieldSpec
+		Indexes    *[]index.IndexSpec
+	}
+
 	// SubAction handles atomic action as part of main Action
 	SubAction struct {
-		Execute func()
-		GetRawStatement func() string
+		// GetStatement returns code statement in the official MongoDB API
+		GetStatement func() string
+		// this returns string literal definition of ActionSchema
+		GetSchemaLiteral func() string
 		// could be the name of collection, index, field, or etc
-		Name string
-		// payload could any object format
-		// passed as argument in the official MongoDB API
-		// could be more than one arguments
-		Payload []bson.M
+		Type SubActionType
+		// schema changed in this action
+		ActionSchema SubActionSchema
 	}
 
 	// Action is an entity for storing actionable item to run on MongoDB
@@ -37,15 +51,15 @@ type (
 	// - Change field type (for now it's a bit challenging)
 	//
 	// since this is a usecase level entity, there might be more than one sub actions
-	// e.g: in Create new collection, we need to create collection definition, 
+	// e.g: in Create new collection, we need to create collection definition,
 	// then insert some insert values to main the stucture integrity
-	// 
+	//
 	// also since, this is the higher level represention of MongoDB statement
 	// there must be implementation of each action
 
 	ActionIf interface {
-		Execute()
-		GetRawStatements() string
+		GetStatements() string
+		// this returns the schema whether added or removed by current action
 	}
 
 	Action struct {
@@ -56,18 +70,11 @@ type (
 	}
 )
 
-func (a Action) Execute() {
-	// execute all sub actions
-	for _, subAction := range a.SubActions {
-		subAction.Execute()
-	}
-}
-
 func (a Action) GetRawStatements() string {
 	res := ""
 	for index, subAction := range a.SubActions {
-		res += fmt.Sprintf("Step %d:\n%s\n", index + 1, subAction.GetRawStatement)
+		res += fmt.Sprintf("Step %d:\n%s\n", index+1, subAction.GetStatement())
 	}
-	
+
 	return res
 }
