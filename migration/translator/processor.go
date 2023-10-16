@@ -26,12 +26,13 @@ type (
 )
 
 func (p Processor) Generate(collections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema) {
-	p.initDictionary(collections)
-	// TODO: something  to find intersection of user-defined collections, migration-generated sub action schemas
+	//p.initDictionary(collections)
+	// TODO: something to find intersection of user-defined collections, migration-generated sub action schemas
+	
 }
 
 func (p Processor)  Consolidate(collections []collection.Collection, dbCollections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema) {
-	// TODO: something tof ind consolidation resulting intersection of user-defined collections, db collections, migration-generated sub action schemas
+	// TODO: something to find consolidation resulting intersection of user-defined collections, db collections, migration-generated sub action schemas
 }
 
 func (p Processor) initDictionary(collections []collection.Collection) {

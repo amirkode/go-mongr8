@@ -116,6 +116,10 @@ func DoubleField(name string) *FieldSpec {
 	return baseField(name, TypeDouble)
 }
 
+func BooleanField(name string) *FieldSpec {
+	return baseField(name, TypeBoolean)
+}
+
 func ArrayField(name string) *FieldSpec {
 	return baseField(name, TypeArray)
 }

@@ -7,6 +7,10 @@ Licensed under the MIT License
 */
 package field
 
+import (
+	"internal/util"
+)
+
 type (
 	FieldType string
 )
@@ -33,3 +37,24 @@ const (
 	// other types such as Decimal128, etc.
 	// might be added in the future update
 )
+
+// implement /internal/util/Comparable
+func (f FieldType) CompareTo(other FieldType) int {
+	if string(f) > string(other) {
+		return 1
+	}
+
+	if string(f) < string(other) {
+		return -1
+	}
+
+	return 0
+}
+
+func (f FieldType) IsNumeric() bool {
+	return util.InList(f, []FieldType{
+		TypeInt32,
+		TypeInt64,
+		TypeDouble,
+	})
+}
