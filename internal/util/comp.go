@@ -14,3 +14,13 @@ func InList[T Comparable[T]](what T, in []T) bool {
 
 	return false
 }
+
+func InListEq[T comparable](what T, in []T) bool {
+	for _, i := range in {
+		if what == i {
+			return true
+		}
+	}
+
+	return false
+}

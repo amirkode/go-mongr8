@@ -48,14 +48,14 @@ func (b *FieldSpec) AddArrayField(s *FieldSpec) *FieldSpec {
 	return b
 }
 
-func (b *FieldSpec) AddObjectFields(fields *[]FieldSpec) *FieldSpec {
+func (b *FieldSpec) AddObjectFields(fields ...*FieldSpec) *FieldSpec {
 	if b.spec.Object == nil {
 		objects := []Spec{}
 		b.spec.Object = &objects
 	}
 
 	objects := *b.spec.Object
-	for _, o := range *fields {
+	for _, o := range fields {
 		objects = append(objects, *o.Spec())
 	}
 
@@ -124,8 +124,11 @@ func ArrayField(name string) *FieldSpec {
 	return baseField(name, TypeArray)
 }
 
-func ObjectField(name string) *FieldSpec {
-	return baseField(name, TypeObject)
+func ObjectField(name string, fields ...*FieldSpec) *FieldSpec {
+	field := baseField(name, TypeObject)
+	field.AddObjectFields(fields...)
+
+	return field
 }
 
 func TimestampField(name string) *FieldSpec {
@@ -197,9 +200,7 @@ func (s *legacyCoordinateEmbeddedDocSpec) setCoordinateField(name string, isX bo
 		s.yIsSet = true
 	}
 
-	s.AddObjectFields(&[]FieldSpec{
-		*DoubleField(name),
-	})
+	s.AddObjectFields(DoubleField(name))
 }
 
 func (s *legacyCoordinateEmbeddedDocSpec) SetCoordinateX(name string) *legacyCoordinateEmbeddedDocSpec {

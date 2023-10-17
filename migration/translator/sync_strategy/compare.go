@@ -126,18 +126,7 @@ func (f SignedField) Intersect(other SignedField) *[]SignedField {
 		// we don't need to check the children (array/object)
 		if this.Spec().Type != other.Spec().Type {
 			// decide proper type conversion (Supported, Unsupported, or Undefined)
-			if util.InList(this.Spec().Type, []field.FieldType{field.TypeString, field.TypeObject}) ||
-				util.InList(other.Spec().Type, []field.FieldType{field.TypeString, field.TypeObject}) {
-				// this should be unsupported type conversion
-				// add plus action for "this"
-				plus, _ := restorePath(append(path, dt.NewPair(this.Spec().Name, this.Spec().Type)))
-				plus.Sign = SignPlus
-				res = append(res, plus)
-				// add minus action for "other"
-				minus, _ := restorePath(append(path, dt.NewPair(this.Spec().Name, other.Spec().Type)))
-				minus.Sign = SignMinus
-				res = append(res, minus)
-			} else if this.Spec().Type == field.TypeString ||
+			if this.Spec().Type == field.TypeString ||
 				(this.Spec().Type.IsNumeric() && other.Spec().Type.IsNumeric()) {
 				// by default any type to string must be supported
 				// for numeric to numeric conversion, there's an edge case
@@ -147,12 +136,23 @@ func (f SignedField) Intersect(other SignedField) *[]SignedField {
 				convert.Sign = SignConvert
 				convert.convertFrom = &convertFrom
 				res = append(res, convert)
-			} else {
+			} else if other.Spec().Type == field.TypeString {
+				// any to string conversion
 				// this must be undefined conversion type
 				// by default just perform drop and add
 
 				// TODO: add condition for user-defined Force Conversion option
 
+				// add plus action for "this"
+				plus, _ := restorePath(append(path, dt.NewPair(this.Spec().Name, this.Spec().Type)))
+				plus.Sign = SignPlus
+				res = append(res, plus)
+				// add minus action for "other"
+				minus, _ := restorePath(append(path, dt.NewPair(this.Spec().Name, other.Spec().Type)))
+				minus.Sign = SignMinus
+				res = append(res, minus)
+			} else {
+				// this should be unsupported type conversion
 				// add plus action for "this"
 				plus, _ := restorePath(append(path, dt.NewPair(this.Spec().Name, this.Spec().Type)))
 				plus.Sign = SignPlus
@@ -215,6 +215,16 @@ func (f SignedField) Intersect(other SignedField) *[]SignedField {
 				curr, prevField := restorePath(path)
 				// the sign of curr based on nested child u
 				curr.Sign = u.Sign
+				// check whether current field sign is convert
+				// then, we need set the convertFrom in the current
+				if u.Sign == SignConvert {
+					convertFrom, cfPrevField := restorePath(path)
+					cfCurrSpec := *u.convertFrom.Spec()
+					(*cfPrevField).Spec().ArrayFields = &[]field.Spec{cfCurrSpec}
+					// set curr.convertFrom
+					convertFrom.Sign = SignConvert
+					curr.convertFrom = &convertFrom
+				}
 				// join u.Collection as curr.Collection.ArrayFields
 				currSpec := *u.Spec()
 				(*prevField).Spec().ArrayFields = &[]field.Spec{currSpec}
@@ -259,6 +269,16 @@ func (f SignedField) Intersect(other SignedField) *[]SignedField {
 				curr, prevField := restorePath(path)
 				// the sign of curr based on nested child u
 				curr.Sign = u.Sign
+				// check whether current field sign is convert
+				// then, we need set the convertFrom in the current
+				if u.Sign == SignConvert {
+					convertFrom, cfPrevField := restorePath(path)
+					cfCurrSpec := *u.convertFrom.Spec()
+					(*cfPrevField).Spec().Object = &[]field.Spec{cfCurrSpec}
+					// set curr.convertFrom
+					convertFrom.Sign = SignConvert
+					curr.convertFrom = &convertFrom
+				}
 				// join u.Collection as curr.Collection.Object
 				currSpec := *u.Spec()
 				(*prevField).Spec().Object = &[]field.Spec{currSpec}
@@ -323,11 +343,15 @@ func (f SignedIndex) Key() string {
 	// - sparse option
 	// key := fmt.Sprintf("%v", f.Spec())
 	key := string(f.Spec().Type)
-	key += fmt.Sprintf("%v", *f.Spec().Rules)
 	key += fmt.Sprintf("%v", f.Spec().Sparse)
+	
 	for _, field := range f.Spec().Fields {
 		key += field.Key
 		key += fmt.Sprintf("%v", field.Value)
+	}
+
+	if f.Spec().Rules != nil {
+		key += fmt.Sprintf("%v", *f.Spec().Rules)
 	}
 
 	return key
@@ -360,7 +384,7 @@ func (f SignedCollection) Intersect(other SignedCollection) *[]SignedCollection 
 		return nil
 	}
 
-	// panic if there's a metadata difference
+	// panic if there's any metadata difference
 	// once a collection is declared, it's expected
 	// not to be modfied on any option
 	if f.Metadata.Key() != other.Metadata.Key() {
@@ -371,19 +395,21 @@ func (f SignedCollection) Intersect(other SignedCollection) *[]SignedCollection 
 	// get union of fields and push as individual SignedCollection(s)
 	signedFields := Union(f.Fields, other.Fields)
 	for _, signedField := range signedFields {
+		curr := signedField
 		res = append(res, SignedCollection{
 			Metadata: f.Metadata,
-			Fields: []SignedField{signedField},
-			Sign: signedField.Sign,
+			Fields: []SignedField{curr},
+			Sign: curr.Sign,
 		})
 	}
 	// get union of indexes and push as individual SignedCollection(s)
 	signedIndexes := Union(f.Indexes, other.Indexes)
 	for _, signedIndex := range signedIndexes {
+		curr := signedIndex
 		res = append(res, SignedCollection{
 			Metadata: f.Metadata,
-			Indexes: []SignedIndex{signedIndex},
-			Sign: signedIndex.Sign,
+			Indexes: []SignedIndex{curr},
+			Sign: curr.Sign,
 		})
 	}
 
@@ -420,7 +446,6 @@ func Union[T operator[T]](source1 []T, source2 []T) []T {
 			// reverse sign to negative
 			new := item
 			new = new.SetSign(SignMinus)
-
 			res = append(res, new)
 		}
 	}
@@ -429,7 +454,10 @@ func Union[T operator[T]](source1 []T, source2 []T) []T {
 	for _, item := range source1 {
 		_, ok := source2MappedByKey[item.Key()]
 		if !ok {
-			res = append(res, item)
+			// make sure of postive sign
+			new := item
+			new = new.SetSign(SignPlus)
+			res = append(res, new)
 		}
 	}
 
