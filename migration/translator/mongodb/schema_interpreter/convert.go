@@ -1,4 +1,4 @@
-package api_interpreter
+package schema_interpreter
 
 import (
 	"fmt"
@@ -79,4 +79,35 @@ func toLiteralStringBsonMap(value interface{}) string {
 	}
 
 	return anyToLiteralString(value)
+}
+
+func ConvertValueTypeToRealType(value interface{}) interface{} {
+	if reflect.TypeOf(value).Kind() == reflect.Map &&
+		reflect.TypeOf(value).Key().Kind() == reflect.String &&
+		reflect.TypeOf(value).Elem().Kind() == reflect.Interface {
+		// if value type is a map[string]interface{}
+		res := value.(map[string]interface{})
+		for key, v := range res {
+			res[key] = ConvertValueTypeToRealType(v)
+		}
+
+		return res
+	} else if reflect.TypeOf(value).Kind() == reflect.Array &&
+		reflect.TypeOf(value).Elem().Kind() == reflect.Interface {
+		// if value type is an array ([]interface{})
+		res := value.([]interface{})
+		for index, v := range res {
+			res[index] = ConvertValueTypeToRealType(v)
+		}
+
+		return res
+	}
+
+	if reflect.TypeOf(value) == reflect.TypeOf(dictionary.ValueType{}) {
+		// convert individual value
+		return value.(dictionary.ValueType).Value
+	}
+
+	// if none of type is recognized, just return as a string ValueType
+	return fmt.Sprintf("%v", value)
 }

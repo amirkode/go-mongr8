@@ -1,37 +1,46 @@
 package translator
 
 import (
+	"context"
 	"fmt"
 
+	dt "internal/data_type"
+
 	"github.com/amirkode/go-mongr8/collection"
+	"github.com/amirkode/go-mongr8/migration/migrator"
 	"github.com/amirkode/go-mongr8/migration/translator/dictionary"
-	// "github.com/amirkode/go-mongr8/migration/translator/collection_loader"
-	"github.com/amirkode/go-mongr8/migration/translator/mongodb/api_interpreter"
+	"github.com/amirkode/go-mongr8/migration/translator/sync_strategy"
+	si "github.com/amirkode/go-mongr8/migration/translator/mongodb/schema_interpreter"
 )
 
 type (
 
 	ProcessorIf interface {
-		initDictionary(collections []collection.Collection)
-		GetTranslateDictionaries() (*[]dictionary.Dictionary, error)
-		Generate(collections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema)
-		Consolidate(collections []collection.Collection, dbCollections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema)
+		ValidateCollection(collections []collection.Collection) error
+		Generate(collections []collection.Collection, migrations []migrator.Migration) dt.Pair[[]si.Action, []si.Action]
+		Consolidate(collections []collection.Collection, dbCollections []collection.Collection, migrations []migrator.Migration)
 	}
 
 	Processor struct {
 		ProcessorIf,
+		Ctx context.Context
 		Dictionaries []dictionary.Dictionary
 		Init bool
 	}
 )
 
-func (p Processor) Generate(collections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema) {
-	//p.initDictionary(collections)
-	// TODO: something to find intersection of user-defined collections, migration-generated sub action schemas
-	
+func (p Processor) ValidateCollection(collections []collection.Collection) error {
+	// implement something
+	return nil
 }
 
-func (p Processor)  Consolidate(collections []collection.Collection, dbCollections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema) {
+func (p Processor) Generate(collections []collection.Collection, migrations []migrator.Migration) dt.Pair[[]si.Action, []si.Action] {
+	collectionsFromMigrations := sync_strategy.GetCollectionFromMigrations(migrations)
+	// TODO: validate collection
+	return sync_strategy.GetActions(collections, collectionsFromMigrations)
+}
+
+func (p Processor)  Consolidate(collections []collection.Collection, dbCollections []collection.Collection, migrations []migrator.Migration) {
 	// TODO: something to find consolidation resulting intersection of user-defined collections, db collections, migration-generated sub action schemas
 }
 
@@ -57,8 +66,9 @@ func (p Processor) GetTranslateDictionaries() (*[]dictionary.Dictionary, error) 
 	return &p.Dictionaries, nil
 }
 
-func NewProcessor() ProcessorIf {
+func NewProcessor(ctx context.Context) ProcessorIf {
 	return Processor{
+		Ctx: ctx,
 		Init: true,
 	}	
 }

@@ -1,13 +1,14 @@
 package migration
 
 import (
+	"context"
 	"time"
 
 	"github.com/amirkode/go-mongr8/collection"
-	"github.com/amirkode/go-mongr8/migration/migrator/generate"
+	"github.com/amirkode/go-mongr8/migration/migrator"
+	// "github.com/amirkode/go-mongr8/migration/migrator/generate"
 	"github.com/amirkode/go-mongr8/migration/migrator/loader"
 	"github.com/amirkode/go-mongr8/migration/translator"
-	"github.com/amirkode/go-mongr8/migration/translator/mongodb/api_interpreter"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -17,45 +18,54 @@ const (
 )
 
 type (
+	MigrationOption struct {
+		SortedSchema    bool
+		ForceConversion bool
+	}
+
 	Cmd interface {
 		ApplyMigration() error
-		ConsolidateMigration(collections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema) error
-		GenerateMigration(collections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema) error
+		ConsolidateMigration(collections []collection.Collection, migrations []migrator.Migration) error
+		GenerateMigration(collections []collection.Collection, migrations []migrator.Migration) error
 	}
 
 	Migration struct {
 		Cmd
+		ctx  context.Context
 		db   *mongo.Database
 		date string
 	}
 )
 
-func NewMigration(db *mongo.Database) Cmd {
-	return Migration{
+func NewMigration(ctx context.Context, db *mongo.Database) Cmd {
+	return &Migration{
+		ctx:  ctx,
 		db:   db,
 		date: time.Now().Format("2006-01-02"),
 	}
 }
 
-func (Migration) ApplyMigration() error {
+func (m *Migration) ApplyMigration() error {
 	return nil
 }
 
-func (Migration) ConsolidateMigration(collections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema) error {
+func (m *Migration) ConsolidateMigration(collections []collection.Collection, migrations []migrator.Migration) error {
 	dbSchemas := loader.GetSchemaFromDB()
-	processor := translator.NewProcessor()
-	processor.Consolidate(collections, dbSchemas, migrationSubActionSchemas)
+	processor := translator.NewProcessor(m.ctx)
+	processor.Consolidate(collections, dbSchemas, migrations)
 	return nil
 }
 
-func (Migration) GenerateMigration(collections []collection.Collection, migrationSubActionSchemas []api_interpreter.SubActionSchema) error {
-	processor := translator.NewProcessor()
-	processor.Generate(collections, migrationSubActionSchemas)
+func (m *Migration) GenerateMigration(collections []collection.Collection, migrations []migrator.Migration) error {
+	processor := translator.NewProcessor(m.ctx)
+	processor.Generate(collections, migrations)
 	// get translated dictionary
-	translatedDictionaries, err := processor.GetTranslateDictionaries()
-	if err != nil {
-		return err
-	}
+	// translatedDictionaries, err := processor.GetTranslateDictionaries()
+	// if err != nil {
+	// 	return err
+	// }
 
-	return generate.Run(*translatedDictionaries)
+	// return generate.Run(*translatedDictionaries)
+	// TODO: implement something
+	return nil
 }

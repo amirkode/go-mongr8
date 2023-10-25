@@ -1,11 +1,12 @@
-package api_interpreter
+package schema_interpreter
 
 import (
-	"fmt"
+	dt "internal/data_type"
 
+	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
-	"github.com/amirkode/go-mongr8/collection/index"
-	"github.com/amirkode/go-mongr8/collection/metadata"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // TODO: NEED TO FIND BETTER APPROACH
@@ -21,21 +22,35 @@ type (
 		// Collection must always be defined
 		// if Fields and Indexes are not defined, then it must be
 		// related to collection option, i.e: Create Collection
-		Collection metadata.MetadataSpec
-		Fields     *[]field.FieldSpec
-		Indexes    *[]index.IndexSpec
+		Collection collection.Metadata
+		Fields     []collection.Field
+		Indexes    []collection.Index
+		// field type for conversion
+		// we're expecting only a single field conversion
+		// each sub action
+		FieldConvertFrom *field.FieldType
+	}
+
+	SubActionIf interface {
+		// flag whether current sub action is Up or Down
+		IsUp() bool
+		// this will return pairs of index and rule
+		GetIndexesBsonD() []dt.Pair[bson.D, bson.D]
+		GetIndexesBsonM() []dt.Pair[bson.M, bson.M]
+		// this will return whole field schema in the collection
+		GetFieldsBsonD() bson.D
+		GetFieldsBsonM() bson.M
 	}
 
 	// SubAction handles atomic action as part of main Action
 	SubAction struct {
-		// GetStatement returns code statement in the official MongoDB API
-		GetStatement func() string
-		// this returns string literal definition of ActionSchema
-		GetSchemaLiteral func() string
+		SubActionIf
 		// could be the name of collection, index, field, or etc
 		Type SubActionType
 		// schema changed in this action
 		ActionSchema SubActionSchema
+		// validate function
+		validate func()
 	}
 
 	// Action is an entity for storing actionable item to run on MongoDB
@@ -57,24 +72,25 @@ type (
 	// also since, this is the higher level represention of MongoDB statement
 	// there must be implementation of each action
 
-	ActionIf interface {
-		GetStatements() string
-		// this returns the schema whether added or removed by current action
-	}
+	// ActionIf interface {
+	// 	GetStatements() string
+	// 	// this returns the schema whether added or removed by current action
+	// }
 
+	// Action holds operations that will be performed in a collection
 	Action struct {
-		ActionIf
-		Type ActionType
+		// ActionIf
+		ActionKey string
 		// sub actions should be execute respectively
 		SubActions []SubAction
 	}
 )
 
-func (a Action) GetRawStatements() string {
-	res := ""
-	for index, subAction := range a.SubActions {
-		res += fmt.Sprintf("Step %d:\n%s\n", index+1, subAction.GetStatement())
-	}
+// func (a Action) GetRawStatements() string {
+// 	res := ""
+// 	for index, subAction := range a.SubActions {
+// 		res += fmt.Sprintf("Step %d:\n%s\n", index+1, subAction.GetStatement())
+// 	}
 
-	return res
-}
+// 	return res
+// }

@@ -22,11 +22,11 @@ type (
 	// @ee field_impl.go for implementation
 	TranslatedFieldIf interface {
 		// still not find the proper usecase
-		// for getArray()
-		getArray() []interface{}
+		// for GetArray()
+		GetArray() []interface{}
 
 		// get object of current field
-		getObject() map[string]interface{}
+		GetObject() map[string]interface{}
 
 		// get value of current field
 		getItem() interface{}
@@ -47,8 +47,6 @@ type (
 		// Translated Properties
 		GetPrimaryKey()
 		GetOptions() *map[metadata.CollectionOption]interface{}
-		Fields() []TranslatedFieldIf
-		Indexes() []TranslatedFieldIf
 		GetDocument() map[string]interface{}
 	}
 

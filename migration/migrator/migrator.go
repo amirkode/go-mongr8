@@ -1,17 +1,28 @@
 package migrator
 
+import (
+	si "github.com/amirkode/go-mongr8/migration/translator/mongodb/schema_interpreter"
+)
+
 type (
-	PreData interface {}
+	// Migration entity
+	Migration struct {
+		ID   string
+		Up   []si.Action
+		Down []si.Action
+	}
+
+	MigratorIf interface {
+		PrepData()
+		ExecOps()
+		Rollback()
+	}
 
 	Migrator struct {
-		contracts interface {
-			PrepData() PreData
-			ExecOps()
-			Rollback()
-		}
+		MigratorIf
 	}
 )
 
 func (m Migrator) OnError() {
-	m.contracts.Rollback()
+	m.Rollback()
 }

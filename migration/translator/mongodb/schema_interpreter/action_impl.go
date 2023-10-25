@@ -1,4 +1,4 @@
-package api_interpreter
+package schema_interpreter
 
 // import "github.com/amirkode/go-mongr8/migration/translator/dictionary"
 

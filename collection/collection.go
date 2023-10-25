@@ -8,9 +8,9 @@ Licensed under the MIT License
 package collection
 
 import (
-	"github.com/amirkode/go-mongr8/collection/metadata"
 	"github.com/amirkode/go-mongr8/collection/field"
 	"github.com/amirkode/go-mongr8/collection/index"
+	"github.com/amirkode/go-mongr8/collection/metadata"
 )
 
 type (
@@ -30,9 +30,9 @@ type (
 
 	// Collection entity manages a single MongoDB collection
 	Collection interface {
-		Collection()  Metadata
-		Fields()      []Field
-		Indexes()     []Index
+		Collection() Metadata
+		Fields() []Field
+		Indexes() []Index
 	}
 )
 
@@ -44,9 +44,35 @@ type (
 // 			return field.Spec()
 // 		}
 // 	}
-	
+
 // 	return nil
 // }
+
+type baseCollection struct {
+	metadata Metadata
+	fields   []Field
+	indexes  []Index
+}
+
+func (c baseCollection) Collection() Metadata {
+	return c.metadata
+}
+
+func (c baseCollection) Fields() []Field {
+	return c.fields
+}
+
+func (c baseCollection) Indexes() []Index {
+	return c.indexes
+}
+
+func NewCollection(metadata Metadata, fields []Field, indexes []Index) Collection {
+	return baseCollection{
+		metadata: metadata,
+		fields:   fields,
+		indexes:  indexes,
+	}
+}
 
 func FieldFromType(name string, _type field.FieldType) Field {
 	switch _type {
@@ -85,4 +111,27 @@ func FieldFromType(name string, _type field.FieldType) Field {
 	}
 
 	return &field.FieldSpec{}
+}
+
+
+func FieldsFromSpecs(arrFields *[]field.Spec) []Field {
+	if arrFields == nil {
+		panic("FromArrayFieldSpecs: arrFields must not be nil")
+	}
+
+	res := make([]Field, len(*arrFields))
+	for index, arrField := range *arrFields {
+		res[index] = field.FromFieldSpec(&arrField)
+	}
+
+	return res
+}
+
+func SpecsFromFields(fields []Field) []field.Spec {
+	specs := make([]field.Spec, len(fields))
+	for index, _field := range fields {
+		specs[index] = *_field.Spec()
+	}
+
+	return specs
 }

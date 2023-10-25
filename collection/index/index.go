@@ -7,6 +7,10 @@ Licensed under the MIT License
 */
 package index
 
+import (
+	"fmt"
+)
+
 type IndexField struct {
 	Key   string
 	Value interface{}
@@ -34,6 +38,31 @@ type Spec struct {
 
 type IndexSpec struct {
 	spec *Spec
+}
+
+// this is used for compare two index whether
+// they both have the exact same structure
+func (s *Spec) GetKey() string {
+	// we can have unique index by comparing entire structure
+	// with these combinations:
+	// - type
+	// - index fields
+	// - rules
+	// - sparse option
+	// key := fmt.Sprintf("%v", f.Spec())
+	key := string(s.Type)
+	key += fmt.Sprintf("%v", s.Sparse)
+
+	for _, field := range s.Fields {
+		key += field.Key
+		key += fmt.Sprintf("%v", field.Value)
+	}
+
+	if s.Rules != nil {
+		key += fmt.Sprintf("%v", *s.Rules)
+	}
+
+	return key
 }
 
 func (b *IndexSpec) Spec() *Spec {
@@ -79,6 +108,13 @@ func customValueIndex(_type IndexType, fields map[string]interface{}, rules *map
 	}
 
 	return baseIndex(_type, indexFields, rules)
+}
+
+func NewIndexField(key string, value interface{}) IndexField {
+	return IndexField{
+		Key:   key,
+		Value: value,
+	}
 }
 
 func SingleFieldIndex(field IndexField) *IndexSpec {

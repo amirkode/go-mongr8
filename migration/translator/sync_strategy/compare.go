@@ -26,10 +26,20 @@ const (
 )
 
 type (
+	// TODO: implement these function with pointer receiver
 	operator[T any] interface {
+		// intersection of two entities resulting modifications
 		Intersect(other T) *[]T
+		// set entity sign (action direction)
 		SetSign(sign EntitySign) T
+		// set flag denoting whether the entity is formed by intersection
+		SetIntersectionFlag(flag bool) T
+		// if the current entity sign is convert
+		// this function returns the original entity
+		// that will be converted from
+		// for now, it's probably has not yet used
 		ConvertFrom() *T
+		// a unique key required from Union and Intersection
 		Key() string
 	}
 
@@ -54,16 +64,12 @@ type (
 
 	SignedCollection struct {
 		operator[SignedCollection]
-		Metadata SignedMetadata
-		Fields   []SignedField
-		Indexes  []SignedIndex
-		Sign     EntitySign
+		Metadata       SignedMetadata
+		Fields         []SignedField
+		Indexes        []SignedIndex
+		Sign           EntitySign
+		IsIntersection bool
 	}
-
-	SignedFieldArr      []SignedField
-	SignedindexArr      []SignedIndex
-	SignedMetadataArr   []SignedMetadata
-	SignedCollectionArr []SignedCollection
 )
 
 func (f SignedField) Intersect(other SignedField) *[]SignedField {
@@ -300,8 +306,50 @@ func (f SignedField) ConvertFrom() *SignedField {
 	return f.convertFrom
 }
 
+// get deepest type of a signed field
+// assuming there's only a single way
+func (f SignedField) FieldDeepestType() field.FieldType {
+	var dfs func(_field collection.Field) field.FieldType
+	dfs = func(_field collection.Field) field.FieldType {
+		switch _field.Spec().Type {
+		case field.TypeArray:
+			return dfs(field.FromFieldSpec(&(*_field.Spec().ArrayFields)[0]))
+		case field.TypeObject:
+			return dfs(field.FromFieldSpec(&(*_field.Spec().Object)[0]))
+		}
+
+		return _field.Spec().Type
+	}
+
+	return dfs(f.Field)
+}
+
+// set deepest type of a signed field
+// assuming there's only a single way
+func (f SignedField) SetFieldDeepestType(toType field.FieldType) {
+	var dfs func(_field *field.Spec)
+	dfs = func(_field *field.Spec) {
+		switch (*_field).Type {
+		case field.TypeArray:
+			dfs(&(*_field.ArrayFields)[0])
+			return
+		case field.TypeObject:
+			dfs(&(*_field.Object)[0])
+			return
+		}
+
+		_field.Type = toType
+	}
+
+	dfs(f.Spec())
+}
+
 func (f SignedField) SetSign(sign EntitySign) SignedField {
 	f.Sign = sign
+	return f
+}
+
+func (f SignedField) SetIntersectionFlag(flag bool) SignedField {
 	return f
 }
 
@@ -334,27 +382,12 @@ func (f SignedIndex) SetSign(sign EntitySign) SignedIndex {
 	return f
 }
 
+func (f SignedIndex) SetIntersectionFlag(flag bool) SignedIndex {
+	return f
+}
+
 func (f SignedIndex) Key() string {
-	// we can have unique index by comparing entire structure
-	// with these combinations:
-	// - type
-	// - index fields
-	// - rules
-	// - sparse option
-	// key := fmt.Sprintf("%v", f.Spec())
-	key := string(f.Spec().Type)
-	key += fmt.Sprintf("%v", f.Spec().Sparse)
-	
-	for _, field := range f.Spec().Fields {
-		key += field.Key
-		key += fmt.Sprintf("%v", field.Value)
-	}
-
-	if f.Spec().Rules != nil {
-		key += fmt.Sprintf("%v", *f.Spec().Rules)
-	}
-
-	return key
+	return f.Spec().GetKey()
 }
 
 func (f SignedMetadata) Intersect(other SignedMetadata) *[]SignedMetadata {
@@ -365,6 +398,10 @@ func (f SignedMetadata) ConvertFrom() *SignedMetadata { return nil }
 
 func (f SignedMetadata) SetSign(sign EntitySign) SignedMetadata {
 	f.Sign = sign
+	return f
+}
+
+func (f SignedMetadata) SetIntersectionFlag(flag bool) SignedMetadata {
 	return f
 }
 
@@ -397,9 +434,10 @@ func (f SignedCollection) Intersect(other SignedCollection) *[]SignedCollection 
 	for _, signedField := range signedFields {
 		curr := signedField
 		res = append(res, SignedCollection{
-			Metadata: f.Metadata,
-			Fields: []SignedField{curr},
-			Sign: curr.Sign,
+			Metadata:       f.Metadata,
+			Fields:         []SignedField{curr},
+			Sign:           curr.Sign,
+			IsIntersection: true,
 		})
 	}
 	// get union of indexes and push as individual SignedCollection(s)
@@ -407,9 +445,10 @@ func (f SignedCollection) Intersect(other SignedCollection) *[]SignedCollection 
 	for _, signedIndex := range signedIndexes {
 		curr := signedIndex
 		res = append(res, SignedCollection{
-			Metadata: f.Metadata,
-			Indexes: []SignedIndex{curr},
-			Sign: curr.Sign,
+			Metadata:       f.Metadata,
+			Indexes:        []SignedIndex{curr},
+			Sign:           curr.Sign,
+			IsIntersection: true,
 		})
 	}
 
@@ -421,8 +460,31 @@ func (f SignedCollection) SetSign(sign EntitySign) SignedCollection {
 	return f
 }
 
+func (f SignedCollection) SetIntersectionFlag(flag bool) SignedCollection {
+	f.IsIntersection = flag
+	return f
+}
+
 func (f SignedCollection) Key() string {
 	return f.Metadata.Spec().Name
+}
+
+func (f SignedCollection) GetFields() []collection.Field {
+	res := make([]collection.Field, len(f.Fields))
+	for index, signedField := range f.Fields {
+		res[index] = signedField.Field
+	}
+
+	return res
+}
+
+func (f SignedCollection) GetIndexes() []collection.Index {
+	res := make([]collection.Index, len(f.Indexes))
+	for index, signedIndex := range f.Indexes {
+		res[index] = signedIndex.Index
+	}
+
+	return res
 }
 
 func Union[T operator[T]](source1 []T, source2 []T) []T {

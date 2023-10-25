@@ -89,7 +89,7 @@ type (
 
 func (t TranslatedField) getItem() interface{} {
 	key := t.field.Spec().Name
-	return t.getObject()[key]
+	return t.GetObject()[key]
 }
 
 // translation for string field type
@@ -206,7 +206,7 @@ func (t translatedArray) getOject() map[string]interface{} {
 	arrayFields := t.field.Spec().ArrayFields
 	res := []interface{}{}
 	for _, _field := range *arrayFields {
-		item := getTranslatedField(field.FromFieldSpec(&_field)).getItem()
+		item := GetTranslatedField(field.FromFieldSpec(&_field)).getItem()
 		res = append(res, item)
 	}
 
@@ -231,7 +231,7 @@ func newTranslatedObject(field collection.Field) translatedObject {
 func (t translatedObject) getObject() map[string]interface{} {
 	res := map[string]interface{}{}
 	for _, _field := range *t.field.Spec().Object {
-		res[_field.Name] = getTranslatedField(field.FromFieldSpec(&_field)).getItem()
+		res[_field.Name] = GetTranslatedField(field.FromFieldSpec(&_field)).getItem()
 	}
 
 	return res
@@ -430,7 +430,7 @@ func (t translatedGeoJSONGeometryCollection) getObject() map[string]interface{} 
 	arrayFields := t.field.Spec().ArrayFields
 	collections := Array()
 	for _, _field := range *arrayFields {
-		item := getTranslatedField(field.FromFieldSpec(&_field)).getObject()
+		item := GetTranslatedField(field.FromFieldSpec(&_field)).GetObject()
 		collections = append(collections, item)
 	}
 
@@ -460,7 +460,7 @@ func (t translatedLegacyCoordinate) getArray() []interface{} {
 }
 
 // map field to correct translated field
-func getTranslatedField(_field collection.Field) TranslatedFieldIf {
+func GetTranslatedField(_field collection.Field) TranslatedFieldIf {
 	switch _field.Spec().Type {
 	case field.TypeString:
 		return newTranslatedString(_field)

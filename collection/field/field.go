@@ -23,6 +23,10 @@ type Spec struct {
 
 	// Nullable flag
 	Nullable bool
+
+	// Index required if schema is sorted
+	// for adding/setting new field
+	index int
 }
 
 type FieldSpec struct {
@@ -219,7 +223,7 @@ func LegacyCoordinateEmbeddedDocField(name string) *legacyCoordinateEmbeddedDocS
 	baseField := baseField(name, TypeLegacyCoordinateEmbeddedDoc)
 	return &legacyCoordinateEmbeddedDocSpec{
 		FieldSpec: *baseField,
-		xIsSet: false,
-		yIsSet: false,
+		xIsSet:    false,
+		yIsSet:    false,
 	}
 }

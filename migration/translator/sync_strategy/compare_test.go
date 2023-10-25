@@ -524,6 +524,8 @@ func TestSignedCollectionIntersect(t *testing.T) {
 	case2Intersect := case2Collection1.Intersect(case2Collection2)
 	test.AssertTrue(t, case2Intersect != nil && len(*case2Intersect) == 4, "Case 2: Intersection is not expected")
 	for _, i := range *case2Intersect {
+		// intersection flag should be true
+		test.AssertTrue(t, i.IsIntersection, "Case 2: Intersection flag is not true")
 		// the number of fields or indexes is either 0 or 1
 		test.AssertTrue(t, len(i.Fields) == 1 || len(i.Indexes) == 1, "Case 2: Fields and Indexes are empty")
 		if len(i.Fields) > 0 {
