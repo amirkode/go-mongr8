@@ -2,7 +2,6 @@ package dictionary
 
 import (
 	"github.com/amirkode/go-mongr8/collection"
-	"github.com/amirkode/go-mongr8/collection/metadata"
 )
 
 type (
@@ -41,57 +40,19 @@ type (
 		getRules() *map[string]interface{}
 	}
 
-	DictIf interface {
-		initValidateFuncs()
-		setSchemaValidation()
-		// Translated Properties
-		GetPrimaryKey()
-		GetOptions() *map[metadata.CollectionOption]interface{}
-		GetDocument() map[string]interface{}
+	ValidationIf interface {
+		Validate()
 	}
 
-	Dictionary struct {
-		DictIf
+	Validation struct {
+		ValidationIf
 		// raw collection data
-		Collection collection.Collection
+		Collections []collection.Collection
 
-		validateFuncs []func() error
+		validationFuncs []func() error
 
-		// if schema validation exists, should be added to validateFuncs on setSchemaValidation
-		// this is also used to describe current schma validation
-		schemeValidation *SchemaValidation
+		// // if schema validation exists, should be added to validateFuncs on setSchemaValidation
+		// // this is also used to describe current schma validation
+		// schemeValidation *SchemaValidation
 	}
 )
-
-func (dict Dictionary) Translate() {
-	dict.initValidateFuncs()
-}
-
-func (dict Dictionary) validate() error {
-	for _, v := range dict.validateFuncs {
-		if err := v(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (dict Dictionary) setValidateFuncs(funcs ...func() error) {
-	for _, f := range funcs {
-		dict.validateFuncs = append(dict.validateFuncs, f)
-	}
-}
-
-func (dict Dictionary) GetPrimaryKey() {
-	// pkField := dict.Collection.LookupField("_id")
-	// if pkField != nil {
-	// 	//
-	// }
-}
-
-func (dict Dictionary) GetCollectionDoc() map[string]interface{} {
-	res := map[string]interface{}{}
-
-	return res
-}

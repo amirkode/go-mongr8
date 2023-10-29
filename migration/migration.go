@@ -6,7 +6,7 @@ import (
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/migration/migrator"
-	// "github.com/amirkode/go-mongr8/migration/migrator/generate"
+	"github.com/amirkode/go-mongr8/migration/migrator/generate"
 	"github.com/amirkode/go-mongr8/migration/migrator/loader"
 	"github.com/amirkode/go-mongr8/migration/translator"
 
@@ -18,11 +18,6 @@ const (
 )
 
 type (
-	MigrationOption struct {
-		SortedSchema    bool
-		ForceConversion bool
-	}
-
 	Cmd interface {
 		ApplyMigration() error
 		ConsolidateMigration(collections []collection.Collection, migrations []migrator.Migration) error
@@ -31,13 +26,13 @@ type (
 
 	Migration struct {
 		Cmd
-		ctx  context.Context
+		ctx  *context.Context
 		db   *mongo.Database
 		date string
 	}
 )
 
-func NewMigration(ctx context.Context, db *mongo.Database) Cmd {
+func NewMigration(ctx *context.Context, db *mongo.Database) Cmd {
 	return &Migration{
 		ctx:  ctx,
 		db:   db,
@@ -58,14 +53,7 @@ func (m *Migration) ConsolidateMigration(collections []collection.Collection, mi
 
 func (m *Migration) GenerateMigration(collections []collection.Collection, migrations []migrator.Migration) error {
 	processor := translator.NewProcessor(m.ctx)
-	processor.Generate(collections, migrations)
-	// get translated dictionary
-	// translatedDictionaries, err := processor.GetTranslateDictionaries()
-	// if err != nil {
-	// 	return err
-	// }
+	actions := processor.Generate(collections, migrations)
 
-	// return generate.Run(*translatedDictionaries)
-	// TODO: implement something
-	return nil
+	return generate.Run(m.ctx, actions)
 }

@@ -20,7 +20,13 @@ var createCollectionCmd = &cobra.Command{
 	Short: "Create a new collection entity",
 	Long:  `Create collection entity with `,
 	Run: func(cmd *cobra.Command, args []string) {
-		name := cmd.PersistentFlags().Lookup("name").Value.String()
+		if len(args) != 1 {
+			fmt.Println("Error creating collection: Invalid collection name")
+			return
+		}
+
+		// name := cmd.PersistentFlags().Lookup("name").Value.String()
+		name := args[0]
 		err := generator.GenerateMigrationTemplate(name)
 		if err != nil {
 			fmt.Println("Error creating collection: " + err.Error())
@@ -31,5 +37,5 @@ var createCollectionCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(createCollectionCmd)
 	
-	createCollectionCmd.PersistentFlags().String("name", "", "MongoDB Collection Entity")
+	// createCollectionCmd.PersistentFlags().String("name", "", "MongoDB Collection Entity")
 }

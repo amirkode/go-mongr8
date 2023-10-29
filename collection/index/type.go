@@ -12,13 +12,13 @@ type (
 )
 
 const (
-	TypeSingleField       IndexType = "single_field"
-	TypeCompound          IndexType = "compound"
-	TypeText              IndexType = "text"
-	TypeGeopatial2dsphere IndexType = "geospatial_2dsphere"
-	TypeUnique            IndexType = "unique"
-	TypePartial           IndexType = "partial"
-	TypeCollation         IndexType = "collation"
+	TypeSingleField       IndexType = "TypeSingleField"
+	TypeCompound          IndexType = "TypeCompound"
+	TypeText              IndexType = "TypeText"
+	TypeGeopatial2dsphere IndexType = "TypeGeopatial2dsphere"
+	TypeUnique            IndexType = "TypeUnique"
+	TypePartial           IndexType = "TypePartial"
+	TypeCollation         IndexType = "TypeCollation"
 	// raw user defined index
-	TypeRaw               IndexType = "raw"
+	TypeRaw               IndexType = "TypeRaw"
 )

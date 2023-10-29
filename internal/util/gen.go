@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"os"
 
+	"go/format"
+
 	"io/ioutil"
 	"text/template"
 )
@@ -34,5 +36,13 @@ func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface {}) 
 		return err
 	}
 
-	return os.WriteFile(outputPath, output.Bytes(), 0644)
+	// fmt.Printf("%s", output.Bytes())
+	// fmt.Println("halo")
+
+	formattedOutput, err := format.Source(output.Bytes())
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(outputPath, formattedOutput, 0644)
 }

@@ -12,7 +12,7 @@ import "fmt"
 type Spec struct {
 	Name    string
 	Options *map[CollectionOption]interface{}
-	Type CollectionType
+	Type    CollectionType
 }
 
 type MetadataSpec struct {
@@ -31,10 +31,7 @@ func (s *MetadataSpec) Capped(size int64) *MetadataSpec {
 	}
 
 	(*s.Spec().Options)[CollectionOptionCapped] = true
-	(*s.Spec().Options)[CollectionOptionSize] = size
-
-	// set collection type to capped collection
-	s.Spec().Type = TypeCappedCollection
+	(*s.Spec().Options)[CollectionOptionCappedSize] = size
 
 	return s
 }
@@ -47,9 +44,6 @@ func (s *MetadataSpec) TTL(expiredAfter int64) *MetadataSpec {
 	}
 
 	(*s.Spec().Options)[CollectionOptionExpiredAfterSeconds] = expiredAfter
-
-	// set collection type to ttl collection
-	s.Spec().Type = TypeTTLCollection
 
 	return s
 }

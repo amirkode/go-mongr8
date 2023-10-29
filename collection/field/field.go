@@ -37,17 +37,19 @@ func (b *FieldSpec) Spec() *Spec {
 	return b.spec
 }
 
-func (b *FieldSpec) AddArrayField(s *FieldSpec) *FieldSpec {
+func (b *FieldSpec) AddArrayField(fields ...*FieldSpec) *FieldSpec {
 	if b.spec.ArrayFields == nil {
 		// init slice of array fields
 		arrFields := []Spec{}
 		b.spec.ArrayFields = &arrFields
 	}
 
-	currArr := *b.spec.ArrayFields
-	currArr = append(currArr, *s.Spec())
+	arr := *b.spec.ArrayFields
+	for _, f := range fields {
+		arr = append(arr, *f.Spec())
+	}
 
-	b.spec.ArrayFields = &currArr
+	b.spec.ArrayFields = &arr
 
 	return b
 }
@@ -108,12 +110,12 @@ func StringField(name string) *FieldSpec {
 	return baseField(name, TypeString)
 }
 
-func Int64Field(name string) *FieldSpec {
-	return baseField(name, TypeInt64)
-}
-
 func Int32Field(name string) *FieldSpec {
 	return baseField(name, TypeInt32)
+}
+
+func Int64Field(name string) *FieldSpec {
+	return baseField(name, TypeInt64)
 }
 
 func DoubleField(name string) *FieldSpec {
@@ -124,8 +126,11 @@ func BooleanField(name string) *FieldSpec {
 	return baseField(name, TypeBoolean)
 }
 
-func ArrayField(name string) *FieldSpec {
-	return baseField(name, TypeArray)
+func ArrayField(name string, fields ...*FieldSpec) *FieldSpec {
+	field := baseField(name, TypeArray)
+	field.AddArrayField(fields...)
+
+	return field
 }
 
 func ObjectField(name string, fields ...*FieldSpec) *FieldSpec {

@@ -1,6 +1,8 @@
 package schema_interpreter
 
 import (
+	"fmt"
+
 	"internal/convert"
 	dt "internal/data_type"
 	"internal/util"
@@ -95,6 +97,20 @@ func (sa SubAction) IsUp() bool {
 		SubActionTypeCreateIndex,
 		SubActionTypeConvertField,
 	})
+}
+
+func (sa SubAction) GetLiteralInstance(prefix string, isArrayItem bool) string {
+	res := ""
+	if !isArrayItem {
+		res += fmt.Sprintf("%sSubAction", prefix)
+	}
+
+	res += "{\n"
+	res += fmt.Sprintf("Type: %s%s,\n", prefix, sa.Type.ToString())
+	res += fmt.Sprintf("ActionSchema: %s,\n", sa.ActionSchema.GetLiteralInstance(prefix, false))
+	res += "}"
+
+	return res
 }
 
 func SubActionCreateCollection(schema SubActionSchema) *SubAction {

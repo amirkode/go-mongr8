@@ -1,37 +1,25 @@
 package schema_interpreter
 
-// import "github.com/amirkode/go-mongr8/migration/translator/dictionary"
-
-const (
-	VarNameDatabase      = "db"
-	VarNameCollection    = "collection"
-	VarNameCreateOptions = "createOptions"
-	VarNameError         = "err"
-	VarNameContext       = "ctx"
+import (
+	"fmt"
 )
 
-type (
-	actionCreateCollection struct {
-		Action
+func (a Action) GetLiteralInstance(prefix string, isArrayItem bool) string {
+	res := ""
+	if !isArrayItem {
+		res += fmt.Sprintf("%sAction", prefix)
 	}
 
-	actionCreateIndex struct {
-		Action
+	res += "{\n"
+	res += fmt.Sprintf(`ActionKey: "%s",%s`, a.ActionKey, "\n")
+	res += fmt.Sprintf("SubActions: []%sSubAction{\n", prefix)
+	// fill sub actions
+	for _, sa := range a.SubActions {
+		res += fmt.Sprintf("%s,\n", sa.GetLiteralInstance(prefix, true))
 	}
 
-	actionCreateField struct {
-		Action
-	}
+	res += "},\n"
+	res += "}"
 
-	actionDropCollection struct {
-		Action
-	}
-
-	actionDropIndex struct {
-		Action
-	}
-
-	actionDropField struct {
-		Action
-	}
-)
+	return res
+}

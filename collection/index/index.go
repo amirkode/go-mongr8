@@ -16,11 +16,20 @@ type IndexField struct {
 	Value interface{}
 }
 
-func Field(name string, value interface{}) IndexField {
-	return IndexField{
-		Key:   name,
-		Value: value,
+func Field(name string, value ...interface{}) IndexField {
+	if len(value) > 1 {
+		panic("Index field value at most declared once")
 	}
+
+	res := IndexField{
+		Key:   name,
+	}
+
+	if len(value) == 1 {
+		res.Value = value[0]
+	}
+
+	return res
 }
 
 func (f IndexField) NestedField(name string) IndexField {

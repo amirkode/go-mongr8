@@ -3,17 +3,17 @@ package metadata
 type CollectionType string
 
 const (
-	TypeDefaultCollection CollectionType = "default_collection"
-	TypeCappedCollection  CollectionType = "capped_collection"
-	TypeTTLCollection     CollectionType = "ttl_collection"
+	TypeDefaultCollection CollectionType = "TypeDefaultCollection"
+	// TypeCappedCollection  CollectionType = "capped_collection"
+	// TypeTTLCollection     CollectionType = "ttl_collection"
 	// as the time this was written, view creation is defined as collection entity
-	TypeViewCollection CollectionType = "view"
+	TypeViewCollection CollectionType = "TypeViewCollection"
 )
 
 type CollectionOption string
 
 const (
 	CollectionOptionCapped              CollectionOption = "capped"
-	CollectionOptionSize                CollectionOption = "size"
+	CollectionOptionCappedSize          CollectionOption = "size"
 	CollectionOptionExpiredAfterSeconds CollectionOption = "expiredAfterSeconds"
 )

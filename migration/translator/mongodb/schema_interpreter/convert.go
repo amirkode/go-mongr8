@@ -8,6 +8,30 @@ import (
 	"github.com/amirkode/go-mongr8/migration/translator/dictionary"
 )
 
+// convert any value to literal, this function can be called any where
+func AnyToLiteral(value interface{}) string {
+	if reflect.TypeOf(value).Kind() == reflect.Map &&
+		reflect.TypeOf(value).Key().Kind() == reflect.String {
+		res := "map[string]interface{}{\n"
+		for key, v := range value.(map[string]interface{}) {
+			res += fmt.Sprintf(`"%s": %s,`, key, AnyToLiteral(v)) + "\n"
+		}
+		res += "}"
+
+		return res
+	} else if reflect.TypeOf(value).Kind() == reflect.Slice {
+		res := "[]interface{}{\n"
+		for _, v := range value.([]interface{}) {
+			res += fmt.Sprintf("%s\n,", AnyToLiteral(v))
+		}
+		res += "}"
+
+		return res
+	}
+
+	return anyToLiteralString(value)
+}
+
 // converts any value to its string literal type
 // i.e: str := "hello", this function will return `string("hello")`
 func anyToLiteralString(value interface{}) string {
@@ -33,7 +57,7 @@ func anyToLiteralString(value interface{}) string {
 	case reflect.Float64:
 		return fmt.Sprintf("float64(%v)", v)
 	case reflect.String:
-		return fmt.Sprintf("string(%v)", v)
+		return fmt.Sprintf(`string("%v")`, v)
 	case reflect.Bool:
 		return fmt.Sprintf("bool(%v)", v)
 	}
@@ -45,7 +69,7 @@ func anyToLiteralString(value interface{}) string {
 	}
 
 	// if none of type is recognized, just return as a string ValueType
-	return fmt.Sprintf("string(%v)", v)
+	return fmt.Sprintf(`string("%v")`, v)
 }
 
 func timeToLiteralString(t time.Time) string {

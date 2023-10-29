@@ -2,12 +2,17 @@ package schema_interpreter
 
 type SubActionType string
 
+// make sure constant name is exactly same as it's value
 const (
-	SubActionTypeCreateCollection SubActionType = "create_collection"
-	SubActionTypeCreateIndex      SubActionType = "create_index"
-	SubActionTypeCreateField      SubActionType = "create_field"
-	SubActionTypeConvertField     SubActionType = "convert_field"
-	SubActionTypeDropCollection   SubActionType = "drop_collection"
-	SubActionTypeDropIndex        SubActionType = "drop_index"
-	SubActionTypeDropField        SubActionType = "drop_field"
+	SubActionTypeCreateCollection SubActionType = "SubActionTypeCreateCollection"
+	SubActionTypeCreateIndex      SubActionType = "SubActionTypeCreateIndex"
+	SubActionTypeCreateField      SubActionType = "SubActionTypeCreateField"
+	SubActionTypeConvertField     SubActionType = "SubActionTypeConvertField"
+	SubActionTypeDropCollection   SubActionType = "SubActionTypeDropCollection"
+	SubActionTypeDropIndex        SubActionType = "SubActionTypeDropIndex"
+	SubActionTypeDropField        SubActionType = "SubActionTypeDropField"
 )
+
+func (sat SubActionType) ToString() string {
+	return string(sat)
+}

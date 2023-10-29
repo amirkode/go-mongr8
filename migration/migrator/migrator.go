@@ -8,6 +8,7 @@ type (
 	// Migration entity
 	Migration struct {
 		ID   string
+		Desc string
 		Up   []si.Action
 		Down []si.Action
 	}
