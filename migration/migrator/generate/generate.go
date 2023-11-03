@@ -2,6 +2,7 @@ package generate
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	dt "internal/data_type"
@@ -13,12 +14,13 @@ import (
 )
 
 func Run(ctx *context.Context, actions dt.Pair[[]si.Action, []si.Action]) error {
-	migrationID := time.Now().Format("20060102_150405")
-	nextSuffix, err := getNextSuffix()
-	if err != nil {
-		return err
+	if len(actions.First) == 0 {
+		fmt.Println("Migration files are already up to date")
+		return nil
 	}
-	
+
+	migrationID := time.Now().Format("20060102_150405")
+
 	migration := migrator.Migration{
 		ID:   migrationID,
 		Desc: option.GetMigrationOptionFromContext(ctx).Desc,
@@ -26,5 +28,5 @@ func Run(ctx *context.Context, actions dt.Pair[[]si.Action, []si.Action]) error 
 		Down: actions.Second,
 	}
 
-	return writer.Write(migration, nextSuffix)
+	return writer.Write(migration)
 }

@@ -1,9 +1,10 @@
 package sync_strategy
 
 import (
+	"testing"
+
 	"internal/test"
 	"internal/util"
-	"testing"
 
 	"github.com/amirkode/go-mongr8/collection/field"
 	"github.com/amirkode/go-mongr8/collection/index"
@@ -24,17 +25,31 @@ func TestSignedFieldGetKey(t *testing.T) {
 func TestSignedFieldIntersect(t *testing.T) {
 	// test intersect on array with different children
 	case1Field1 := SignedField{
-		Field: field.ArrayField("array_field").
-			AddArrayField(field.StringField("string")).
-			AddArrayField(field.Int32Field("int32")).
-			AddArrayField(field.BooleanField("boolean")),
+		Field: field.ArrayField("array_field", 
+			field.ObjectField("name not required", 
+				field.BooleanField("state1"),
+				field.BooleanField("state3"),
+			),
+		),
+			// TODO: update this
+			// for now, we do not support multipe types array
+			// AddArrayField(field.StringField("string")),
+			// AddArrayField(field.Int32Field("int32")).
+			// AddArrayField(field.BooleanField("boolean")),
 		Sign: SignPlus,
 	}
 	case1Field2 := SignedField{
-		Field: field.ArrayField("array_field").
-			AddArrayField(field.StringField("string")).
-			AddArrayField(field.StringField("string_2")).
-			AddArrayField(field.Int32Field("int32")),
+		Field: field.ArrayField("array_field", 
+			field.ObjectField("name not required", 
+				field.BooleanField("state1"),
+				field.BooleanField("state2"),
+			),
+		),
+			// TODO: update this
+			// for now, we do not support multipe types array
+			// AddArrayField(field.StringField("string")).
+			// AddArrayField(field.StringField("string_2")).
+			// AddArrayField(field.Int32Field("int32")),
 		Sign: SignPlus,
 	}
 
@@ -44,46 +59,43 @@ func TestSignedFieldIntersect(t *testing.T) {
 	test.AssertTrue(t, case1Intersection != nil && len(*case1Intersection) == 2, "Case 1: Intersection is not expected")
 	// check on the intersection result
 	for _, i := range *case1Intersection {
-		if i.Sign == SignPlus {
-			test.AssertEqual(t, i.Field.Spec().Type, field.TypeArray, "Case 1: Unexpected parent type")
-			test.AssertTrue(t, i.Field.Spec().ArrayFields != nil, "Case 1: Array children not found")
-			test.AssertEqual(t, (*i.Field.Spec().ArrayFields)[0].Type, field.TypeBoolean, "Case 1: Unexpected child type")
-			test.AssertEqual(t, (*i.Field.Spec().ArrayFields)[0].Name, "boolean", "Case 1: Unexpected child name")
-		} else if i.Sign == SignMinus {
-			test.AssertEqual(t, i.Field.Spec().Type, field.TypeArray, "Case 1: Unexpected parent type")
-			test.AssertTrue(t, i.Field.Spec().ArrayFields != nil, "Case 1: Array children not found")
-			test.AssertEqual(t, (*i.Field.Spec().ArrayFields)[0].Type, field.TypeString, "Case 1: Unexpected child type")
-			test.AssertEqual(t, (*i.Field.Spec().ArrayFields)[0].Name, "string_2", "Case 1: Unexpected child name")
-		} else {
-			t.Error("Case 1: Intersection sign is not expected")
+		if !util.InListEq(i.Sign, []EntitySign{SignPlus, SignMinus}) {
+			msg := "Case 1: Intersection sign is not expected"
+			t.Error(msg)
+			panic(msg)
 		}
+
+		test.AssertEqual(t, i.Field.Spec().Type, field.TypeArray, "Case 1: Unexpected parent type")
+		test.AssertTrue(t, i.Field.Spec().ArrayFields != nil, "Case 1: Array children not found")
+		test.AssertEqual(t, (*i.Field.Spec().ArrayFields)[0].Type, field.TypeObject, "Case 1: Unexpected child type")
+		test.AssertTrue(t, (*i.Field.Spec().ArrayFields)[0].Object != nil, "Case 1: Object children not found")
+		test.AssertEqual(t, (*(*i.Field.Spec().ArrayFields)[0].Object)[0].Type, field.TypeBoolean, "Case 1: Unexpected object child type")
+		test.AssertTrue(t, util.InListEq((*(*i.Field.Spec().ArrayFields)[0].Object)[0].Name, []string{"state2", "state3"}) , "Case 1: Unexpected object child name")
 	}
 
 	// test intersect on object with different children
 	case2Field1 := SignedField{
-		Field: field.ObjectField("object_field").
-			AddObjectFields(
-				field.StringField("string"),
-				field.Int32Field("int32"),
-				field.BooleanField("boolean"),
-				field.ObjectField("nested_object",
-					field.StringField("nested_string1"),
-					field.StringField("nested_string2"),
-				),
+		Field: field.ObjectField("object_field",
+			field.StringField("string"),
+			field.Int32Field("int32"),
+			field.BooleanField("boolean"),
+			field.ObjectField("nested_object",
+				field.StringField("nested_string1"),
+				field.StringField("nested_string2"),
 			),
+		),
 		Sign: SignPlus,
 	}
 	case2Field2 := SignedField{
-		Field: field.ObjectField("object_field").
-			AddObjectFields(
-				field.StringField("string"),
-				field.StringField("string_2"),
-				field.Int32Field("int32"),
-				field.ObjectField("nested_object",
-					field.StringField("nested_string1"),
-					field.StringField("nested_string2"),
-				),
+		Field: field.ObjectField("object_field",
+			field.StringField("string"),
+			field.StringField("string_2"),
+			field.Int32Field("int32"),
+			field.ObjectField("nested_object",
+				field.StringField("nested_string1"),
+				field.StringField("nested_string2"),
 			),
+		),
 		Sign: SignPlus,
 	}
 
@@ -145,7 +157,9 @@ func TestSignedFieldUnion(t *testing.T) {
 	}
 	case1FieldArr2 := []SignedField{
 		{
-			Field: field.ArrayField("scores"),
+			Field: field.ArrayField("scores",
+				field.Int32Field("name not required"),
+			),
 		},
 	}
 	case1Union := Union(case1FieldArr1, case1FieldArr2)

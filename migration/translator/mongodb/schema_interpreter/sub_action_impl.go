@@ -190,12 +190,12 @@ func SubActionDropIndex(schema SubActionSchema) *SubAction {
 
 func SubActionDropField(schema SubActionSchema) *SubAction {
 	return &SubAction{
-		Type:         SubActionTypeDropIndex,
+		Type:         SubActionTypeDropField,
 		ActionSchema: schema,
 		validate: func() {
 			// expecting exactly 1 field to drop by field name
 			if len(schema.Fields) != 1 {
-				panic("At least an index declared for dropping field")
+				panic("At least field declared for dropping field")
 			}
 		},
 	}

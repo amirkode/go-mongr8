@@ -37,7 +37,7 @@ func (b *FieldSpec) Spec() *Spec {
 	return b.spec
 }
 
-func (b *FieldSpec) AddArrayField(fields ...*FieldSpec) *FieldSpec {
+func (b *FieldSpec) addArrayField(fields ...*FieldSpec) *FieldSpec {
 	if b.spec.ArrayFields == nil {
 		// init slice of array fields
 		arrFields := []Spec{}
@@ -54,7 +54,7 @@ func (b *FieldSpec) AddArrayField(fields ...*FieldSpec) *FieldSpec {
 	return b
 }
 
-func (b *FieldSpec) AddObjectFields(fields ...*FieldSpec) *FieldSpec {
+func (b *FieldSpec) addObjectFields(fields ...*FieldSpec) *FieldSpec {
 	if b.spec.Object == nil {
 		objects := []Spec{}
 		b.spec.Object = &objects
@@ -127,15 +127,23 @@ func BooleanField(name string) *FieldSpec {
 }
 
 func ArrayField(name string, fields ...*FieldSpec) *FieldSpec {
+	// TODO: add support for array of different types, when the usecase is clear
+	// for now, we only support for a single type, but we still support empty fields
+	// since, there's a case that we field as a type representative only
+	// yet will eventually be validated again at the translation level
+	if len(fields) > 1 {
+		panic(fmt.Sprintf("ArrayField needs 1 field must be declared"))
+	}
+
 	field := baseField(name, TypeArray)
-	field.AddArrayField(fields...)
+	field.addArrayField(fields...)
 
 	return field
 }
 
 func ObjectField(name string, fields ...*FieldSpec) *FieldSpec {
 	field := baseField(name, TypeObject)
-	field.AddObjectFields(fields...)
+	field.addObjectFields(fields...)
 
 	return field
 }
@@ -209,7 +217,7 @@ func (s *legacyCoordinateEmbeddedDocSpec) setCoordinateField(name string, isX bo
 		s.yIsSet = true
 	}
 
-	s.AddObjectFields(DoubleField(name))
+	s.addObjectFields(DoubleField(name))
 }
 
 func (s *legacyCoordinateEmbeddedDocSpec) SetCoordinateX(name string) *legacyCoordinateEmbeddedDocSpec {

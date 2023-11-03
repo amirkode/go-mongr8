@@ -87,9 +87,13 @@ func FieldFromType(name string, _type field.FieldType) Field {
 	case field.TypeBoolean:
 		return field.BooleanField(name)
 	case field.TypeArray:
-		return field.ArrayField(name)
+		return field.ArrayField(name,
+			// since no child provided, we don't need to pass any field
+		)
 	case field.TypeObject:
-		return field.ObjectField(name)
+		return field.ObjectField(name,
+			// since no child provided, we don't need to pass any field
+		)
 	case field.TypeTimestamp:
 		return field.TimestampField(name)
 	case field.TypeGeoJSONPoint:

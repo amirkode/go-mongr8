@@ -29,6 +29,7 @@ type (
 	// TODO: implement these function with pointer receiver
 	operator[T any] interface {
 		// intersection of two entities resulting modifications
+		// TODO: rename [other] with [origin] and rename [this] with [incoming]
 		Intersect(other T) *[]T
 		// set entity sign (action direction)
 		SetSign(sign EntitySign) T
@@ -143,7 +144,7 @@ func (f SignedField) Intersect(other SignedField) *[]SignedField {
 				convert.convertFrom = &convertFrom
 				res = append(res, convert)
 			} else if other.Spec().Type == field.TypeString {
-				// any to string conversion
+				// string to any type conversion
 				// this must be undefined conversion type
 				// by default just perform drop and add
 

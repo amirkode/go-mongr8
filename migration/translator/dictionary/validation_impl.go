@@ -126,3 +126,4 @@ func validateIndexDuplication(collectionName string, indexes []collection.Index)
 }
 
 // TODO: add individual field validation, i.e: array field must not be empty
+// TODO: index fields must be declared in fields

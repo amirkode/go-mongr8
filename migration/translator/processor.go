@@ -9,12 +9,14 @@ import (
 	"github.com/amirkode/go-mongr8/migration/migrator"
 	"github.com/amirkode/go-mongr8/migration/translator/dictionary"
 	si "github.com/amirkode/go-mongr8/migration/translator/mongodb/schema_interpreter"
+	ai "github.com/amirkode/go-mongr8/migration/translator/mongodb/api_interpreter"
 	"github.com/amirkode/go-mongr8/migration/translator/sync_strategy"
 )
 
 type (
 	ProcessorIf interface {
 		validateCollection(collections []collection.Collection, panic bool) error
+		GetApi(migrations []migrator.Migration, dbSchemas []collection.Collection) []ai.SubActionApi
 		Generate(collections []collection.Collection, migrations []migrator.Migration) dt.Pair[[]si.Action, []si.Action]
 		Consolidate(collections []collection.Collection, dbCollections []collection.Collection, migrations []migrator.Migration)
 	}
@@ -40,6 +42,21 @@ func (p Processor) validateCollection(collections []collection.Collection, panic
 	}
 
 	return nil
+}
+
+func (p Processor) GetApi(migrations []migrator.Migration, dbSchemas []collection.Collection) []ai.SubActionApi {
+	// For now, we only add Up Actions
+	// pair of migration ID and sub action
+	subActions := []dt.Pair[string, si.SubAction]{}
+	for _, m := range migrations {
+		for _, action := range m.Up {
+			for _, subAction := range action.SubActions {
+				subActions = append(subActions, dt.NewPair(m.ID, subAction))
+			}
+		}
+	}
+
+	return ai.GetSubActionApis(subActions, dbSchemas)
 }
 
 func (p Processor) Generate(collections []collection.Collection, migrations []migrator.Migration) dt.Pair[[]si.Action, []si.Action] {
