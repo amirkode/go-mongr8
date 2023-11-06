@@ -26,18 +26,15 @@ type (
 
 		// get object of current field
 		GetObject() map[string]interface{}
-
-		// get value of current field
-		getItem() interface{}
 	}
 
 	// translated field to bson.M doc
 	// @ee index_impl.go for implementation
 	TranslatedIndexIf interface {
 		// get object of indexes
-		getObject() map[string]interface{}
+		GetObject() map[string]interface{}
 		// get rules
-		getRules() *map[string]interface{}
+		GetRules() *map[string]interface{}
 	}
 
 	ValidationIf interface {

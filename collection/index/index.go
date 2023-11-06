@@ -9,6 +9,7 @@ package index
 
 import (
 	"fmt"
+	"reflect"
 )
 
 type IndexField struct {
@@ -43,6 +44,8 @@ type Spec struct {
 	Fields []IndexField
 	Rules  *map[string]interface{}
 	Sparse bool
+	// TODO: implement custom index name
+	Name  *string
 }
 
 type IndexSpec struct {
@@ -74,6 +77,50 @@ func (s *Spec) GetKey() string {
 	return key
 }
 
+func (s *Spec) GetName() string {
+	if s.Name != nil {
+		return *s.Name
+	}
+	
+	res := ""
+	for _, field := range s.Fields {
+		if res == "" {
+			res = fmt.Sprintf("%s_%v", field.Key, field.Value)
+		} else {
+			res = fmt.Sprintf("%s_%s_%v", res, field.Key, field.Value)
+		}
+	}
+
+	var getPath func(curr interface{}) string
+	getPath = func(curr interface{}) string {
+		path := ""
+		if reflect.TypeOf(curr).Kind() == reflect.Map &&
+			reflect.TypeOf(curr).Key().Kind() == reflect.String &&
+			reflect.TypeOf(curr).Elem().Kind() == reflect.Interface {
+			mp := curr.(map[string]interface{})
+			for key, val := range mp {
+				res = fmt.Sprintf("%s_%s%s", res, key, getPath(val))
+			}
+		} else if reflect.TypeOf(curr).Kind() == reflect.Slice &&
+			reflect.TypeOf(curr).Elem().Kind() == reflect.Interface {
+			arr := curr.([]interface{})
+			for _, val := range arr {
+				res = fmt.Sprintf("%s%s", res, getPath(val))
+			}
+		} else {
+			res = fmt.Sprintf("%s_%v", res, curr)
+		}
+
+		return path
+	}
+
+	if s.Rules != nil {
+		res += getPath(*s.Rules)
+	}
+
+	return res
+}
+
 func (b *IndexSpec) Spec() *Spec {
 	return b.spec
 }
@@ -84,7 +131,11 @@ func (b *IndexSpec) SetRules(rules map[string]interface{}) {
 
 func (b *IndexSpec) SetSparse(sparse bool) *IndexSpec {
 	b.spec.Sparse = sparse
+	return b
+}
 
+func (b *IndexSpec) SetCustomIndexName(name string) *IndexSpec {
+	b.spec.Name = &name
 	return b
 }
 
@@ -143,7 +194,10 @@ func Geospatial2dsphereIndex(field IndexField) *IndexSpec {
 }
 
 func UniqueIndex(field IndexField) *IndexSpec {
-	return defaultIndex(TypeUnique, []IndexField{field}, nil)
+	rules := map[string]interface{}{
+		"unique": true,
+	}
+	return defaultIndex(TypeUnique, []IndexField{field}, &rules)
 }
 
 // partial index custom spec
@@ -152,7 +206,11 @@ type partialIndexSpec struct {
 }
 
 func (s *partialIndexSpec) SetPartialExpression(partialExp map[string]interface{}) *partialIndexSpec {
-	s.SetRules(partialExp)
+	rules := map[string]interface{}{
+		"partialFilterExpression": partialExp,
+	}
+
+	s.SetRules(rules)
 
 	return s
 }
@@ -169,8 +227,14 @@ type collationIndexSpec struct {
 	IndexSpec
 }
 
-func (s *collationIndexSpec) SetCollation(collation map[string]interface{}) {
-	s.SetRules(collation)
+func (s *collationIndexSpec) SetCollation(collation map[string]interface{}) *collationIndexSpec {
+	rules := map[string]interface{}{
+		"collation": collation,
+	}
+
+	s.SetRules(rules)
+
+	return s
 }
 
 func CollationIndex(field IndexField) *collationIndexSpec {

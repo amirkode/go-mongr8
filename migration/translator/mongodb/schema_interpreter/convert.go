@@ -105,6 +105,10 @@ func toLiteralStringBsonMap(value interface{}) string {
 	return anyToLiteralString(value)
 }
 
+// ConvertValueTypeToRealType return value reversal of ValueType(d) structure
+// as defined in migration/translator/dictionary
+// TODO: find better approach in the future as the ValueType was intended
+// because of to many type conversions needed
 func ConvertValueTypeToRealType(value interface{}) interface{} {
 	if reflect.TypeOf(value).Kind() == reflect.Map &&
 		reflect.TypeOf(value).Key().Kind() == reflect.String &&
@@ -116,9 +120,9 @@ func ConvertValueTypeToRealType(value interface{}) interface{} {
 		}
 
 		return res
-	} else if reflect.TypeOf(value).Kind() == reflect.Array &&
+	} else if reflect.TypeOf(value).Kind() == reflect.Slice &&
 		reflect.TypeOf(value).Elem().Kind() == reflect.Interface {
-		// if value type is an array ([]interface{})
+		// if value type is a slice ([]interface{})
 		res := value.([]interface{})
 		for index, v := range res {
 			res[index] = ConvertValueTypeToRealType(v)

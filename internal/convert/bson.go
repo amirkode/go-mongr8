@@ -18,7 +18,7 @@ func ArrToBsonA(arr []interface{}, isD bool) bson.A {
 			} else {
 				res = append(res, MapToBsonM(value.(map[string]interface{})))
 			}
-		} else if reflect.TypeOf(value).Kind() == reflect.Array &&
+		} else if reflect.TypeOf(value).Kind() == reflect.Slice &&
 			reflect.TypeOf(value).Elem().Kind() == reflect.Interface {
 			// if value type is an array ([]interface{})
 			nextArr := value.([]interface{})
@@ -41,7 +41,7 @@ func MapToBsonM(mp map[string]interface{}) bson.M {
 			reflect.TypeOf(value).Elem().Kind() == reflect.Interface {
 			// if it's a map, recursively convert it to bson.M
 			res[key] = MapToBsonM(value.(map[string]interface{}))
-		} else if reflect.TypeOf(value).Kind() == reflect.Array &&
+		} else if reflect.TypeOf(value).Kind() == reflect.Slice &&
 			reflect.TypeOf(value).Elem().Kind() == reflect.Interface {
 			// if value type is an array ([]interface{})
 			arr := value.([]interface{})
@@ -67,7 +67,7 @@ func MapToBsonD(mp map[string]interface{}) bson.D {
 				Key:   key,
 				Value: MapToBsonD(value.(map[string]interface{})),
 			})
-		} else if reflect.TypeOf(value).Kind() == reflect.Array &&
+		} else if reflect.TypeOf(value).Kind() == reflect.Slice &&
 			reflect.TypeOf(value).Elem().Kind() == reflect.Interface {
 			// if value type is an array ([]interface{})
 			arr := value.([]interface{})

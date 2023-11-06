@@ -118,7 +118,7 @@ func ConvertAnyToValueType(value interface{}) interface{} {
 		}
 
 		return res
-	} else if reflect.TypeOf(value).Kind() == reflect.Array &&
+	} else if reflect.TypeOf(value).Kind() == reflect.Slice &&
 		reflect.TypeOf(value).Elem().Kind() == reflect.Interface {
 		// if value type is an array ([]interface{})
 		res := value.([]interface{})

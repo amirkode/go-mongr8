@@ -4,14 +4,13 @@ package api_interpreter
 
 import (
 	"context"
-	"fmt"
-	"reflect"
 
 	dt "internal/data_type"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
 	"github.com/amirkode/go-mongr8/collection/metadata"
+	"github.com/amirkode/go-mongr8/migration/migrator"
 	si "github.com/amirkode/go-mongr8/migration/translator/mongodb/schema_interpreter"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -31,23 +30,8 @@ func createField(ctx context.Context, db *mongo.Database, collName string, paylo
 	}
 
 	// set field expects 1 path
-	var setPayload func(curr interface{}, path string) bson.M
-	setPayload = func(curr interface{}, path string) bson.M {
-		if reflect.TypeOf(curr) == reflect.TypeOf(bson.D{}) {
-			d := curr.(bson.D)
-			return setPayload(d[0].Value, fmt.Sprintf("%s.%s", path, d[0].Key))
-		} else if reflect.TypeOf(curr) == reflect.TypeOf(bson.A{}) {
-			a := curr.(bson.A)
-			return setPayload(a[0], fmt.Sprintf("%s.$[]", path))
-		}
-
-		return bson.M{
-			path: curr,
-		}
-	}
-
 	updatePayload := bson.M{
-		"$set": setPayload(payload, ""),
+		"$set": createFieldSetPayload(payload, ""),
 	}
 
 	_, err := collection.UpdateMany(ctx, bson.M{}, updatePayload)
@@ -55,13 +39,11 @@ func createField(ctx context.Context, db *mongo.Database, collName string, paylo
 	return err
 }
 
-
-// TODO: complete this + test
 func convertField(ctx context.Context, db *mongo.Database, collName string, to collection.Field, from field.FieldType) error {
 	// depth as suffix of map alias to maintain the uniqueness of the alias
-	depth := 0 
+	depth := 0
 	updatePayload := bson.M{
-		"$set": convertSetPayload(to, "", from, &depth),
+		"$set": convertFieldSetPayload(to, "", from, &depth),
 	}
 
 	collection := db.Collection(collName)
@@ -70,12 +52,14 @@ func convertField(ctx context.Context, db *mongo.Database, collName string, to c
 	return err
 }
 
-func createIndexes(ctx context.Context, db *mongo.Database, collName string, indexes []dt.Pair[bson.D, bson.D]) error {
+func createIndexes(ctx context.Context, db *mongo.Database, collName string, indexes []dt.Pair[string, dt.Pair[bson.D, bson.D]]) error {
 	collection := db.Collection(collName)
 	for _, idx := range indexes {
-		keys := idx.First
-		rules := idx.Second
+		name := idx.First
+		keys := idx.Second.First
+		rules := idx.Second.Second
 		opt := options.Index()
+		opt.Name = &name
 		// init options
 		for _, rule := range rules {
 			switch rule.Key {
@@ -127,7 +111,7 @@ func createIndexes(ctx context.Context, db *mongo.Database, collName string, ind
 	return nil
 }
 
-func SubActionApiCreateCollection(subAction dt.Pair[string, si.SubAction]) SubActionApi {
+func SubActionApiCreateCollection(subAction dt.Pair[migrator.Migration, si.SubAction]) SubActionApi {
 	collectionName := subAction.Second.ActionSchema.Collection.Spec().Name
 	exec := func(ctx context.Context, db *mongo.Database) error {
 		opt := options.CreateCollectionOptions{}
@@ -161,47 +145,104 @@ func SubActionApiCreateCollection(subAction dt.Pair[string, si.SubAction]) SubAc
 	}
 
 	return SubActionApi{
-		MigrationID: subAction.First,
-		SubAction:   subAction.Second,
-		Execute:     exec,
+		Migration: subAction.First,
+		SubAction: subAction.Second,
+		Execute:   exec,
 	}
 }
 
-func SubActionApiCreateIndex(subAction dt.Pair[string, si.SubAction]) SubActionApi {
+func SubActionApiCreateIndex(subAction dt.Pair[migrator.Migration, si.SubAction]) SubActionApi {
 	collectionName := subAction.Second.ActionSchema.Collection.Spec().Name
 	exec := func(ctx context.Context, db *mongo.Database) error {
 		return createIndexes(ctx, db, collectionName, subAction.Second.GetIndexesBsonD())
 	}
 
 	return SubActionApi{
-		MigrationID: subAction.First,
-		SubAction:   subAction.Second,
-		Execute:     exec,
+		Migration: subAction.First,
+		SubAction: subAction.Second,
+		Execute:   exec,
 	}
 }
 
-func SubActionApiCreateField(subAction dt.Pair[string, si.SubAction]) SubActionApi {
+func SubActionApiCreateField(subAction dt.Pair[migrator.Migration, si.SubAction]) SubActionApi {
 	collectionName := subAction.Second.ActionSchema.Collection.Spec().Name
 	exec := func(ctx context.Context, db *mongo.Database) error {
 		return createField(ctx, db, collectionName, subAction.Second.GetFieldsBsonD(), true)
 	}
 
 	return SubActionApi{
-		MigrationID: subAction.First,
-		SubAction:   subAction.Second,
-		Execute:     exec,
+		Migration: subAction.First,
+		SubAction: subAction.Second,
+		Execute:   exec,
 	}
 }
 
-func SubActionApiConvertField(subAction dt.Pair[string, si.SubAction]) SubActionApi {
+func SubActionApiConvertField(subAction dt.Pair[migrator.Migration, si.SubAction]) SubActionApi {
 	collectionName := subAction.Second.ActionSchema.Collection.Spec().Name
 	exec := func(ctx context.Context, db *mongo.Database) error {
 		return convertField(ctx, db, collectionName, subAction.Second.ActionSchema.Fields[0], *subAction.Second.ActionSchema.FieldConvertFrom)
 	}
 
 	return SubActionApi{
-		MigrationID: subAction.First,
-		SubAction:   subAction.Second,
-		Execute:     exec,
+		Migration: subAction.First,
+		SubAction: subAction.Second,
+		Execute:   exec,
+	}
+}
+
+func SubActionApiDropCollection(subAction dt.Pair[migrator.Migration, si.SubAction]) SubActionApi {
+	collectionName := subAction.Second.ActionSchema.Collection.Spec().Name
+	exec := func(ctx context.Context, db *mongo.Database) error {
+		collection := db.Collection(collectionName)
+		return collection.Drop(ctx)
+	}
+
+	return SubActionApi{
+		Migration: subAction.First,
+		SubAction: subAction.Second,
+		Execute:   exec,
+	}
+}
+
+func SubActionApiDropIndex(subAction dt.Pair[migrator.Migration, si.SubAction]) SubActionApi {
+	collectionName := subAction.Second.ActionSchema.Collection.Spec().Name
+	exec := func(ctx context.Context, db *mongo.Database) error {
+		coll := db.Collection(collectionName)
+		indexes := subAction.Second.ActionSchema.Indexes
+		for _, index := range indexes {
+			_, err := coll.Indexes().DropOne(ctx, index.Spec().GetName())
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	return SubActionApi{
+		Migration: subAction.First,
+		SubAction: subAction.Second,
+		Execute:   exec,
+	}
+}
+
+func SubActionApiDropField(subAction dt.Pair[migrator.Migration, si.SubAction]) SubActionApi {
+	collectionName := subAction.Second.ActionSchema.Collection.Spec().Name
+	exec := func(ctx context.Context, db *mongo.Database) error {
+		coll := db.Collection(collectionName)
+		payload := subAction.Second.GetFieldsBsonD()
+		unsetPayload := bson.M{
+			"$unset": dropFieldUnsetPayload(payload, ""),
+		}
+
+		_, err := coll.UpdateMany(ctx, bson.M{}, unsetPayload)
+
+		return err
+	}
+
+	return SubActionApi{
+		Migration: subAction.First,
+		SubAction: subAction.Second,
+		Execute:   exec,
 	}
 }

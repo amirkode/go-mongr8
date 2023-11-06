@@ -73,8 +73,8 @@ type (
 	}
 )
 
-func (f SignedField) Intersect(other SignedField) *[]SignedField {
-	if f.Key() != other.Key() {
+func (incoming SignedField) Intersect(origin SignedField) *[]SignedField {
+	if incoming.Key() != origin.Key() {
 		return nil
 	}
 
@@ -159,6 +159,8 @@ func (f SignedField) Intersect(other SignedField) *[]SignedField {
 				minus.Sign = SignMinus
 				res = append(res, minus)
 			} else {
+				panic(fmt.Sprintf("Unsupported conversion type: from %s to %s", this.Spec().Type, other.Spec().Type))
+				// TODO: enable this, if such usecase required
 				// this should be unsupported type conversion
 				// add plus action for "this"
 				plus, _ := restorePath(append(path, dt.NewPair(this.Spec().Name, this.Spec().Type)))
@@ -296,7 +298,7 @@ func (f SignedField) Intersect(other SignedField) *[]SignedField {
 	}
 
 	// perform DFS
-	dfs([]dt.Pair[string, field.FieldType]{}, f, other)
+	dfs([]dt.Pair[string, field.FieldType]{}, incoming, origin)
 
 	// this will also return an emtpy slice
 	// if there's no schema difference in deepest level

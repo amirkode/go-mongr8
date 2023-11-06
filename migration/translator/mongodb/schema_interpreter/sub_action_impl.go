@@ -35,8 +35,8 @@ func getFieldsMap(fields []collection.Field) map[string]interface{} {
 	res := map[string]interface{}{}
 	for _, field := range fields {
 		// Translate
-		translated := dictionary.GetTranslatedField(field)
-		res[field.Spec().Name] = translated.GetObject()
+		translatedObj := dictionary.GetTranslatedField(field).GetObject()
+		res[field.Spec().Name] = translatedObj[field.Spec().Name]
 	}
 
 	return ConvertValueTypeToRealType(res).(map[string]interface{})
@@ -50,30 +50,38 @@ func fieldsToBsonM(fields []collection.Field) bson.M {
 	return convert.MapToBsonM(getFieldsMap(fields))
 }
 
-func (sa SubAction) GetIndexesBsonD() []dt.Pair[bson.D, bson.D] {
+func (sa SubAction) GetIndexesBsonD() []dt.Pair[string, dt.Pair[bson.D, bson.D]] {
 	sa.validate()
-	res := []dt.Pair[bson.D, bson.D]{}
+	res := []dt.Pair[string, dt.Pair[bson.D, bson.D]]{}
 	for _, index := range sa.ActionSchema.Indexes {
-		indexes := indexesToBsonD(index.Spec().Fields)
-		if index.Spec().Rules != nil {
-			res = append(res, dt.NewPair(indexes, convert.MapToBsonD(*index.Spec().Rules)))
+		translated := dictionary.GetTranslatedIndex(index)
+		indexName := index.Spec().GetName()
+		indexes := convert.MapToBsonD(ConvertValueTypeToRealType(translated.GetObject()).(map[string]interface{}))
+		rules := translated.GetRules()
+		if rules != nil {
+			convertedRules := convert.MapToBsonD(ConvertValueTypeToRealType(*rules).(map[string]interface{}))
+			res = append(res, dt.NewPair(indexName, dt.NewPair(indexes, convertedRules)))
 		} else {
-			res = append(res, dt.NewPair(indexes, bson.D{}))
+			res = append(res, dt.NewPair(indexName, dt.NewPair(indexes, bson.D{})))
 		}
 	}
 
 	return res
 }
 
-func (sa SubAction) GetIndexesBsonM() []dt.Pair[bson.M, bson.M] {
+func (sa SubAction) GetIndexesBsonM() []dt.Pair[string, dt.Pair[bson.M, bson.M]] {
 	sa.validate()
-	res := []dt.Pair[bson.M, bson.M]{}
+	res := []dt.Pair[string, dt.Pair[bson.M, bson.M]]{}
 	for _, index := range sa.ActionSchema.Indexes {
-		indexes := indexesToBsonM(index.Spec().Fields)
-		if index.Spec().Rules != nil {
-			res = append(res, dt.NewPair(indexes, convert.MapToBsonM(*index.Spec().Rules)))
+		translated := dictionary.GetTranslatedIndex(index)
+		indexName := index.Spec().GetName()
+		indexes := convert.MapToBsonM(ConvertValueTypeToRealType(translated.GetObject()).(map[string]interface{}))
+		rules := translated.GetRules()
+		if rules != nil {
+			convertedRules := convert.MapToBsonM(ConvertValueTypeToRealType(*rules).(map[string]interface{}))
+			res = append(res, dt.NewPair(indexName, dt.NewPair(indexes, convertedRules)))
 		} else {
-			res = append(res, dt.NewPair(indexes, bson.M{}))
+			res = append(res, dt.NewPair(indexName, dt.NewPair(indexes, bson.M{})))
 		}
 	}
 
@@ -81,12 +89,18 @@ func (sa SubAction) GetIndexesBsonM() []dt.Pair[bson.M, bson.M] {
 }
 
 func (sa SubAction) GetFieldsBsonD() bson.D {
-	sa.validate()
+	if sa.validate != nil {
+		sa.validate()
+	}
+	
 	return fieldsToBsonD(sa.ActionSchema.Fields)
 }
 
 func (sa SubAction) GetFieldsBsonM() bson.M {
-	sa.validate()
+	if sa.validate != nil {
+		sa.validate()
+	}
+
 	return fieldsToBsonM(sa.ActionSchema.Fields)
 }
 
@@ -101,14 +115,32 @@ func (sa SubAction) IsUp() bool {
 
 func (sa SubAction) GetLiteralInstance(prefix string, isArrayItem bool) string {
 	res := ""
-	if !isArrayItem {
-		res += fmt.Sprintf("%sSubAction", prefix)
+	actionSchema := sa.ActionSchema.GetLiteralInstance(prefix, false)
+	switch sa.Type {
+	case SubActionTypeCreateCollection:
+		res += fmt.Sprintf("*%sSubActionCreateCollection(%s)", prefix, actionSchema)
+	case SubActionTypeCreateIndex:
+		res += fmt.Sprintf("*%sSubActionCreateIndex(%s)", prefix, actionSchema)
+	case SubActionTypeCreateField:
+		res += fmt.Sprintf("*%sSubActionCreateField(%s)", prefix, actionSchema)
+	case SubActionTypeConvertField:
+		res += fmt.Sprintf("*%sSubActionConvertField(%s)", prefix, actionSchema)
+	case SubActionTypeDropCollection:
+		res += fmt.Sprintf("*%sSubActionDropCollection(%s)", prefix, actionSchema)
+	case SubActionTypeDropIndex:
+		res += fmt.Sprintf("*%sSubActionDropIndex(%s)", prefix, actionSchema)
+	case SubActionTypeDropField:
+		res += fmt.Sprintf("*%sSubActionDropField(%s)", prefix, actionSchema)
+	default:
+		if !isArrayItem {
+			res += fmt.Sprintf("%sSubAction", prefix)
+		}
+	
+		res += "{\n"
+		res += fmt.Sprintf("Type: %s%s,\n", prefix, sa.Type.ToString())
+		res += fmt.Sprintf("ActionSchema: %s,\n", actionSchema)
+		res += "}"
 	}
-
-	res += "{\n"
-	res += fmt.Sprintf("Type: %s%s,\n", prefix, sa.Type.ToString())
-	res += fmt.Sprintf("ActionSchema: %s,\n", sa.ActionSchema.GetLiteralInstance(prefix, false))
-	res += "}"
 
 	return res
 }
@@ -118,7 +150,7 @@ func SubActionCreateCollection(schema SubActionSchema) *SubAction {
 		Type:         SubActionTypeCreateCollection,
 		ActionSchema: schema,
 		validate: func() {
-			if len(schema.Fields) > 0 {
+			if len(schema.Fields) == 0 {
 				panic("At least a field declared on collection creation")
 			}
 		},

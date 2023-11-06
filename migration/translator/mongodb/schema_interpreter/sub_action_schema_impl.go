@@ -163,6 +163,13 @@ func (sas SubActionSchema) getIndexDeclarationLiteral(idx collection.Index) stri
 		}
 	}
 
+	// if custom index name is declared
+	if idx.Spec().Name != nil {
+		res += fmt.Sprintf(`.SetCustomIndexName("%s")`, 
+			*idx.Spec().Name,
+		)
+	}
+
 	return res
 }
 

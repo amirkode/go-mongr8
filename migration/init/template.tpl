@@ -62,28 +62,30 @@ func Database() *mongo.Database {
 
 func initDatabase() {
 	/*
-	   do something here to init Config.Database
-	   you can call an existing mongodb database instance from the project
+		do something here to init Config.Database
+		you can call an existing mongodb database instance from the project
 
-	   here's simple example of direct database initialization
-	   add import "go.mongodb.org/mongo-driver/mongo/options"
-	   code example:
-	   ctx := GlobalContext()
-	   clientOpts := options.Client().ApplyURI(fmt.Sprintf("mongodb://%s", "db host goes here")).
-	           SetDirect(true)
+		here's simple example of direct database initialization
+		add import "go.mongodb.org/mongo-driver/mongo/options"
+		code example:
+		ctx := GlobalContext()
+		clientOpts := options.Client().ApplyURI(fmt.Sprintf("mongodb://%s", "db host goes here")).
+				SetDirect(true)
 
-	   credential := options.Credential{
-	       Username:   "username goes here",
-	       Password:   "password goes here",
-	       AuthSource: "auth db goes here",
-	   }
-	   clientOpts.SetAuth(credential)
+		credential := options.Credential{
+			Username:   "username goes here",
+			Password:   "password goes here",
+			AuthSource: "auth db goes here",
+		}
+		clientOpts.SetAuth(credential)
 
-	   client, err := mongo.Connect(ctx, clientOpts)
-	   if err != nil {
-	       db := client.Database("main db goes here")
-	       conf.database = db
-	   }
+		client, err := mongo.Connect(ctx, clientOpts)
+		if err != nil {
+			panic(err.Error())
+		}
+
+	   	db := client.Database("main db goes here")
+		conf.database = db
 	*/
 }
 {{ end }}
@@ -156,6 +158,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 
 	collection_no_edit "{{ .ModuleName}}/mongr8/collection/no_edit"
 	migration_no_edit "{{ .ModuleName}}/mongr8/migration"
@@ -166,19 +169,20 @@ import (
 
 func CmdGenerateMigration(ctx *context.Context) {
 	collections := collection_no_edit.GetAllCollections()
-	migrationSubActionSchemas := migration_no_edit.GetAllMigrations()
+	migrations := migration_no_edit.GetAllMigrations()
 	migration := migration.NewMigration(ctx, config.Database())
-	err := migration.GenerateMigration(collections, migrationSubActionSchemas)
+	err := migration.GenerateMigration(collections, migrations)
 	if err != nil {
-
+		fmt.Println(err.Error())
 	}
 }
 
 func CmdApplyMigration(ctx *context.Context) {
+	migrations := migration_no_edit.GetAllMigrations()
 	migration := migration.NewMigration(ctx, config.Database())
-	err := migration.ApplyMigration()
+	err := migration.ApplyMigration(migrations)
 	if err != nil {
-		
+		fmt.Println(err.Error())
 	}
 }
 
@@ -188,7 +192,7 @@ func CmdConsolidateMigration(ctx *context.Context) {
 	migration := migration.NewMigration(ctx, config.Database())
 	err := migration.ConsolidateMigration(collections, migrationSubActionSchemas)
 	if err != nil {
-
+		fmt.Println(err.Error())
 	}
 }
 {{ end }}
@@ -216,7 +220,7 @@ import (
 
 func main() {
 	ctx := context.WithValue(context.Background(), option.MigrationOptionKey, option.GetMigrationOptionFromArgs())
-	cmd.CmdGenerateMigration(&ctx)
+	cmd.{{ .FuncName}}(&ctx)
 }
 
 {{ end }}

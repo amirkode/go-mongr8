@@ -47,11 +47,11 @@ func (p Processor) validateCollection(collections []collection.Collection, panic
 func (p Processor) GetApi(migrations []migrator.Migration, dbSchemas []collection.Collection) []ai.SubActionApi {
 	// For now, we only add Up Actions
 	// pair of migration ID and sub action
-	subActions := []dt.Pair[string, si.SubAction]{}
+	subActions := []dt.Pair[migrator.Migration, si.SubAction]{}
 	for _, m := range migrations {
 		for _, action := range m.Up {
 			for _, subAction := range action.SubActions {
-				subActions = append(subActions, dt.NewPair(m.ID, subAction))
+				subActions = append(subActions, dt.NewPair(m, subAction))
 			}
 		}
 	}

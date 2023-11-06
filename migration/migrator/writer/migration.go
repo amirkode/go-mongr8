@@ -94,7 +94,7 @@ func Write(migration migrator.Migration) error {
 	tplPath := fmt.Sprintf("%s/migration/migrator/writer/template.tpl", *packagePath)
 	outputPath := fmt.Sprintf("%s/mongr8/migration/%s.go", *projectPath, migration.ID)
 
-	err = util.GenerateTemplate("migration", tplPath, outputPath, tplVar)
+	err = util.GenerateTemplate("migration", tplPath, outputPath, tplVar, true)
 	if err != nil {
 		return err
 	}
@@ -117,5 +117,5 @@ func Write(migration migrator.Migration) error {
 	tplPath = fmt.Sprintf("%s/migration/migrator/writer/template.tpl", *packagePath)
 	outputPath = fmt.Sprintf("%s/mongr8/migration/base.go", *projectPath)
 
-	return util.GenerateTemplate("migrations", tplPath, outputPath, baseTplVar)
+	return util.GenerateTemplate("migrations", tplPath, outputPath, baseTplVar, true)
 }

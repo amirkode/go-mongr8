@@ -2,6 +2,7 @@ package api_interpreter
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
@@ -17,18 +18,71 @@ func appendPath(parent, child string) string {
 	return fmt.Sprintf("%s.%s", parent, child)
 }
 
+func createFieldSetPayload(curr interface{}, path string) bson.M {
+	if reflect.TypeOf(curr) == reflect.TypeOf(bson.D{}) {
+		d := curr.(bson.D)
+		return createFieldSetPayload(d[0].Value, appendPath(path, d[0].Key))
+	} else if reflect.TypeOf(curr) == reflect.TypeOf(bson.A{}) {
+		a := curr.(bson.A)
+		// if there's no deeper search, then just set the current path to the array
+		if reflect.TypeOf(a[0]) == reflect.TypeOf(bson.A{}) ||
+			reflect.TypeOf(a[0]) == reflect.TypeOf(bson.D{}) {
+			return createFieldSetPayload(a[0], appendPath(path, "$[]"))
+		}
+	}
+
+	return bson.M{
+		path: curr,
+	}
+}
+
+func dropFieldUnsetPayload(curr interface{}, path string) bson.M {
+	if reflect.TypeOf(curr) == reflect.TypeOf(bson.D{}) {
+		d := curr.(bson.D)
+		return dropFieldUnsetPayload(d[0].Value, appendPath(path, d[0].Key))
+	} else if reflect.TypeOf(curr) == reflect.TypeOf(bson.A{}) {
+		a := curr.(bson.A)
+		// if there's no deeper search, then just set the current path to the array
+		if reflect.TypeOf(a[0]) == reflect.TypeOf(bson.A{}) ||
+			reflect.TypeOf(a[0]) == reflect.TypeOf(bson.D{}) {
+			return dropFieldUnsetPayload(a[0], appendPath(path, "$[]"))
+		}
+	}
+
+	return bson.M{
+		path: "",
+	}
+}
+
+// This returns original conversion function in MongoDB
+// assuming all the conversions are valid
 func convertFunction(to field.FieldType, from field.FieldType) string {
-	return "implement this"
+	// TODO: utilize `from` param in the future if needed
+	switch to {
+	case field.TypeString:
+		return "toString"
+	case field.TypeBoolean:
+		return "toBoolean"
+	case field.TypeTimestamp:
+		return "toDate"
+	case field.TypeInt32:
+		return "toInt"
+	case field.TypeInt64:
+		return "toLong"
+	// TODO: complete for the future usecases
+	}
+
+	panic("Conversion is not supported")
 }
 
 // This returns the bosn.M object payload of a map
-func convertObjectPayload(curr collection.Field, path string, from field.FieldType, depth *int) bson.M {
+func convertFieldObjectPayload(curr collection.Field, path string, from field.FieldType, depth *int) bson.M {
 	var child bson.M
 	switch curr.Spec().Type {
 	case field.TypeArray:
-		child = convertMapPayload(field.FromFieldSpec(&(*curr.Spec().ArrayFields)[0]), appendPath(path, curr.Spec().Name), from, depth)
+		child = convertFieldMapPayload(field.FromFieldSpec(&(*curr.Spec().ArrayFields)[0]), appendPath(path, curr.Spec().Name), from, depth)
 	case field.TypeObject:
-		child = convertObjectPayload(field.FromFieldSpec(&(*curr.Spec().Object)[0]), appendPath(path, curr.Spec().Name), from, depth)
+		child = convertFieldObjectPayload(field.FromFieldSpec(&(*curr.Spec().Object)[0]), appendPath(path, curr.Spec().Name), from, depth)
 	default:
 		child = bson.M{
 			convertFunction(curr.Spec().Type, from): fmt.Sprintf("$%s", appendPath(path, curr.Spec().Name)),
@@ -41,16 +95,16 @@ func convertObjectPayload(curr collection.Field, path string, from field.FieldTy
 }
 
 // This returns map operation in the bson.M representation
-func convertMapPayload(curr collection.Field, path string, from field.FieldType, depth *int) bson.M {
+func convertFieldMapPayload(curr collection.Field, path string, from field.FieldType, depth *int) bson.M {
 	var child bson.M
 	*depth += 1
 	currAlias := fmt.Sprintf("alias_%d", *depth)
 	switch curr.Spec().Type {
 	case field.TypeArray:
-		child = convertMapPayload(field.FromFieldSpec(&(*curr.Spec().ArrayFields)[0]), fmt.Sprintf("$%s", currAlias), from, depth)
+		child = convertFieldMapPayload(field.FromFieldSpec(&(*curr.Spec().ArrayFields)[0]), fmt.Sprintf("$%s", currAlias), from, depth)
 	case field.TypeObject:
 		// this must be a child of map operation
-		child = convertObjectPayload(field.FromFieldSpec(&(*curr.Spec().Object)[0]), fmt.Sprintf("$%s", currAlias), from, depth)
+		child = convertFieldObjectPayload(field.FromFieldSpec(&(*curr.Spec().Object)[0]), fmt.Sprintf("$%s", currAlias), from, depth)
 	default:
 		child = bson.M{
 			convertFunction(curr.Spec().Type, from): fmt.Sprintf("$$%s", currAlias),
@@ -60,8 +114,8 @@ func convertMapPayload(curr collection.Field, path string, from field.FieldType,
 	return bson.M{
 		"$map": bson.M{
 			"input": fmt.Sprintf("$%s", path),
-			"as": currAlias,
-			"in": child,
+			"as":    currAlias,
+			"in":    child,
 		},
 	}
 }
@@ -71,17 +125,17 @@ func convertMapPayload(curr collection.Field, path string, from field.FieldType,
 // `path` represents the current path of fields so far
 // `from` represents the type of conversion from
 // `depth` represents the the depth of map operations has reached
-func convertSetPayload(curr collection.Field, path string, from field.FieldType, depth *int) bson.M {
+func convertFieldSetPayload(curr collection.Field, path string, from field.FieldType, depth *int) bson.M {
 	currPath := appendPath(path, curr.Spec().Name)
 	switch curr.Spec().Type {
 	case field.TypeArray:
 		return bson.M{
-			currPath: convertMapPayload(field.FromFieldSpec(&(*curr.Spec().ArrayFields)[0]), appendPath(path, curr.Spec().Name), from, depth),
+			currPath: convertFieldMapPayload(field.FromFieldSpec(&(*curr.Spec().ArrayFields)[0]), appendPath(path, curr.Spec().Name), from, depth),
 		}
 	case field.TypeObject:
-		return convertSetPayload(field.FromFieldSpec(&(*curr.Spec().Object)[0]), currPath, from, depth)
+		return convertFieldSetPayload(field.FromFieldSpec(&(*curr.Spec().Object)[0]), currPath, from, depth)
 	}
-	
+
 	return bson.M{
 		currPath: bson.M{
 			convertFunction(curr.Spec().Type, from): fmt.Sprintf("$%s", currPath),

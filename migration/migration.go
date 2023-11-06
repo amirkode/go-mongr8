@@ -46,7 +46,7 @@ func (m *Migration) ApplyMigration(migrations []migrator.Migration) error {
 	processor := translator.NewProcessor(m.ctx)
 	apis := processor.GetApi(migrations, dbSchemas)
 
-	return apply.Run(m.db, apis)
+	return apply.Run(m.ctx, m.db, apis)
 }
 
 func (m *Migration) ConsolidateMigration(collections []collection.Collection, migrations []migrator.Migration) error {
