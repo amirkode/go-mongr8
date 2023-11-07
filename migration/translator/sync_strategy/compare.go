@@ -29,6 +29,7 @@ type (
 	// TODO: implement these function with pointer receiver
 	operator[T any] interface {
 		// intersection of two entities resulting modifications
+		// TODO: rename [other] with [origin] and rename [this] with [incoming]
 		Intersect(other T) *[]T
 		// set entity sign (action direction)
 		SetSign(sign EntitySign) T
@@ -72,8 +73,8 @@ type (
 	}
 )
 
-func (f SignedField) Intersect(other SignedField) *[]SignedField {
-	if f.Key() != other.Key() {
+func (incoming SignedField) Intersect(origin SignedField) *[]SignedField {
+	if incoming.Key() != origin.Key() {
 		return nil
 	}
 
@@ -143,7 +144,7 @@ func (f SignedField) Intersect(other SignedField) *[]SignedField {
 				convert.convertFrom = &convertFrom
 				res = append(res, convert)
 			} else if other.Spec().Type == field.TypeString {
-				// any to string conversion
+				// string to any type conversion
 				// this must be undefined conversion type
 				// by default just perform drop and add
 
@@ -158,6 +159,8 @@ func (f SignedField) Intersect(other SignedField) *[]SignedField {
 				minus.Sign = SignMinus
 				res = append(res, minus)
 			} else {
+				panic(fmt.Sprintf("Unsupported conversion type: from %s to %s", this.Spec().Type, other.Spec().Type))
+				// TODO: enable this, if such usecase required
 				// this should be unsupported type conversion
 				// add plus action for "this"
 				plus, _ := restorePath(append(path, dt.NewPair(this.Spec().Name, this.Spec().Type)))
@@ -295,7 +298,7 @@ func (f SignedField) Intersect(other SignedField) *[]SignedField {
 	}
 
 	// perform DFS
-	dfs([]dt.Pair[string, field.FieldType]{}, f, other)
+	dfs([]dt.Pair[string, field.FieldType]{}, incoming, origin)
 
 	// this will also return an emtpy slice
 	// if there's no schema difference in deepest level
@@ -342,6 +345,34 @@ func (f SignedField) SetFieldDeepestType(toType field.FieldType) {
 	}
 
 	dfs(f.Spec())
+}
+
+func (f SignedField) RefreshFieldAddresses() SignedField {
+	var deepCopyField func(_field *field.Spec) *field.Spec
+	deepCopyField = func(_field *field.Spec) *field.Spec {
+		newField := *_field
+		switch newField.Type {
+		case field.TypeArray:
+			newArrayFields := []field.Spec{}
+			for _, arr := range *newField.ArrayFields {
+				newArrayFields = append(newArrayFields, *deepCopyField(&arr))
+			}
+			newField.ArrayFields = &newArrayFields
+		case field.TypeObject:
+			newObjectFields := []field.Spec{}
+			for _, obj := range *newField.Object {
+				newObjectFields = append(newObjectFields, *deepCopyField(&obj))
+			}
+			newField.Object = &newObjectFields
+		}
+
+		return &newField
+	}
+
+	newField := collection.FieldsFromSpecs(&[]field.Spec{*deepCopyField(f.Field.Spec())})[0]
+	f.Field = newField
+
+	return f
 }
 
 func (f SignedField) SetSign(sign EntitySign) SignedField {
@@ -485,6 +516,18 @@ func (f SignedCollection) GetIndexes() []collection.Index {
 	}
 
 	return res
+}
+
+func (f SignedCollection) RefreshFieldAddresses() SignedCollection {
+	fields := f.Fields
+	newFields := []SignedField{}
+	for _, field := range fields {
+		newFields = append(newFields, field.RefreshFieldAddresses())
+	}
+
+	f.Fields = newFields
+
+	return f
 }
 
 func Union[T operator[T]](source1 []T, source2 []T) []T {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/amirkode/go-mongr8/collection"
+	"github.com/amirkode/go-mongr8/collection/index"
 )
 
 type (
@@ -77,7 +78,7 @@ func (t TranslatedIndex) getSparseObjectOrNil() *map[string]interface{} {
 }
 
 // translation for single field index
-func newTranslatedSingleField(index collection.Index) translatedSingleField {
+func newTranslatedSingleFieldIndex(index collection.Index) translatedSingleField {
 	return translatedSingleField{
 		TranslatedIndex{
 			index: index,
@@ -85,17 +86,17 @@ func newTranslatedSingleField(index collection.Index) translatedSingleField {
 	}
 }
 
-func (t translatedSingleField) getObject() map[string]interface{} {
+func (t translatedSingleField) GetObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	return t.getFieldsObject()
 }
 
-func (t translatedSingleField) getRules() *map[string]interface{} {
+func (t translatedSingleField) GetRules() *map[string]interface{} {
 	return t.getSparseObjectOrNil()
 }
 
 // translation for compound index
-func newTranslatedCompound(index collection.Index) translatedCompound {
+func newTranslatedCompoundIndex(index collection.Index) translatedCompound {
 	return translatedCompound{
 		TranslatedIndex{
 			index: index,
@@ -103,17 +104,17 @@ func newTranslatedCompound(index collection.Index) translatedCompound {
 	}
 }
 
-func (t translatedCompound) getObject() map[string]interface{} {
+func (t translatedCompound) GetObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(2)
 	return t.getFieldsObject()
 }
 
-func (t translatedCompound) getRules() *map[string]interface{} {
+func (t translatedCompound) GetRules() *map[string]interface{} {
 	return t.getSparseObjectOrNil()
 }
 
 // translation for text index
-func newTranslatedText(index collection.Index) translatedText {
+func newTranslatedTextIndex(index collection.Index) translatedText {
 	return translatedText{
 		TranslatedIndex{
 			index: index,
@@ -121,7 +122,7 @@ func newTranslatedText(index collection.Index) translatedText {
 	}
 }
 
-func (t translatedText) getObject() map[string]interface{} {
+func (t translatedText) GetObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	field := t.index.Spec().Fields[0]
 	return map[string]interface{}{
@@ -129,12 +130,12 @@ func (t translatedText) getObject() map[string]interface{} {
 	}
 }
 
-func (t translatedText) getRules() *map[string]interface{} {
+func (t translatedText) GetRules() *map[string]interface{} {
 	return t.getSparseObjectOrNil()
 }
 
 // translation for geospatial: 2dspehere index
-func newGeospatial2dsphere(index collection.Index) translatedGeospatial2dsphere {
+func newTranslatedGeospatial2dsphereIndex(index collection.Index) translatedGeospatial2dsphere {
 	return translatedGeospatial2dsphere{
 		TranslatedIndex{
 			index: index,
@@ -142,7 +143,7 @@ func newGeospatial2dsphere(index collection.Index) translatedGeospatial2dsphere 
 	}
 }
 
-func (t translatedGeospatial2dsphere) getOjbect() map[string]interface{} {
+func (t translatedGeospatial2dsphere) GetObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	field := t.index.Spec().Fields[0]
 	return map[string]interface{}{
@@ -150,12 +151,12 @@ func (t translatedGeospatial2dsphere) getOjbect() map[string]interface{} {
 	}
 }
 
-func (t translatedGeospatial2dsphere) getRules() *map[string]interface{} {
+func (t translatedGeospatial2dsphere) GetRules() *map[string]interface{} {
 	return t.getSparseObjectOrNil()
 }
 
 // translation for unique index
-func newTranslatedUnique(index collection.Index) translatedUnique {
+func newTranslatedUniqueIndex(index collection.Index) translatedUnique {
 	return translatedUnique{
 		TranslatedIndex{
 			index: index,
@@ -163,24 +164,22 @@ func newTranslatedUnique(index collection.Index) translatedUnique {
 	}
 }
 
-func (t translatedUnique) getObject() map[string]interface{} {
+func (t translatedUnique) GetObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	return t.getFieldsObject()
 }
 
-func (t translatedUnique) getRules() *map[string]interface{} {
-	res := map[string]interface{}{
-		"unique": Boolean(true),
-	}
+func (t translatedUnique) GetRules() *map[string]interface{} {
+	rules := ConvertAnyToValueType(*t.index.Spec().Rules).(map[string]interface{})
 	if t.index.Spec().Sparse {
-		res["sparse"] = Boolean(true)
+		rules["sparse"] = Boolean(true)
 	}
 
-	return &res
+	return &rules
 }
 
 // translation for partial index
-func newTranslatedPartial(index collection.Index) translatedPartial {
+func newTranslatedPartialIndex(index collection.Index) translatedPartial {
 	return translatedPartial{
 		TranslatedIndex{
 			index: index,
@@ -188,17 +187,15 @@ func newTranslatedPartial(index collection.Index) translatedPartial {
 	}
 }
 
-func (t translatedPartial) getObject() map[string]interface{} {
+func (t translatedPartial) GetObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	return t.getFieldsObject()
 }
 
-func (t translatedPartial) getRules() *map[string]interface{} {
+func (t translatedPartial) GetRules() *map[string]interface{} {
 	t.mustProvideRulesValidation()
 
-	rules := map[string]interface{}{
-		"partialFilterExpression": ConvertAnyToValueType(*t.index.Spec().Rules),
-	}
+	rules := ConvertAnyToValueType(*t.index.Spec().Rules).(map[string]interface{})
 	if t.index.Spec().Sparse {
 		rules["sparse"] = Boolean(true)
 	}
@@ -207,7 +204,7 @@ func (t translatedPartial) getRules() *map[string]interface{} {
 }
 
 // translation for collation index
-func newCollation(index collection.Index) translatedCollation {
+func newTranslatedCollationIndex(index collection.Index) translatedCollation {
 	return translatedCollation{
 		TranslatedIndex{
 			index: index,
@@ -215,17 +212,15 @@ func newCollation(index collection.Index) translatedCollation {
 	}
 }
 
-func (t translatedCollation) getObject() map[string]interface{} {
+func (t translatedCollation) GetObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 	return t.getFieldsObject()
 }
 
-func (t translatedCollation) getRules() *map[string]interface{} {
+func (t translatedCollation) GetRules() *map[string]interface{} {
 	t.mustProvideRulesValidation()
 
-	rules := map[string]interface{}{
-		"collation": ConvertAnyToValueType(*t.index.Spec().Rules),
-	}
+	rules := ConvertAnyToValueType(*t.index.Spec().Rules).(map[string]interface{})
 	if t.index.Spec().Sparse {
 		rules["sparse"] = Boolean(true)
 	}
@@ -234,7 +229,7 @@ func (t translatedCollation) getRules() *map[string]interface{} {
 }
 
 // translation for raw definition index
-func newRaw(index collection.Index) translatedRaw {
+func newTranslatedRawIndex(index collection.Index) translatedRaw {
 	return translatedRaw{
 		TranslatedIndex{
 			index: index,
@@ -242,13 +237,13 @@ func newRaw(index collection.Index) translatedRaw {
 	}
 }
 
-func (t translatedRaw) getObject() map[string]interface{} {
+func (t translatedRaw) GetObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
 
 	return t.getFieldsObject()
 }
 
-func (t translatedRaw) getRules() *map[string]interface{} {
+func (t translatedRaw) GetRules() *map[string]interface{} {
 	if t.index.Spec().Rules == nil {
 		return nil
 	}
@@ -259,4 +254,28 @@ func (t translatedRaw) getRules() *map[string]interface{} {
 	}
 
 	return &rules
+}
+
+// map index to correct translated index
+func GetTranslatedIndex(_index collection.Index) TranslatedIndexIf {
+	switch _index.Spec().Type {
+	case index.TypeSingleField:
+		return newTranslatedSingleFieldIndex(_index)
+	case index.TypeCompound:
+		return newTranslatedCompoundIndex(_index)
+	case index.TypeText:
+		return newTranslatedTextIndex(_index)
+	case index.TypeGeopatial2dsphere:
+		return newTranslatedGeospatial2dsphereIndex(_index)
+	case index.TypeUnique:
+		return newTranslatedUniqueIndex(_index)
+	case index.TypePartial:
+		return newTranslatedPartialIndex(_index)
+	case index.TypeCollation:
+		return newTranslatedCollationIndex(_index)
+	case index.TypeRaw:
+		return newTranslatedRawIndex(_index)
+	}
+
+	return TranslatedIndex{}
 }

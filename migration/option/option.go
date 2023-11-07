@@ -12,6 +12,7 @@ const (
 	MigrationOptionArgUseSortedSchema     = "use-sorted-schema"
 	MigrationOptionArgUseForceConversion  = "use-force-conversion"
 	MigrationOptionArgUseSchemaValidation = "use-schema-validation"
+	MigrationOptionArgUseTransaction      = "use-transaction"
 	MigrationOptionArgDesc                = "desc"
 )
 
@@ -20,6 +21,7 @@ type (
 		UseSortedSchema     bool
 		UseForceConversion  bool
 		UseSchemaValidation bool
+		UseTransaction      bool
 		Desc                string
 	}
 )
@@ -32,6 +34,7 @@ func GetMigrationOptionFromArgs() MigrationOption {
 	flag.BoolVar(&opt.UseSortedSchema, MigrationOptionArgUseSortedSchema, false, "Define option for Sorted MongoDb Schema")
 	flag.BoolVar(&opt.UseForceConversion, MigrationOptionArgUseForceConversion, false, "Define option for forced conversion on migration")
 	flag.BoolVar(&opt.UseSchemaValidation, MigrationOptionArgUseSchemaValidation, false, "Define option for Schema Validation on migration")
+	flag.BoolVar(&opt.UseTransaction, MigrationOptionArgUseTransaction, false, "Define option for Transaction Usage on migration")
 	flag.StringVar(&opt.Desc, MigrationOptionArgDesc, "", "Define option for Schema Validation on migration")
 	flag.Parse()
 

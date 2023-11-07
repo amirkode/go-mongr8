@@ -18,7 +18,7 @@ import (
 	"text/template"
 )
 
-func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface {}) error {
+func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface {}, formatSource bool) error {
 	fmt.Println("file path: " + tplPath)
 	data, err := ioutil.ReadFile(tplPath)
 	if err != nil {
@@ -38,6 +38,11 @@ func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface {}) 
 
 	// fmt.Printf("%s", output.Bytes())
 	// fmt.Println("halo")
+
+	// skip source formatting
+	if !formatSource {
+		return os.WriteFile(outputPath, output.Bytes(), 0644)	
+	}
 
 	formattedOutput, err := format.Source(output.Bytes())
 	if err != nil {

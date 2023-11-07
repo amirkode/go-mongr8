@@ -31,6 +31,8 @@ const (
 // this will generate all required folders for mongr8
 // project-root/
 // ├── mongr8/
+// |   ├── cmd/
+// |       ├── contains migration commands
 // |   ├── collection/
 // |       ├── contains collection definitions
 // |   ├── config/
@@ -135,7 +137,7 @@ func initMongr8Info(projectPath, tplPath string) error {
 
 	outputPath := fmt.Sprintf("%s/mongr8/mongr8.info", projectPath)
 
-	return util.GenerateTemplate(tplMongr8, tplPath, outputPath, tplVar)
+	return util.GenerateTemplate(tplMongr8, tplPath, outputPath, tplVar, false)
 }
 
 func initConfig(projectPath, tplPath string) error {
@@ -147,7 +149,7 @@ func initConfig(projectPath, tplPath string) error {
 
 	outputPath := fmt.Sprintf("%s/mongr8/config/config.go", projectPath)
 
-	return util.GenerateTemplate(tplConfig, tplPath, outputPath, tplVar)
+	return util.GenerateTemplate(tplConfig, tplPath, outputPath, tplVar, true)
 }
 
 func initCombinedCollections(projectPath, tplPath string) error {
@@ -159,7 +161,7 @@ func initCombinedCollections(projectPath, tplPath string) error {
 
 	outputPath := fmt.Sprintf("%s/mongr8/collection/no_edit/combined_collections.go", projectPath)
 
-	return util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, tplVar)
+	return util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, tplVar, true)
 }
 
 func initMigrationSubActionSchemas(projectPath, tplPath string) error {
@@ -171,7 +173,7 @@ func initMigrationSubActionSchemas(projectPath, tplPath string) error {
 
 	outputPath := fmt.Sprintf("%s/mongr8/migration/base.go", projectPath)
 
-	return util.GenerateTemplate(tplMigrations, tplPath, outputPath, tplVar)
+	return util.GenerateTemplate(tplMigrations, tplPath, outputPath, tplVar, true)
 }
 
 func initCmd(projectPath, tplPath string) error {
@@ -187,7 +189,7 @@ func initCmd(projectPath, tplPath string) error {
 		ModuleName: moduleName,
 	}
 	outputPath := fmt.Sprintf("%s/mongr8/cmd/cmd.go", projectPath)
-	err := util.GenerateTemplate(tplCmdMain, tplPath, outputPath, tplCmdMainVar)
+	err := util.GenerateTemplate(tplCmdMain, tplPath, outputPath, tplCmdMainVar, true)
 	if err != nil {
 		return err
 	}
@@ -221,7 +223,7 @@ func initCmd(projectPath, tplPath string) error {
 			FuncName:   output.funcName,
 		}
 		outputPath = fmt.Sprintf("%s/mongr8/cmd/%s/main.go", projectPath, output.operation)
-		err := util.GenerateTemplate(tplCmdCall, tplPath, outputPath, tplCmdCallVar)
+		err := util.GenerateTemplate(tplCmdCall, tplPath, outputPath, tplCmdCallVar, true)
 		if err != nil {
 			return err
 		}

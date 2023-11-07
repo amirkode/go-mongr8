@@ -35,8 +35,8 @@ type (
 		// flag whether current sub action is Up or Down
 		IsUp() bool
 		// this will return pairs of index and rule
-		GetIndexesBsonD() []dt.Pair[bson.D, bson.D]
-		GetIndexesBsonM() []dt.Pair[bson.M, bson.M]
+		GetIndexesBsonD() []dt.Pair[string, dt.Pair[bson.D, bson.D]]
+		GetIndexesBsonM() []dt.Pair[string, dt.Pair[bson.M, bson.M]]
 		// this will return whole field schema in the collection
 		GetFieldsBsonD() bson.D
 		GetFieldsBsonM() bson.M

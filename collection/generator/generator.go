@@ -84,7 +84,7 @@ func GenerateMigrationTemplate(collectionName string) error {
 
 	// genenrate collection
 	outputPath := fmt.Sprintf("%s/mongr8/collection/%s.go", *rootPath, collectionName)
-	err = util.GenerateTemplate(tplCollection, tplPath, outputPath, collTemplateVar)
+	err = util.GenerateTemplate(tplCollection, tplPath, outputPath, collTemplateVar, true)
 
 	// generate combined collections
 	combinedCollsTemplateVar, err := getCombinedCollectionsTemplateVar(*rootPath)
@@ -94,5 +94,5 @@ func GenerateMigrationTemplate(collectionName string) error {
 
 	outputPath = fmt.Sprintf("%s/mongr8/collection/no_edit/combined_collections.go", *rootPath)
 
-	return util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, combinedCollsTemplateVar)
+	return util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, combinedCollsTemplateVar, true)
 }

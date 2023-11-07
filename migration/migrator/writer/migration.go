@@ -37,7 +37,12 @@ func getMigrationLiteral(migration migrator.Migration) string {
 	return res
 }
 
-func Write(migration migrator.Migration, suffix int) error {
+func Write(migration migrator.Migration) error {
+	suffix, err := getNextSuffix()
+	if err != nil {
+		return err
+	}
+
 	/// projectPath should be the root project directory
 	projectPath, err := config.GetProjectRootDir()
 	if err != nil {
@@ -49,19 +54,68 @@ func Write(migration migrator.Migration, suffix int) error {
 		return err
 	}
 
+	// check whether current migration uses field or/and index
+	useField := false
+	useIndex := false
+	for _, action := range migration.Up {
+		for _, subAction := range action.SubActions {
+			if !useField {
+				useField = len(subAction.ActionSchema.Fields) > 0
+			}
+			if !useIndex {
+				useIndex = len(subAction.ActionSchema.Indexes) > 0
+			}
+			// all states are found
+			if useField && useIndex {
+				break
+			}
+		}
+		// all states are found
+		if useField && useIndex {
+			break
+		}
+	}
+
 	tplVar := struct {
 		CreateDate      string
 		MigrationSuffix int
 		Migration       string
+		UseField        bool
+		UseIndex        bool
 	}{
 		CreateDate:      time.Now().Format("2006-01-02"),
 		MigrationSuffix: suffix,
 		Migration:       getMigrationLiteral(migration),
+		UseField:        useField,
+		UseIndex:        useIndex,
 	}
 
 	// init templates
 	tplPath := fmt.Sprintf("%s/migration/migrator/writer/template.tpl", *packagePath)
 	outputPath := fmt.Sprintf("%s/mongr8/migration/%s.go", *projectPath, migration.ID)
 
-	return util.GenerateTemplate("migration", tplPath, outputPath, tplVar)
+	err = util.GenerateTemplate("migration", tplPath, outputPath, tplVar, true)
+	if err != nil {
+		return err
+	}
+
+	// updated migration variable names
+	migrationVarNames, err := getMigrationVarNames()
+	if err != nil {
+		return err
+	}
+
+	baseTplVar := struct {
+		CreateDate string
+		Migrations []string
+	}{
+		CreateDate: time.Now().Format("2006-01-02"),
+		Migrations: migrationVarNames,
+	}
+
+	// init templates
+	tplPath = fmt.Sprintf("%s/migration/migrator/writer/template.tpl", *packagePath)
+	outputPath = fmt.Sprintf("%s/mongr8/migration/base.go", *projectPath)
+
+	return util.GenerateTemplate("migrations", tplPath, outputPath, baseTplVar, true)
 }

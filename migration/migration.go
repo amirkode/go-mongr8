@@ -6,6 +6,7 @@ import (
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/migration/migrator"
+	"github.com/amirkode/go-mongr8/migration/migrator/apply"
 	"github.com/amirkode/go-mongr8/migration/migrator/generate"
 	"github.com/amirkode/go-mongr8/migration/migrator/loader"
 	"github.com/amirkode/go-mongr8/migration/translator"
@@ -19,7 +20,7 @@ const (
 
 type (
 	Cmd interface {
-		ApplyMigration() error
+		ApplyMigration(migrations []migrator.Migration) error
 		ConsolidateMigration(collections []collection.Collection, migrations []migrator.Migration) error
 		GenerateMigration(collections []collection.Collection, migrations []migrator.Migration) error
 	}
@@ -40,8 +41,12 @@ func NewMigration(ctx *context.Context, db *mongo.Database) Cmd {
 	}
 }
 
-func (m *Migration) ApplyMigration() error {
-	return nil
+func (m *Migration) ApplyMigration(migrations []migrator.Migration) error {
+	dbSchemas := loader.GetSchemaFromDB()
+	processor := translator.NewProcessor(m.ctx)
+	apis := processor.GetApi(migrations, dbSchemas)
+
+	return apply.Run(m.ctx, m.db, apis)
 }
 
 func (m *Migration) ConsolidateMigration(collections []collection.Collection, migrations []migrator.Migration) error {

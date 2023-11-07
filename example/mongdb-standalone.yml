@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo
+    container_name: mongodb-go-mongr8-test
+    ports:
+      - 27099:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongr8
+      MONGO_INITDB_ROOT_PASSWORD: mongr8
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
