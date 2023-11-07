@@ -17,3 +17,11 @@ const (
 	CollectionOptionCappedSize          CollectionOption = "size"
 	CollectionOptionExpiredAfterSeconds CollectionOption = "expiredAfterSeconds"
 )
+
+func GetAllOptionKeys() []CollectionOption {
+	return []CollectionOption{
+		CollectionOptionCapped,
+		CollectionOptionCappedSize,
+		CollectionOptionExpiredAfterSeconds,
+	}
+}

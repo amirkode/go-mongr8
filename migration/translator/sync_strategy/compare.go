@@ -347,6 +347,34 @@ func (f SignedField) SetFieldDeepestType(toType field.FieldType) {
 	dfs(f.Spec())
 }
 
+func (f SignedField) RefreshFieldAddresses() SignedField {
+	var deepCopyField func(_field *field.Spec) *field.Spec
+	deepCopyField = func(_field *field.Spec) *field.Spec {
+		newField := *_field
+		switch newField.Type {
+		case field.TypeArray:
+			newArrayFields := []field.Spec{}
+			for _, arr := range *newField.ArrayFields {
+				newArrayFields = append(newArrayFields, *deepCopyField(&arr))
+			}
+			newField.ArrayFields = &newArrayFields
+		case field.TypeObject:
+			newObjectFields := []field.Spec{}
+			for _, obj := range *newField.Object {
+				newObjectFields = append(newObjectFields, *deepCopyField(&obj))
+			}
+			newField.Object = &newObjectFields
+		}
+
+		return &newField
+	}
+
+	newField := collection.FieldsFromSpecs(&[]field.Spec{*deepCopyField(f.Field.Spec())})[0]
+	f.Field = newField
+
+	return f
+}
+
 func (f SignedField) SetSign(sign EntitySign) SignedField {
 	f.Sign = sign
 	return f
@@ -488,6 +516,18 @@ func (f SignedCollection) GetIndexes() []collection.Index {
 	}
 
 	return res
+}
+
+func (f SignedCollection) RefreshFieldAddresses() SignedCollection {
+	fields := f.Fields
+	newFields := []SignedField{}
+	for _, field := range fields {
+		newFields = append(newFields, field.RefreshFieldAddresses())
+	}
+
+	f.Fields = newFields
+
+	return f
 }
 
 func Union[T operator[T]](source1 []T, source2 []T) []T {

@@ -125,7 +125,8 @@ func FieldsFromSpecs(arrFields *[]field.Spec) []Field {
 
 	res := make([]Field, len(*arrFields))
 	for index, arrField := range *arrFields {
-		res[index] = field.FromFieldSpec(&arrField)
+		currField := arrField // assign new address
+		res[index] = field.FromFieldSpec(&currField)
 	}
 
 	return res

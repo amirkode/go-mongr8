@@ -60,15 +60,15 @@ func convertFunction(to field.FieldType, from field.FieldType) string {
 	// TODO: utilize `from` param in the future if needed
 	switch to {
 	case field.TypeString:
-		return "toString"
+		return "$toString"
 	case field.TypeBoolean:
-		return "toBoolean"
+		return "$toBoolean"
 	case field.TypeTimestamp:
-		return "toDate"
+		return "$toDate"
 	case field.TypeInt32:
-		return "toInt"
+		return "$toInt"
 	case field.TypeInt64:
-		return "toLong"
+		return "$toLong"
 	// TODO: complete for the future usecases
 	}
 
@@ -111,12 +111,24 @@ func convertFieldMapPayload(curr collection.Field, path string, from field.Field
 		}
 	}
 
+	mp := bson.M{
+		"input": fmt.Sprintf("$%s", path),
+		"as":    currAlias,
+		"in":    child,
+	}
+
+	// merge objects
+	if curr.Spec().Type == field.TypeObject {
+		mp["in"] = bson.M{
+			"$mergeObjects": bson.A{
+				fmt.Sprintf("$$%s", currAlias),
+				child,
+			},
+		}
+	}
+
 	return bson.M{
-		"$map": bson.M{
-			"input": fmt.Sprintf("$%s", path),
-			"as":    currAlias,
-			"in":    child,
-		},
+		"$map": mp,
 	}
 }
 
@@ -126,6 +138,8 @@ func convertFieldMapPayload(curr collection.Field, path string, from field.Field
 // `from` represents the type of conversion from
 // `depth` represents the the depth of map operations has reached
 func convertFieldSetPayload(curr collection.Field, path string, from field.FieldType, depth *int) bson.M {
+	// TODO: FIXME: by default, this will ignore other properties other than the converted field
+	// it's because of the $map behaviour
 	currPath := appendPath(path, curr.Spec().Name)
 	switch curr.Spec().Type {
 	case field.TypeArray:

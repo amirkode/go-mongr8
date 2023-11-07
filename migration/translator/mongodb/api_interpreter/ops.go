@@ -4,6 +4,7 @@ package api_interpreter
 
 import (
 	"context"
+	"fmt"
 
 	dt "internal/data_type"
 
@@ -42,9 +43,13 @@ func createField(ctx context.Context, db *mongo.Database, collName string, paylo
 func convertField(ctx context.Context, db *mongo.Database, collName string, to collection.Field, from field.FieldType) error {
 	// depth as suffix of map alias to maintain the uniqueness of the alias
 	depth := 0
-	updatePayload := bson.M{
-		"$set": convertFieldSetPayload(to, "", from, &depth),
+	updatePayload := bson.A{
+		bson.M{
+			"$set": convertFieldSetPayload(to, "", from, &depth),
+		},
 	}
+
+	fmt.Println("convert payload:", updatePayload)
 
 	collection := db.Collection(collName)
 	_, err := collection.UpdateMany(ctx, bson.M{}, updatePayload)

@@ -1,9 +1,11 @@
 package sync_strategy
 
 import (
+	"fmt"
+	"sort"
+
 	dt "internal/data_type"
 	"internal/util"
-	"sort"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
@@ -195,10 +197,12 @@ func GetActions(incoming []collection.Collection, origin []collection.Collection
 			schema.FieldConvertFrom = &convertFromType
 			upSubAction = si.SubActionConvertField(schema)
 			// set down conversion
-			signedCollection.Fields[0].SetFieldDeepestType(convertFromType)
-			schema.Fields = signedCollection.GetFields()
-			schema.FieldConvertFrom = &convertToType
-			downSubAction = si.SubActionConvertField(schema)
+			downSignedCollection := signedCollection.RefreshFieldAddresses()
+			downSignedCollection.Fields[0].SetFieldDeepestType(convertFromType)
+			downSchema := schema // assign new address
+			downSchema.Fields = downSignedCollection.GetFields()
+			downSchema.FieldConvertFrom = &convertToType
+			downSubAction = si.SubActionConvertField(downSchema)
 		case si.SubActionTypeDropCollection:
 			upSubAction = si.SubActionDropCollection(schema)
 			downSubAction = si.SubActionCreateCollection(schema)
@@ -309,28 +313,40 @@ func GetCollectionFromMigrations(migrations []migrator.Migration) []collection.C
 	var mergeFields func(a, b []collection.Field, c bool) []collection.Field
 	mergeFields = func(origin, incoming []collection.Field, isRemove bool) []collection.Field {
 		res := []collection.Field{}
-		// TODO: implement something
 		mergeDeeper := func(org, inc collection.Field) {
-			merged := []collection.Field{}
+			if org.Spec().Type != inc.Spec().Type {
+				if isRemove {
+					panic("Field type for both origin and incoming must be same for removal")
+				}
+
+				// this should be field conversion, add the incoming
+				res = append(res, inc)
+			}
+
 			if org.Spec().Type == field.TypeArray {
-				merged = mergeFields(
+				merged := mergeFields(
 					collection.FieldsFromSpecs(org.Spec().ArrayFields),
 					collection.FieldsFromSpecs(inc.Spec().ArrayFields),
 					isRemove,
 				)
+				// merged array fields not empty
+				if len(merged) > 0 {
+					arrayFields := collection.SpecsFromFields(merged)
+					org.Spec().ArrayFields = &arrayFields
+					res = append(res, org)
+				}
 			} else if org.Spec().Type == field.TypeObject {
-				merged = mergeFields(
+				merged := mergeFields(
 					collection.FieldsFromSpecs(org.Spec().Object),
 					collection.FieldsFromSpecs(inc.Spec().Object),
 					isRemove,
 				)
-			}
-
-			// merged fields not empty
-			if len(merged) > 0 {
-				arrayFields := collection.SpecsFromFields(merged)
-				org.Spec().ArrayFields = &arrayFields
-				res = append(res, org)
+				// merged object fields not empty
+				if len(merged) > 0 {
+					objectFields := collection.SpecsFromFields(merged)
+					org.Spec().Object = &objectFields
+					res = append(res, org)
+				}
 			}
 		}
 
@@ -350,10 +366,6 @@ func GetCollectionFromMigrations(migrations []migrator.Migration) []collection.C
 			for _, org := range origin {
 				inc, found := incFields[org.Spec().Name]
 				if found {
-					if org.Spec().Type != inc.Spec().Type {
-						panic("Field type for both origin and incoming must be same")
-					}
-
 					mergeDeeper(org, inc)
 				} else {
 					// skip, no need to remove
@@ -373,10 +385,6 @@ func GetCollectionFromMigrations(migrations []migrator.Migration) []collection.C
 			for _, inc := range incoming {
 				org, found := orgFields[inc.Spec().Name]
 				if found {
-					if org.Spec().Type != inc.Spec().Type {
-						panic("Field type for both origin and incoming must be same")
-					}
-
 					mergeDeeper(org, inc)
 				} else {
 					// if not found in origin, just add it
@@ -387,22 +395,24 @@ func GetCollectionFromMigrations(migrations []migrator.Migration) []collection.C
 
 		return res
 	}
-	mergeToCollections := func(subAction *si.SubAction) {
+	mergeToCollections := func(subAction *si.SubAction, migrationID string) {
 		collectionName := subAction.ActionSchema.Collection.Spec().Name
 		coll, ok := collections[collectionName]
-		if !ok || subAction.Type == si.SubActionTypeCreateCollection {
+		if subAction.Type == si.SubActionTypeCreateCollection {
 			// add new collection
 			collections[collectionName] = collection.NewCollection(
 				subAction.ActionSchema.Collection,
 				subAction.ActionSchema.Fields,
 				subAction.ActionSchema.Indexes,
 			)
-		} else {
+		} else if ok {
 			if subAction.Type == si.SubActionTypeDropCollection {
 				// delete collection from map
 				delete(collections, subAction.ActionSchema.Collection.Spec().Name)
 			} else {
 				// flag whether to add or remove
+				// we consider a convert as an add
+				// since, we only care of incoming type
 				isRemove := util.InListEq(subAction.Type, []si.SubActionType{
 					si.SubActionTypeDropField,
 					si.SubActionTypeDropIndex,
@@ -454,6 +464,8 @@ func GetCollectionFromMigrations(migrations []migrator.Migration) []collection.C
 					newIndexes,
 				)
 			}
+		} else {
+			panic(fmt.Sprintf("Inconsitent migration found (%s) with action: %s\n", migrationID, subAction.Type.ToString()))
 		}
 	}
 
@@ -461,7 +473,7 @@ func GetCollectionFromMigrations(migrations []migrator.Migration) []collection.C
 		// we only care of UP actions
 		for _, action := range migration.Up {
 			for _, subAction := range action.SubActions {
-				mergeToCollections(&subAction)
+				mergeToCollections(&subAction, migration.ID)
 			}
 		}
 	}

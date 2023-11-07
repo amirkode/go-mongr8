@@ -200,8 +200,54 @@ func TestGetActions(t *testing.T) {
 		}
 	}
 
+	// Case 2: Field Conversion
+	case2Incoming := []collection.Collection{
+		collection.NewCollection(
+			metadata.InitMetadata("customers"),
+			[]collection.Field{
+				field.ObjectField("other_info",
+					field.ArrayField("tx_history",
+						field.ObjectField("",
+							field.StringField("amount"),
+						),
+					),
+				),
+			},
+			[]collection.Index{},
+		),
+	}
+	case2Origin := []collection.Collection{
+		collection.NewCollection(
+			metadata.InitMetadata("customers"),
+			[]collection.Field{
+				field.ObjectField("other_info",
+					field.ArrayField("tx_history",
+						field.ObjectField("",
+							field.Int32Field("amount"),
+						),
+					),
+				),
+			},
+			[]collection.Index{},
+		),
+	}
+	case2Actions := GetActions(case2Incoming, case2Origin)
+
+	test.AssertEqual(t, len(case2Actions.First), 1, "Case 2: Up Actions length must be 1")
+	test.AssertEqual(t, len(case2Actions.Second), 1, "Case 2: Down Actions length must be 1")
+	// check Up Actions
+	test.AssertEqual(t, len(case2Actions.First[0].SubActions), 1, "Case 2: Unexpected Sub Actions length")
+	test.AssertEqual(t, *case2Actions.First[0].SubActions[0].ActionSchema.FieldConvertFrom, field.TypeInt32, "Case 2: Unexpected Convert From Type")
+	case2ExpectedPayloadAsCollection := case2Incoming[0]
+	case2ActualPayloadAsCollection := collection.NewCollection(
+		case2Actions.First[0].SubActions[0].ActionSchema.Collection,
+		case2Actions.First[0].SubActions[0].ActionSchema.Fields,
+		[]collection.Index{},
+	)
+
+	test.AssertTrue(t, collectionsAreEqual(case2ExpectedPayloadAsCollection, case2ActualPayloadAsCollection), "Case 2: Unexpected Action Payload")
+
 	// TODO: Add more cases
-	// - FIELD CONVERSION
 }
 
 func TestGetCollectionFromMigrations(t *testing.T) {
@@ -311,131 +357,201 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 		},
 	}
 	case1Collections := GetCollectionFromMigrations(case1Migrations)
+	case1ExpectedCollections := map[string]collection.Collection{
+		"users": collection.NewCollection(
+			metadata.InitMetadata("users"),
+			[]collection.Field{
+				field.StringField("name"),
+				field.Int32Field("age"),
+				field.ObjectField("additional_info",
+					field.StringField("address"),
+					field.ArrayField("score_history",
+						field.Int32Field("score"),
+					),
+				),
+			},
+			[]collection.Index{
+				index.CompoundIndex(
+					index.Field("name", -1),
+					index.Field("age", 1),
+				),
+			},
+		),
+		"customers": collection.NewCollection(
+			metadata.InitMetadata("customers"),
+			[]collection.Field{
+				field.StringField("name"),
+				field.StringField("bio"),
+				field.StringField("address"),
+			},
+			[]collection.Index{
+				index.SingleFieldIndex(index.Field("bio", 1)),
+				index.SingleFieldIndex(index.Field("address", -1)),
+			},
+		),
+	}
 	// the number of collections must be 2 (users and customers)
 	test.AssertEqual(t, len(case1Collections), 2, "Case 1: The collections length must be 2 (users and customers)")
 	// check collection structure
-	// TODO: replace this test with a single global function to check structure with DFS
 	for _, collection := range case1Collections {
-		if !util.InListEq(collection.Collection().Spec().Name, []string{"users", "customers"}) {
+		compCollection, ok := case1ExpectedCollections[collection.Collection().Spec().Name]
+		if !ok {
 			msg := "Case 1: Collection name must be users or customers"
 			t.Errorf(msg)
 			panic(msg)	
 		}
 
-		switch collection.Collection().Spec().Name {
-		case "users":
-			// check fields
-			test.AssertEqual(t, len(collection.Fields()), 3, "Case 1: fields length for collection users must be 3")
-			for _, f := range collection.Fields() {
-				switch f.Spec().Name {
-				case "name":
-					test.AssertEqual(t, f.Spec().Type, field.TypeString,
-						fmt.Sprintf("Case 1: field type for %s on collection users must be a string", 
-							f.Spec().Name,
+		test.AssertTrue(t, collectionsAreEqual(collection, compCollection), fmt.Sprintf("Case 1: Unexpected Collection %s", collection.Collection().Spec().Name))
+	}
+
+	// Case 2: migrations of different actions with drop field action
+	case2Migrations := []migrator.Migration{
+		{
+			ID: "1",
+			Desc: "a description",
+			Up: []si.Action{
+				{
+					ActionKey: "users",
+					SubActions: []si.SubAction{
+						*si.SubActionCreateCollection(si.SubActionSchema{
+							Collection: metadata.InitMetadata("users"),
+							Fields: []collection.Field{
+								field.StringField("name"),
+							},
+							Indexes: []collection.Index{
+								index.SingleFieldIndex(index.Field("name", int(1))),
+							},
+						}),
+					},
+				},
+			},
+		},
+		{
+			ID: "2",
+			Desc: "a description",
+			Up: []si.Action{
+				{
+					ActionKey: "users",
+					SubActions: []si.SubAction{
+						*si.SubActionCreateField(si.SubActionSchema{
+							Collection: metadata.InitMetadata("users"),
+							Fields: []collection.Field{
+								field.Int32Field("age"),
+							},
+							Indexes: []collection.Index{},
+						}),
+						*si.SubActionCreateIndex(si.SubActionSchema{
+							Collection: metadata.InitMetadata("users"),
+							Fields:     []collection.Field{},
+							Indexes: []collection.Index{
+								index.CompoundIndex(
+									index.Field("name", int(-1)),
+									index.Field("age", int(1)),
+								),
+							},
+						}),
+					},
+				},
+			},
+		},
+		{
+			ID: "3",
+			Desc: "a description",
+			Up: []si.Action{
+				{
+					ActionKey: "customers",
+					SubActions: []si.SubAction{
+						*si.SubActionCreateCollection(si.SubActionSchema{
+							Collection: metadata.InitMetadata("customers"),
+							Fields: []collection.Field{
+								field.StringField("name"),
+								field.StringField("addres"),
+								field.ObjectField("other_info",
+									field.ArrayField("tx_history",
+										field.ObjectField("",
+											field.StringField("id"),
+											field.StringField("desc"),
+											field.StringField("amount"),
+										),
+									),
+								),
+							},
+							Indexes: []collection.Index{},
+						}),
+					},
+				},
+			},
+		},
+		{
+			ID: "4",
+			Desc: "a description",
+			Up: []si.Action{
+				{
+					ActionKey: "customers",
+					SubActions: []si.SubAction{
+						*si.SubActionDropField(si.SubActionSchema{
+							Collection: metadata.InitMetadata("customers"),
+							Fields: []collection.Field{
+								field.ObjectField("other_info",
+									field.ArrayField("tx_history",
+										field.ObjectField("",
+											field.StringField("amount"),
+										),
+									),
+								),
+							},
+							Indexes: []collection.Index{},
+						}),
+					},
+				},
+			},
+		},
+	}
+	case2Collections := GetCollectionFromMigrations(case2Migrations)
+	case2ExpectedCollections := map[string]collection.Collection{
+		"users": collection.NewCollection(
+			metadata.InitMetadata("users"),
+			[]collection.Field{
+				field.StringField("name"),
+				field.Int32Field("age"),
+			},
+			[]collection.Index{
+				index.SingleFieldIndex(index.Field("name", 1)),
+				index.CompoundIndex(
+					index.Field("name", -1),
+					index.Field("age", 1),
+				),
+			},
+		),
+		"customers": collection.NewCollection(
+			metadata.InitMetadata("customers"),
+			[]collection.Field{
+				field.StringField("name"),
+				field.StringField("addres"),
+				field.ObjectField("other_info",
+					field.ArrayField("tx_history",
+						field.ObjectField("",
+							field.StringField("id"),
+							field.StringField("desc"),
 						),
-					)
-				case "age":
-					test.AssertEqual(t, f.Spec().Type, field.TypeInt32,
-						fmt.Sprintf("Case 1: field type for %s on collection users must be an integer", 
-							f.Spec().Name,
-						),
-					)
-				case "additional_info":
-					test.AssertEqual(t, f.Spec().Type, field.TypeObject,
-						fmt.Sprintf("Case 1: field type for %s on collection users must be an integer", 
-							f.Spec().Name,
-						),
-					)
-					test.AssertTrue(t, f.Spec().Object != nil && len(*f.Spec().Object) == 2,
-					fmt.Sprintf("Case 1: object length for %s on collection users must be 2", 
-							f.Spec().Name,
-						),
-					)
-					// assuming after this pass, the children of additional_info are correct
-				default:
-					msg := fmt.Sprintf("Case 1: Unexpected field name %s for collection users", 
-						f.Spec().Name,
-					)
-					t.Errorf(msg)
-					panic(msg)
-				}
-			}
-			// check indexes
-			test.AssertEqual(t, len(collection.Indexes()), 1, "Case 1: indexes length for collection users must be 1")
-			for _, idx := range collection.Indexes() {
-				test.AssertEqual(t, idx.Spec().Type, index.TypeCompound, "Case 1: index type for collection users must be Compound Index")
-				test.AssertEqual(t, len(idx.Spec().Fields), 2, "Case 1: index fields length for collection users must be 2")
-				for _, idxField := range idx.Spec().Fields {
-					switch idxField.Key {
-					case "name":
-						test.AssertEqual(t, idxField.Value, -1, fmt.Sprintf("Case 1: Compound index field %s value for collection users must be -1", 
-							idxField.Key,
-						))
-					case "age":
-						test.AssertEqual(t, idxField.Value, 1, fmt.Sprintf("Case 1: Compound index field %s value for collection users must be -1", 
-							idxField.Key,
-						))
-					default:
-						msg := "Case 1: Compound index field for collection users must be either name or age"
-						t.Errorf(msg)
-						panic(msg)
-					}
-				}
-			}
-		case "customers":
-			// check fields
-			test.AssertEqual(t, len(collection.Fields()), 3, "Case 1: fields length for collection customers must be 3")
-			for _, f := range collection.Fields() {
-				switch f.Spec().Name {
-				case "name":
-					test.AssertEqual(t, f.Spec().Type, field.TypeString,
-						fmt.Sprintf("Case 1: field type for %s on collection customers must be a string", 
-							f.Spec().Name,
-						),
-					)
-				case "bio":
-					test.AssertEqual(t, f.Spec().Type, field.TypeString,
-						fmt.Sprintf("Case 1: field type for %s on collection customers must be a string", 
-							f.Spec().Name,
-						),
-					)
-				case "address":
-					test.AssertEqual(t, f.Spec().Type, field.TypeString,
-						fmt.Sprintf("Case 1: field type for %s on collection customers must be a string", 
-							f.Spec().Name,
-						),
-					)
-				default:
-					msg := fmt.Sprintf("Case 1: Unexpected field name %s for collection customers", 
-						f.Spec().Name,
-					)
-					t.Errorf(msg)
-					panic(msg)
-				}
-			}
-			// check indexes
-			test.AssertEqual(t, len(collection.Indexes()), 2, "Case 1: indexes length for collection customers must be 2")
-			for _, idx := range collection.Indexes() {
-				test.AssertEqual(t, idx.Spec().Type, index.TypeSingleField, "Case 1: index type for collection customers must be Single Field Index")
-				test.AssertEqual(t, len(idx.Spec().Fields), 1, "Case 1: index fields length for collection customers must be 1")
-				for _, idxField := range idx.Spec().Fields {
-					switch idxField.Key {
-					case "bio":
-						test.AssertEqual(t, idxField.Value, 1, fmt.Sprintf("Case 1: Single Field index field %s value for collection customers must be 1", 
-							idxField.Key,
-						))
-					case "address":
-						test.AssertEqual(t, idxField.Value, -1, fmt.Sprintf("Case 1: Single Field index field %s value for collection customers must be -1", 
-							idxField.Key,
-						))
-					default:
-						msg := "Case 1: Single Field index field for collection users must be either bio or address"
-						t.Errorf(msg)
-						panic(msg)
-					}
-				}
-			}
+					),
+				),
+			},
+			[]collection.Index{},
+		),
+	}
+	// the number of collections must be 2 (users and customers)
+	test.AssertEqual(t, len(case2Collections), len(case2ExpectedCollections), "Case 2: Unexpected collections length")
+	// check collection structure
+	for _, collection := range case2Collections {
+		compCollection, ok := case2ExpectedCollections[collection.Collection().Spec().Name]
+		if !ok {
+			msg := "Case 2: Collection name must be users or customers"
+			t.Errorf(msg)
+			panic(msg)	
 		}
+
+		test.AssertTrue(t, collectionsAreEqual(collection, compCollection), fmt.Sprintf("Case 2: Unexpected Collection %s", collection.Collection().Spec().Name))
 	}
 
 	// TODO: add more cases
