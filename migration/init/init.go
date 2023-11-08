@@ -34,11 +34,11 @@ const (
 // |   ├── cmd/
 // |       ├── contains migration commands
 // |   ├── collection/
-// |       ├── contains collection definitions
+// |       ├── contains collection schema definitions
 // |   ├── config/
 // |       ├── contains some setup files
 // |   ├── migration/
-// |       ├── contains some setup files
+// |       ├── contains some migration files
 func InitMigration(applyRootDirValidation bool) error {
 	/// projectPath should be the root project directory
 	projectPath, err := config.GetProjectRootDir()

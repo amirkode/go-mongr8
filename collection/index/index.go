@@ -193,6 +193,7 @@ func Geospatial2dsphereIndex(field IndexField) *IndexSpec {
 	return defaultIndex(TypeGeopatial2dsphere, []IndexField{field}, nil)
 }
 
+// TODO: apply this generally
 func UniqueIndex(field IndexField) *IndexSpec {
 	rules := map[string]interface{}{
 		"unique": true,
