@@ -12,13 +12,19 @@ type (
 )
 
 const (
+	// Index Types
 	TypeSingleField       IndexType = "TypeSingleField"
 	TypeCompound          IndexType = "TypeCompound"
 	TypeText              IndexType = "TypeText"
 	TypeGeopatial2dsphere IndexType = "TypeGeopatial2dsphere"
-	TypeUnique            IndexType = "TypeUnique"
-	TypePartial           IndexType = "TypePartial"
-	TypeCollation         IndexType = "TypeCollation"
-	// raw user defined index
+	TypeHashed            IndexType = "TypeHashedIndex"
 	TypeRaw               IndexType = "TypeRaw"
+	// Index Options
+	OptionSparse           = "sparse"
+	OptionBackground       = "background"
+	OptionUnique           = "unique"
+	OptionHidden           = "hidden"
+	OptionPartialFilterExp = "partialFilterExpression"
+	OptionTTL              = "expireAfterSeconds"
+	OptionCollation        = "collation"
 )

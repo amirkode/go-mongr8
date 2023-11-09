@@ -23,7 +23,7 @@ func Field(name string, value ...interface{}) IndexField {
 	}
 
 	res := IndexField{
-		Key:   name,
+		Key: name,
 	}
 
 	if len(value) == 1 {
@@ -43,9 +43,7 @@ type Spec struct {
 	Type   IndexType
 	Fields []IndexField
 	Rules  *map[string]interface{}
-	Sparse bool
-	// TODO: implement custom index name
-	Name  *string
+	Name   *string
 }
 
 type IndexSpec struct {
@@ -63,8 +61,6 @@ func (s *Spec) GetKey() string {
 	// - sparse option
 	// key := fmt.Sprintf("%v", f.Spec())
 	key := string(s.Type)
-	key += fmt.Sprintf("%v", s.Sparse)
-
 	for _, field := range s.Fields {
 		key += field.Key
 		key += fmt.Sprintf("%v", field.Value)
@@ -81,7 +77,7 @@ func (s *Spec) GetName() string {
 	if s.Name != nil {
 		return *s.Name
 	}
-	
+
 	res := ""
 	for _, field := range s.Fields {
 		if res == "" {
@@ -121,16 +117,112 @@ func (s *Spec) GetName() string {
 	return res
 }
 
+// Check whether an option is set
+func (b *Spec) HasRule(option string) bool {
+	if b.Rules == nil {
+		return false
+	}
+
+	_, ok := (*b.Rules)[option]
+
+	return ok
+}
+
 func (b *IndexSpec) Spec() *Spec {
 	return b.spec
+}
+
+func (b *IndexSpec) InitRules() {
+	if b.spec.Rules == nil {
+		b.SetRules(map[string]interface{}{})
+	}
 }
 
 func (b *IndexSpec) SetRules(rules map[string]interface{}) {
 	b.spec.Rules = &rules
 }
 
-func (b *IndexSpec) SetSparse(sparse bool) *IndexSpec {
-	b.spec.Sparse = sparse
+// Panic if index is raw type
+func (b *IndexSpec) MustNotRaw() {
+	if b.spec.Type == TypeRaw {
+		panic("Index type must not be raw")
+	}
+}
+
+// Set `sparse` option
+// Only indexes documents that have particular field
+func (b *IndexSpec) AsSparse() *IndexSpec {
+	b.MustNotRaw()
+	b.InitRules()
+
+	(*b.spec.Rules)[OptionSparse] = true
+
+	return b
+}
+
+// Set `background` option.
+// Creates the index in the background so it doesn't block reads/writes.
+func (b *IndexSpec) AsBackground() *IndexSpec {
+	b.MustNotRaw()
+	b.InitRules()
+
+	(*b.spec.Rules)[OptionBackground] = true
+
+	return b
+}
+
+// Set `unique` option.
+// Adds uniqueness constraint to the field.
+func (b *IndexSpec) AsUnique() *IndexSpec {
+	b.MustNotRaw()
+	b.InitRules()
+
+	(*b.spec.Rules)[OptionUnique] = true
+
+	return b
+}
+
+// Set `hidden` option.
+// Creates an index that is hidden from the query optimizer.
+func (b *IndexSpec) AsHidden() *IndexSpec {
+	b.MustNotRaw()
+	b.InitRules()
+
+	(*b.spec.Rules)[OptionHidden] = true
+
+	return b
+}
+
+// Set `partialFilterExpression` option.
+// Indexes with particular filters.
+func (b *IndexSpec) SetPartialExpression(partialExp map[string]interface{}) *IndexSpec {
+	b.MustNotRaw()
+	b.InitRules()
+
+	(*b.spec.Rules)[OptionPartialFilterExp] = partialExp
+
+	return b
+}
+
+// Set `expireAfterSeconds` option
+// Adds TTL index to a timestamp field
+func (b *IndexSpec) SetTTL(expireAfterSeconds int32) *IndexSpec {
+	b.MustNotRaw()
+	b.InitRules()
+
+	(*b.spec.Rules)[OptionTTL] = expireAfterSeconds
+
+	return b
+}
+
+// Set `collation` option
+// Creates index with custom collation
+func (b *IndexSpec) SetCollation(collation map[string]interface{}) *IndexSpec {
+	b.MustNotRaw()
+	b.InitRules()
+
+	(*b.spec.Rules)[OptionCollation] = collation
+
 	return b
 }
 
@@ -193,58 +285,6 @@ func Geospatial2dsphereIndex(field IndexField) *IndexSpec {
 	return defaultIndex(TypeGeopatial2dsphere, []IndexField{field}, nil)
 }
 
-// TODO: apply this generally
-func UniqueIndex(field IndexField) *IndexSpec {
-	rules := map[string]interface{}{
-		"unique": true,
-	}
-	return defaultIndex(TypeUnique, []IndexField{field}, &rules)
-}
-
-// partial index custom spec
-type partialIndexSpec struct {
-	IndexSpec
-}
-
-func (s *partialIndexSpec) SetPartialExpression(partialExp map[string]interface{}) *partialIndexSpec {
-	rules := map[string]interface{}{
-		"partialFilterExpression": partialExp,
-	}
-
-	s.SetRules(rules)
-
-	return s
-}
-
-func PartialIndex(fields map[string]interface{}) *partialIndexSpec {
-	baseSpec := customValueIndex(TypePartial, fields, nil)
-	return &partialIndexSpec{
-		*baseSpec,
-	}
-}
-
-// collation index custom spec
-type collationIndexSpec struct {
-	IndexSpec
-}
-
-func (s *collationIndexSpec) SetCollation(collation map[string]interface{}) *collationIndexSpec {
-	rules := map[string]interface{}{
-		"collation": collation,
-	}
-
-	s.SetRules(rules)
-
-	return s
-}
-
-func CollationIndex(field IndexField) *collationIndexSpec {
-	baseSpec := defaultIndex(TypeCollation, []IndexField{field}, nil)
-	return &collationIndexSpec{
-		*baseSpec,
-	}
-}
-
-func RawIndex(fields map[string]interface{}, rules *map[string]interface{}) *IndexSpec {
-	return customValueIndex(TypeRaw, fields, rules)
+func HashedIndex(field IndexField) *IndexSpec {
+	return defaultIndex(TypeHashed, []IndexField{field}, nil)
 }
