@@ -14,10 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const (
-	Mongr8Version = "v0.0.1-alpha"
-)
-
 type (
 	Cmd interface {
 		ApplyMigration(migrations []migrator.Migration) error

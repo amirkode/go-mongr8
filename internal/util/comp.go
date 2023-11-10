@@ -24,3 +24,13 @@ func InListEq[T comparable](what T, in []T) bool {
 
 	return false
 }
+
+func NotInList[T comparable](what T, in []T) bool {
+	for _, i := range in {
+		if what == i {
+			return false
+		}
+	}
+
+	return true
+}

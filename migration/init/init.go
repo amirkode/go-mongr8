@@ -15,7 +15,7 @@ import (
 	"internal/config"
 	"internal/util"
 
-	"github.com/amirkode/go-mongr8/migration"
+	"github.com/amirkode/go-mongr8/migration/common"
 )
 
 const (
@@ -132,7 +132,7 @@ func initMongr8Info(projectPath, tplPath string) error {
 		Version    string
 	}{
 		CreateDate: time.Now().Format("2006-01-02"),
-		Version:    migration.Mongr8Version,
+		Version:    common.Mongr8Version,
 	}
 
 	outputPath := fmt.Sprintf("%s/mongr8/mongr8.info", projectPath)

@@ -34,7 +34,11 @@ func Field(name string, value ...interface{}) IndexField {
 }
 
 func (f IndexField) NestedField(name string) IndexField {
-	f.Key += "." + name
+	if f.Key != "" {
+		f.Key += "."
+	}
+	
+	f.Key += name
 
 	return f
 }
