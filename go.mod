@@ -3,9 +3,9 @@ module github.com/amirkode/go-mongr8
 go 1.20
 
 // internal module
-require github.com/amirkode/go-mongr8/internal v0.0.0
-
-replace github.com/amirkode/go-mongr8/internal => ./internal
+// TODO: enable again with proper usecase
+// require github.com/amirkode/go-mongr8/internal v0.0.0
+// replace github.com/amirkode/go-mongr8/internal => ./internal
 
 // external depedencies
 require (
@@ -25,7 +25,10 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 )
 
-require github.com/ONSdigital/dp-mongodb-in-memory v1.7.0
+require (
+	github.com/ONSdigital/dp-mongodb-in-memory v1.7.0
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
+)
 
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.252.0 // indirect
