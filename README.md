@@ -21,7 +21,7 @@ go install github.com/amirkode/go-mongr8@latest
 ```
 
 ## Usage
-Basic operation can be done by using `go-mongr8` CLI command. Complete documentation can be found [here]().
+Basic operation can be done by using `go-mongr8` CLI command. Complete documentation can be found [here](https://github.com/amirkode/go-mongr8/blob/main/doc/README.md).
 
 Users can easily define their schema with provided APis in this package. Here's the example of simple schema definition:
 
@@ -48,7 +48,7 @@ func (Users) Indexes() []collection.Index {
 }
 
 ```
-Complete documentation can be found [here]().
+Complete documentation can be found [here](https://github.com/amirkode/go-mongr8/blob/main/doc/USER_GUIDE.md).
 
 ## Features
 - Dual-purpose: Use as CLI and as library.
@@ -65,7 +65,7 @@ Complete documentation can be found [here]().
 - [ ] Consolidate migration
 - [ ] Rollback migration
 
-For supported MongoDB operations, you can see [here]().
+For supported MongoDB operations, you can see [here](https://github.com/amirkode/go-mongr8/blob/main/doc/USER_GUIDE.md).
 
 ## Limitations
 As a disclaimer, This is an unofficial package designed for MongoDB Migration written in golang. As it relies on the MongoDB golang API, please be aware that some functionalities may evolve over time, potentially affecting compatibility with future MongoDB versions.
@@ -75,6 +75,6 @@ However, we will continue our efforts to provide support for future updates.
 ## Contribution
 Coming soon
 ## License
-Copyright (c) 2023-present [Authors](https://github.com/amirkode) and Contributors. Logo was created by [Bing Chat](https://bing.com).
+Copyright (c) 2023-present [Authors](https://github.com/amirkode/go-mongr8/blob/main/AUTHORS) and Contributors. Logo was created by [Bing Chat](https://bing.com).
 
 Go-mongr8 is distributed under the [MIT License](https://opensource.org/license/mit/).

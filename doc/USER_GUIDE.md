@@ -69,7 +69,7 @@ As shown above, you can declare basic schema definition such as collection **Met
 - [ ] Auto Apply Schema Validation (soon)
 
 ## Getting Started
-Please ensure that you have already initiated the `go-mongr8` in your project. Complete documentation can be found [here]().
+Please ensure that you have already initiated the `go-mongr8` in your project. Complete documentation can be found [here](https://github.com/amirkode/go-mongr8/blob/main/doc/README.md).
 
 ### Define Schema
 Now, navigate to your project and create a collection schema template, let's taken an example of `users` collection.
@@ -101,9 +101,9 @@ func (Users) Indexes() []collection.Index {
 ```
 
 You define the schema with available `go-mongr8` APIs. Here some explanation of the components:
-- **Metadata** contains basic informations of a collection such as name, and options. You can see available APIs [here]().
-- **Fields** are the list of document outer fields. We supports most primitive types as well as complex types such as object, array, and some Geo JSON fields. You can see available APIs [here]().
-- **Indexes** are the definition of collection indexes. We supports any supported MongoDB index type (at least as the project released). You can see available APIs [here]().
+- **Metadata** contains basic informations of a collection such as name, and options. You can see available APIs [here](###Metadata).
+- **Fields** are the list of document outer fields. We supports most primitive types as well as complex types such as object, array, and some Geo JSON fields. You can see available APIs [here](###Field).
+- **Indexes** are the definition of collection indexes. We supports any supported MongoDB index type (at least as the project released). You can see available APIs [here](###Index).
 
 ### Generate Migration Files
 After defining schema, you need to generate migration file. It will generate a migration with particular version (by default it uses the timestamp when the command executed). So, it makes sure that every time changes are made will be grouped in different versions.
@@ -129,7 +129,7 @@ The migration file should contain relevant actions based on the changes of the l
 - Drop Index
 
 ### Apply Migrations
-After having migration files ready, please make sure required configurations are set as stated [here]().
+After having migration files ready, please make sure required configurations are set as stated [here](https://github.com/amirkode/go-mongr8/blob/main/doc/README.md).
 
 You can apply the migrations by executing:
 ```sh
