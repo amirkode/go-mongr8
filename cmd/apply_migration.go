@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"internal/config"
+	"github.com/amirkode/go-mongr8/internal/config"
 
 	"github.com/amirkode/go-mongr8/migration/option"
 

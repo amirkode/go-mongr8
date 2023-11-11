@@ -13,7 +13,7 @@ import (
 	"context"
 	"fmt"
 
-	dt "internal/data_type"
+	dt "github.com/amirkode/go-mongr8/internal/data_type"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"

@@ -11,8 +11,7 @@ import (
 	"fmt"
 	"strings"
 
-	"internal/util"
-
+	"github.com/amirkode/go-mongr8/internal/util"
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
 	"github.com/amirkode/go-mongr8/collection/index"

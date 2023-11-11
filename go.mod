@@ -3,8 +3,9 @@ module github.com/amirkode/go-mongr8
 go 1.20
 
 // internal module
-// require internal v0.0.0
-// replace internal => ./internal
+require github.com/amirkode/go-mongr8/internal v0.0.0
+
+replace github.com/amirkode/go-mongr8/internal => ./internal
 
 // external depedencies
 require (
@@ -34,6 +35,7 @@ require (
 	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/spf13/afero v1.10.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
 )

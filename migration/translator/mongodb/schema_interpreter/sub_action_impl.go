@@ -10,9 +10,9 @@ package schema_interpreter
 import (
 	"fmt"
 
-	"internal/convert"
-	dt "internal/data_type"
-	"internal/util"
+	"github.com/amirkode/go-mongr8/internal/convert"
+	dt "github.com/amirkode/go-mongr8/internal/data_type"
+	"github.com/amirkode/go-mongr8/internal/util"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/index"
