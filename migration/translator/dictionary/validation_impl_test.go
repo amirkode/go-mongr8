@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"internal/test"
+	"github.com/amirkode/go-mongr8/internal/test"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"

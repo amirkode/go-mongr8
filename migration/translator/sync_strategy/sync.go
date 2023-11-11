@@ -11,9 +11,8 @@ import (
 	"fmt"
 	"sort"
 
-	dt "internal/data_type"
-	"internal/util"
-
+	dt "github.com/amirkode/go-mongr8/internal/data_type"
+	"github.com/amirkode/go-mongr8/internal/util"
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
 	"github.com/amirkode/go-mongr8/migration/migrator"

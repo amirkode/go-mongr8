@@ -11,9 +11,8 @@ import (
 	"fmt"
 	"testing"
 
-	"internal/util"
-	"internal/test"
-
+	"github.com/amirkode/go-mongr8/internal/util"
+	"github.com/amirkode/go-mongr8/internal/test"
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
 	"github.com/amirkode/go-mongr8/collection/index"

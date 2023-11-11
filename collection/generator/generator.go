@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"time"
 
-	"internal/config"
-	"internal/util"
+	"github.com/amirkode/go-mongr8/internal/config"
+	"github.com/amirkode/go-mongr8/internal/util"
 )
 
 const (
