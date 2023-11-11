@@ -101,9 +101,9 @@ func (Users) Indexes() []collection.Index {
 ```
 
 You define the schema with available `go-mongr8` APIs. Here some explanation of the components:
-- **Metadata** contains basic informations of a collection such as name, and options. You can see available APIs [here](###Metadata).
-- **Fields** are the list of document outer fields. We supports most primitive types as well as complex types such as object, array, and some Geo JSON fields. You can see available APIs [here](###Field).
-- **Indexes** are the definition of collection indexes. We supports any supported MongoDB index type (at least as the project released). You can see available APIs [here](###Index).
+- **Metadata** contains basic informations of a collection such as name, and options. You can see available APIs [here](#api-metadata).
+- **Fields** are the list of document outer fields. We supports most primitive types as well as complex types such as object, array, and some Geo JSON fields. You can see available APIs [here](#api-field).
+- **Indexes** are the definition of collection indexes. We supports any supported MongoDB index type (at least as the project released). You can see available APIs [here](#api-index).
 
 ### Generate Migration Files
 After defining schema, you need to generate migration file. It will generate a migration with particular version (by default it uses the timestamp when the command executed). So, it makes sure that every time changes are made will be grouped in different versions.
@@ -144,7 +144,7 @@ You can check whether migrations are applied by simply checking the history on `
 It's worth nothing, Go-mongr8 always maintains a **dummy document** in each collection.
 
 ## Go-mongr8 APIs
-### Metadata
+### Metadata <a name="api-metadata"></a>
 import: `github.com/amirkode/collection/metadata`
 
 Basic declaration: 
@@ -172,7 +172,7 @@ All Options:
 		return metadata.InitMetadata("users").Capped(1000).TTL(60)
 	}
 	```
-### Field
+### Field <a name="api-field"></a>
 import: `github.com/amirkode/collection/field`
 
 Available Fields:
@@ -292,7 +292,7 @@ Available Fields:
 	field.LegacyCoordinateArrayField("[field name]")
 	```
 
-### Index
+### Index <a name="api-index"></a>
 import: `github.com/amirkode/collection/index`
 
 Generally the declaration of field is in this format:
