@@ -1,3 +1,10 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package apply
 
 import (
@@ -6,15 +13,12 @@ import (
 
 	"internal/constant"
 
+	"github.com/amirkode/go-mongr8/migration/common"
 	"github.com/amirkode/go-mongr8/migration/migrator"
 	ai "github.com/amirkode/go-mongr8/migration/translator/mongodb/api_interpreter"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-)
-
-const (
-	MigrationHistoryCollection = "mongr8_migration_history"
 )
 
 type MigrationHistory struct {
@@ -25,7 +29,7 @@ type MigrationHistory struct {
 
 func getLatestMigrationID(ctx context.Context, db *mongo.Database) (*string, error) {
 	res := constant.MinTimevalue().Format("20060102_150405")
-	coll := db.Collection(MigrationHistoryCollection)
+	coll := db.Collection(common.MigrationHistoryCollection)
 	cursor, err := coll.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
@@ -57,7 +61,7 @@ func updateMigrationHistory(migrations []migrator.Migration, ctx context.Context
 		})
 	}
 
-	coll := db.Collection(MigrationHistoryCollection)
+	coll := db.Collection(common.MigrationHistoryCollection)
 	_, err := coll.InsertMany(ctx, payload)
 	
 	return err

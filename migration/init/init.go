@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Author and Contributors
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -15,7 +15,7 @@ import (
 	"internal/config"
 	"internal/util"
 
-	"github.com/amirkode/go-mongr8/migration"
+	"github.com/amirkode/go-mongr8/migration/common"
 )
 
 const (
@@ -34,11 +34,11 @@ const (
 // |   ├── cmd/
 // |       ├── contains migration commands
 // |   ├── collection/
-// |       ├── contains collection definitions
+// |       ├── contains collection schema definitions
 // |   ├── config/
 // |       ├── contains some setup files
 // |   ├── migration/
-// |       ├── contains some setup files
+// |       ├── contains some migration files
 func InitMigration(applyRootDirValidation bool) error {
 	/// projectPath should be the root project directory
 	projectPath, err := config.GetProjectRootDir()
@@ -132,7 +132,7 @@ func initMongr8Info(projectPath, tplPath string) error {
 		Version    string
 	}{
 		CreateDate: time.Now().Format("2006-01-02"),
-		Version:    migration.Mongr8Version,
+		Version:    common.Mongr8Version,
 	}
 
 	outputPath := fmt.Sprintf("%s/mongr8/mongr8.info", projectPath)

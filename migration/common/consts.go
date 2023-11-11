@@ -5,4 +5,9 @@ Copyright (c) 2023 the go-mongr8 Authors and Contributors
 Licensed under the MIT License
 (https://opensource.org/licenses/MIT)
 */
-package schema
+package common
+
+const (
+	Mongr8Version              = "v0.0.1-alpha"
+	MigrationHistoryCollection = "mongr8_migration_history"
+)

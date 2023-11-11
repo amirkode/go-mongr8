@@ -1,3 +1,10 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package migration
 
 import (
@@ -12,10 +19,6 @@ import (
 	"github.com/amirkode/go-mongr8/migration/translator"
 
 	"go.mongodb.org/mongo-driver/mongo"
-)
-
-const (
-	Mongr8Version = "v0.0.1-alpha"
 )
 
 type (

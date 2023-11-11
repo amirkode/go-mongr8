@@ -1,3 +1,10 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package api_interpreter
 
 import (
@@ -138,8 +145,6 @@ func convertFieldMapPayload(curr collection.Field, path string, from field.Field
 // `from` represents the type of conversion from
 // `depth` represents the the depth of map operations has reached
 func convertFieldSetPayload(curr collection.Field, path string, from field.FieldType, depth *int) bson.M {
-	// TODO: FIXME: by default, this will ignore other properties other than the converted field
-	// it's because of the $map behaviour
 	currPath := appendPath(path, curr.Spec().Name)
 	switch curr.Spec().Type {
 	case field.TypeArray:

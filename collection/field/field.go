@@ -89,6 +89,11 @@ func (b *FieldSpec) SetNullable() *FieldSpec {
 }
 
 func baseField(name string, fieldType FieldType) *FieldSpec {
+	// already validated in translation level
+	// if len(name) > 128 {
+	// 	panic("Cannot have a field name more than 128 characters len")
+	// }
+
 	field := &FieldSpec{
 		&Spec{
 			Name:     name,

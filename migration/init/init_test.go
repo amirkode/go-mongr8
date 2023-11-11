@@ -5,4 +5,4 @@ Copyright (c) 2023 the go-mongr8 Authors and Contributors
 Licensed under the MIT License
 (https://opensource.org/licenses/MIT)
 */
-package schema
+package init

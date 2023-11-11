@@ -1,11 +1,22 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package dictionary
 
 import (
 	"fmt"
+	"strings"
+
 	"internal/util"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
+	"github.com/amirkode/go-mongr8/collection/index"
+	"github.com/amirkode/go-mongr8/migration/common"
 )
 
 func (v *Validation) Validate() error {
@@ -32,10 +43,10 @@ func (v *Validation) initValidationFunctions() {
 			return validateID(coll.Collection().Spec().Name, coll.Fields())
 		})
 		v.validationFuncs = append(v.validationFuncs, func() error {
-			return validateFieldDuplication(coll.Collection().Spec().Name, coll.Fields())
+			return validateFields(coll.Collection().Spec().Name, coll.Fields())
 		})
 		v.validationFuncs = append(v.validationFuncs, func() error {
-			return validateIndexDuplication(coll.Collection().Spec().Name, coll.Indexes())
+			return validateIndexes(coll.Collection().Spec().Name, coll.Fields(), coll.Indexes())
 		})
 	}
 }
@@ -44,6 +55,11 @@ func validateCollections(collections []collection.Collection) error {
 	// validate duplicate name
 	dup := map[string]bool{}
 	for _, coll := range collections {
+		// collection name cannot be the same as default migration history collection name
+		if coll.Collection().Spec().Name == common.MigrationHistoryCollection {
+			return fmt.Errorf("Collection name cannot be %s", common.MigrationHistoryCollection)
+		}
+
 		_, ok := dup[coll.Collection().Spec().Name]
 		if ok {
 			return fmt.Errorf("Duplicate collection found with name: %s", coll.Collection().Spec().Name)
@@ -111,9 +127,72 @@ func validateFieldDuplication(collectionName string, fields []collection.Field) 
 	return findDuplicate("", fields)
 }
 
+func validateIndividualField(collectionName, path string, _field collection.Field, insideArray bool) error {
+	if len(_field.Spec().Name) > 128 {
+		return fmt.Errorf("%s: Cannot have a field name more than 128 characters len on field: %s.%s", collectionName, path, _field.Spec().Name)
+	}
+
+	// any field type except a must not be empty
+	if !insideArray {
+		if _field.Spec().Name == "" {
+			return fmt.Errorf("%s: Field name must not be empty for path: %s, type: %s", collectionName, path, _field.Spec().Type.ToString())
+		}
+	}
+
+	if path != "" {
+		path += "."
+	}
+
+	switch _field.Spec().Type {
+	case field.TypeArray:
+		if _field.Spec().ArrayFields == nil {
+			return fmt.Errorf("%s: ArrayFields must not be empty for path: %s, type: %s", collectionName, path, _field.Spec().Type.ToString())
+		}
+
+		if len(*_field.Spec().ArrayFields) != 1 {
+			return fmt.Errorf("%s: ArrayFields must have exactly 1 child for path: %s, type: %s", collectionName, path, _field.Spec().Type.ToString())
+		}
+
+		for _, child := range *_field.Spec().ArrayFields {
+			err := validateIndividualField(collectionName, path + _field.Spec().Name, collection.FieldsFromSpecs(&[]field.Spec{child})[0], true)
+			if err != nil {
+				return err
+			}
+		}
+	case field.TypeObject:
+		if _field.Spec().Object == nil {
+			return fmt.Errorf("%s: Object must not be empty for path: %s, type: %s", collectionName, path, _field.Spec().Type.ToString())
+		}
+
+		for _, child := range *_field.Spec().Object {
+			err := validateIndividualField(collectionName, path + _field.Spec().Name, collection.FieldsFromSpecs(&[]field.Spec{child})[0], false)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateFields(collectionName string, fields []collection.Field) error {
+	err := validateFieldDuplication(collectionName, fields)
+	if err != nil {
+		return err
+	}
+
+	for _, _field := range fields {
+		if err = validateIndividualField(collectionName, "", _field, false); err != nil {
+			return err
+		}
+	}
+
+	return err
+}
+
 func validateIndexDuplication(collectionName string, indexes []collection.Index) error {
+	dup := map[string]bool{}
 	for _, idx := range indexes {
-		dup := map[string]bool{}
 		_, ok := dup[idx.Spec().GetKey()]
 		if ok {
 			return fmt.Errorf("%s: duplicate index found: %s", collectionName, idx.Spec().GetKey())
@@ -122,9 +201,171 @@ func validateIndexDuplication(collectionName string, indexes []collection.Index)
 		dup[idx.Spec().GetKey()] = true
 	}
 
+	// TODO: differentiate usecase for each option. i.e: an option might not be necessary for comparison
+
 	return nil
 }
 
-// TODO: add individual field validation, i.e: array field must not be empty
-// TODO: index fields must be declared in fields
-// TODO: add validation, the collection name must not be "mongr8_migration_history"
+func validateIndexWithFields(collectionName string, fields []collection.Field, _index collection.Index) error {
+	// Index Fields cannot be empty
+	if len(_index.Spec().Fields) == 0 {
+		return fmt.Errorf("%s: Index Fields cannot be empty: %s", collectionName, _index.Spec().GetName())
+	}
+
+	// check whether index keys are in fields
+	var fieldExists func(path []string, _field collection.Field) bool
+	fieldExists = func(path []string, _field collection.Field) bool {
+		// assuming path is not empty
+		curr := path[0]
+		if curr != _field.Spec().Name {
+			return false
+		}
+
+		res := false
+		if len(path) > 1 {
+			switch _field.Spec().Type {
+			case field.TypeArray:
+				if _field.Spec().ArrayFields != nil {
+					for _, child := range *_field.Spec().ArrayFields {
+						res = fieldExists(path[1:], collection.FieldsFromSpecs(&[]field.Spec{child})[0])
+						if res {
+							break
+						}
+					}
+				}
+			case field.TypeObject:
+				if _field.Spec().Object != nil {
+					for _, child := range *_field.Spec().Object {
+						res = fieldExists(path[1:], collection.FieldsFromSpecs(&[]field.Spec{child})[0])
+						if res {
+							break
+						}
+					}
+				}
+			}
+		} else {
+			res = true
+		}
+
+		return res
+	}
+
+	var checkFieldType func(path []string, _field collection.Field, expectedType field.FieldType) bool
+	checkFieldType = func(path []string, _field collection.Field, expectedType field.FieldType) bool {
+		// assuming path is not empty
+		curr := path[0]
+		if curr != _field.Spec().Name {
+			return false
+		}
+
+		if len(path) > 1 {
+			switch _field.Spec().Type {
+			case field.TypeArray:
+				if _field.Spec().ArrayFields != nil {
+					for _, child := range *_field.Spec().ArrayFields {
+						res := checkFieldType(path[1:], collection.FieldsFromSpecs(&[]field.Spec{child})[0], expectedType)
+						if res {
+							return true
+						}
+					}
+				}
+			case field.TypeObject:
+				if _field.Spec().Object != nil {
+					for _, child := range *_field.Spec().Object {
+						res := checkFieldType(path[1:], collection.FieldsFromSpecs(&[]field.Spec{child})[0], expectedType)
+						if res {
+							return true
+						}
+					}
+				}
+			}
+		}
+
+		return _field.Spec().Type == expectedType
+	}
+
+
+	pathExists := func(path []string) bool {
+		ok := false
+		for _, _field := range fields {
+			ok = fieldExists(path, _field)
+			if ok {
+				break
+			}
+		}
+
+		return ok
+	}
+
+	pathHasType := func(path []string, expectedType field.FieldType) bool {
+		ok := false
+		for _, _field := range fields {
+			ok = checkFieldType(path, _field, expectedType)
+			if ok {
+				break
+			}
+		}
+
+		return ok
+	}
+
+	// cross checking index keys x fields
+	for _, indexField := range _index.Spec().Fields {
+		path := strings.Split(indexField.Key, ".")
+		if !pathExists(path) {
+			return fmt.Errorf("%s: index key is invalid: %s", collectionName, indexField.Key)
+		}
+	}
+
+	// validate by index type
+	switch _index.Spec().Type {
+		// TODO: complete if the usecase is clear
+	}
+
+	// validate index options
+	if _index.Spec().Rules != nil {
+		rules := *_index.Spec().Rules
+		if _index.Spec().HasRule(index.OptionPartialFilterExp) {
+			filters := rules[index.OptionPartialFilterExp].(map[string]interface{})
+			for key, _ := range filters {
+				path := strings.Split(key, ".")
+				if !pathExists(path) {
+					return fmt.Errorf("%s: Partial filter key is invalid: %s", collectionName, key)
+				}		
+			}
+		}
+
+		if _index.Spec().HasRule(index.OptionTTL) {
+			// There must be a least a timestamp field
+			ok := false
+			for _, indexField := range _index.Spec().Fields {
+				path := strings.Split(indexField.Key, ".")
+				ok = pathHasType(path, field.TypeTimestamp)
+				if ok {
+					break
+				}
+			}
+
+			if !ok {
+				return fmt.Errorf("%s: Timestamp field must exist in TTL index: %s", collectionName, _index.Spec().GetName())
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateIndexes(collectionName string, fields []collection.Field, indexes []collection.Index) error {
+	err := validateIndexDuplication(collectionName, indexes)
+	if err != nil {
+		return err
+	}
+
+	for _, _index := range indexes {
+		if err = validateIndexWithFields(collectionName, fields, _index); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

@@ -1,3 +1,10 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package sync_strategy
 
 // this contains mechanism to sync schema across all sources

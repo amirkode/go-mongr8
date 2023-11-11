@@ -1,3 +1,10 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package util
 
 type Comparable[T any] interface {
@@ -23,4 +30,14 @@ func InListEq[T comparable](what T, in []T) bool {
 	}
 
 	return false
+}
+
+func NotInList[T comparable](what T, in []T) bool {
+	for _, i := range in {
+		if what == i {
+			return false
+		}
+	}
+
+	return true
 }

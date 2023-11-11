@@ -23,10 +23,17 @@ func (s *MetadataSpec) Spec() *Spec {
 	return s.spec
 }
 
-func (s *MetadataSpec) Capped(size int64) *MetadataSpec {
+func (s *MetadataSpec) initOptions() {
 	if s.Spec().Options == nil {
 		s.Spec().Options = &map[CollectionOption]interface{}{}
-	} else {
+	}
+}
+
+func (s *MetadataSpec) Capped(size int64) *MetadataSpec {
+	s.initOptions()
+
+	_, found := (*s.Spec().Options)[CollectionOptionCapped]
+	if found {
 		panic(fmt.Sprintf("Cannot add capped option, another option already exists on collection: %s", s.Spec().Name))
 	}
 
@@ -37,9 +44,10 @@ func (s *MetadataSpec) Capped(size int64) *MetadataSpec {
 }
 
 func (s *MetadataSpec) TTL(expiredAfter int64) *MetadataSpec {
-	if s.Spec().Options == nil {
-		s.Spec().Options = &map[CollectionOption]interface{}{}
-	} else {
+	s.initOptions()
+
+	_, found := (*s.Spec().Options)[CollectionOptionExpiredAfterSeconds]
+	if found {
 		panic(fmt.Sprintf("Cannot add TTL option, another option already exists on collection: %s", s.Spec().Name))
 	}
 

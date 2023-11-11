@@ -1,3 +1,10 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package api_interpreter
 
 import (
@@ -319,8 +326,13 @@ func TestConvertFieldMapPayload(t *testing.T) {
 			"input": "$scores",
 			"as":    "alias_1",
 			"in": bson.M{
-				"score": bson.M{
-					convertFunction(field.TypeString, field.TypeInt32): "$$alias_1.score",
+				"$mergeObjects": bson.A{
+					"$$alias_1",
+					bson.M{
+						"score": bson.M{
+							convertFunction(field.TypeString, field.TypeInt32): "$$alias_1.score",
+						},
+					},
 				},
 			},
 		},
@@ -436,9 +448,14 @@ func TestConvertFieldSetPayload(t *testing.T) {
 						"input": "$$alias_1",
 						"as":    "alias_2",
 						"in": bson.M{
-							"field4": bson.M{
-								"field5": bson.M{
-									convertFunction(field.TypeString, field.TypeInt32): "$$alias_2.field4.field5",
+							"$mergeObjects": bson.A{
+								"$$alias_2",
+								bson.M{
+									"field4": bson.M{
+										"field5": bson.M{
+											convertFunction(field.TypeString, field.TypeInt32): "$$alias_2.field4.field5",
+										},
+									},
 								},
 							},
 						},

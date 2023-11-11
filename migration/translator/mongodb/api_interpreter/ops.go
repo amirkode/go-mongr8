@@ -1,3 +1,10 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package api_interpreter
 
 // translate sub action to operation with mongodb client interface
@@ -10,6 +17,7 @@ import (
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
+	"github.com/amirkode/go-mongr8/collection/index"
 	"github.com/amirkode/go-mongr8/collection/metadata"
 	"github.com/amirkode/go-mongr8/migration/migrator"
 	si "github.com/amirkode/go-mongr8/migration/translator/mongodb/schema_interpreter"
@@ -68,11 +76,19 @@ func createIndexes(ctx context.Context, db *mongo.Database, collName string, ind
 		// init options
 		for _, rule := range rules {
 			switch rule.Key {
-			case "partialFilterExpression":
+			case index.OptionSparse:
+				opt = opt.SetSparse(rule.Value.(bool))
+			case index.OptionBackground:
+				opt = opt.SetBackground(rule.Value.(bool))
+			case index.OptionUnique:
+				opt = opt.SetUnique(rule.Value.(bool))
+			case index.OptionHidden:
+				opt = opt.SetHidden(rule.Value.(bool))
+			case index.OptionPartialFilterExp:
 				opt = opt.SetPartialFilterExpression(rule.Value)
-			case "sparse":
-				opt = opt.SetSparse(true)
-			case "collation":
+			case index.OptionTTL:
+				opt = opt.SetExpireAfterSeconds(rule.Value.(int32))
+			case index.OptionCollation:
 				collation := options.Collation{}
 				// based on https://www.mongodb.com/docs/manual/reference/collation/
 				for _, c := range rule.Value.(bson.D) {
@@ -97,8 +113,6 @@ func createIndexes(ctx context.Context, db *mongo.Database, collName string, ind
 				}
 
 				opt = opt.SetCollation(&collation)
-			case "unique":
-				opt = opt.SetUnique(true)
 			}
 		}
 
@@ -185,6 +199,10 @@ func SubActionApiCreateField(subAction dt.Pair[migrator.Migration, si.SubAction]
 func SubActionApiConvertField(subAction dt.Pair[migrator.Migration, si.SubAction]) SubActionApi {
 	collectionName := subAction.Second.ActionSchema.Collection.Spec().Name
 	exec := func(ctx context.Context, db *mongo.Database) error {
+		if subAction.Second.ActionSchema.FieldConvertFrom == nil {
+			return fmt.Errorf("FieldConvertFrom is not provided")
+		}
+
 		return convertField(ctx, db, collectionName, subAction.Second.ActionSchema.Fields[0], *subAction.Second.ActionSchema.FieldConvertFrom)
 	}
 

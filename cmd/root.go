@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Author and Contributors
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License

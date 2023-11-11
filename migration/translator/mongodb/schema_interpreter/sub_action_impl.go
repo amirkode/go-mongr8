@@ -1,3 +1,10 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package schema_interpreter
 
 import (
@@ -51,7 +58,10 @@ func fieldsToBsonM(fields []collection.Field) bson.M {
 }
 
 func (sa SubAction) GetIndexesBsonD() []dt.Pair[string, dt.Pair[bson.D, bson.D]] {
-	sa.validate()
+	if sa.validate != nil {
+		sa.validate()
+	}
+
 	res := []dt.Pair[string, dt.Pair[bson.D, bson.D]]{}
 	for _, index := range sa.ActionSchema.Indexes {
 		translated := dictionary.GetTranslatedIndex(index)
@@ -70,7 +80,10 @@ func (sa SubAction) GetIndexesBsonD() []dt.Pair[string, dt.Pair[bson.D, bson.D]]
 }
 
 func (sa SubAction) GetIndexesBsonM() []dt.Pair[string, dt.Pair[bson.M, bson.M]] {
-	sa.validate()
+	if sa.validate != nil {
+		sa.validate()
+	}
+	
 	res := []dt.Pair[string, dt.Pair[bson.M, bson.M]]{}
 	for _, index := range sa.ActionSchema.Indexes {
 		translated := dictionary.GetTranslatedIndex(index)

@@ -1,3 +1,10 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package schema_interpreter
 
 import (
@@ -11,16 +18,16 @@ import (
 
 func (sas SubActionSchema) getMetadataDeclarationLiteral() string {
 	res := fmt.Sprintf(`metadata.InitMetadata("%s")`, sas.Collection.Spec().Name)
-		if sas.Collection.Spec().Options != nil {
+	if sas.Collection.Spec().Options != nil {
 		// check whether the collection is capped
 		_, capped := (*sas.Collection.Spec().Options)[metadata.CollectionOptionCapped]
 		if capped {
-			res += fmt.Sprintf(`%s.Capped("%d")`, "\n", (*sas.Collection.Spec().Options)[metadata.CollectionOptionCappedSize])
+			res += fmt.Sprintf(".Capped(%d)", (*sas.Collection.Spec().Options)[metadata.CollectionOptionCappedSize])
 		}
 		// check whether the collection has expiration time
 		_, hasExpiration := (*sas.Collection.Spec().Options)[metadata.CollectionOptionExpiredAfterSeconds]
 		if hasExpiration {
-			res += fmt.Sprintf(`%s.TTL("%d")`, "\n", (*sas.Collection.Spec().Options)[metadata.CollectionOptionExpiredAfterSeconds])
+			res += fmt.Sprintf(".TTL(%d)", (*sas.Collection.Spec().Options)[metadata.CollectionOptionExpiredAfterSeconds])
 		}
 	}
 
@@ -28,8 +35,8 @@ func (sas SubActionSchema) getMetadataDeclarationLiteral() string {
 }
 
 func (sas SubActionSchema) getFieldDeclarationLiteral(f collection.Field) string {
-	var fieldLiteral func (f collection.Field) string
-	fieldLiteral = func (f collection.Field) string {
+	var fieldLiteral func(f collection.Field) string
+	fieldLiteral = func(f collection.Field) string {
 		res := ""
 		switch f.Spec().Type {
 		case field.TypeString:
@@ -107,8 +114,8 @@ func (sas SubActionSchema) getIndexDeclarationLiteral(idx collection.Index) stri
 
 	switch idx.Spec().Type {
 	case index.TypeSingleField:
-		res += fmt.Sprintf(`index.SingleFieldIndex(index.Field("%s", %s))`, 
-			idx.Spec().Fields[0].Key, 
+		res += fmt.Sprintf(`index.SingleFieldIndex(index.Field("%s", %s))`,
+			idx.Spec().Fields[0].Key,
 			anyToLiteralString(idx.Spec().Fields[0].Value),
 		)
 	case index.TypeCompound:
@@ -120,7 +127,7 @@ func (sas SubActionSchema) getIndexDeclarationLiteral(idx collection.Index) stri
 				"\n",
 			)
 		}
-		res += fmt.Sprintf(`index.CompoundIndex(%s%s)`, 
+		res += fmt.Sprintf(`index.CompoundIndex(%s%s)`,
 			"\n",
 			children,
 		)
@@ -132,21 +139,9 @@ func (sas SubActionSchema) getIndexDeclarationLiteral(idx collection.Index) stri
 		res += fmt.Sprintf(`index.Geospatial2dsphereIndex(index.Field("%s"))`,
 			idx.Spec().Fields[0].Key,
 		)
-	case index.TypeUnique:
-		res += fmt.Sprintf(`index.UniqueIndex(index.Field("%s", %s))`, 
-			idx.Spec().Fields[0].Key, 
-			anyToLiteralString(idx.Spec().Fields[0].Value),
-		)
-	case index.TypePartial:
-		// then convert the map to literal as required in the arguments
-		fArgs := AnyToLiteral(fieldsToMap())
-		res += fmt.Sprintf(`index.PartialIndex(%s)`,
-			fArgs,
-		)
-	case index.TypeCollation:
-		res += fmt.Sprintf(`index.CollationIndex(index.Field("%s", %s))`, 
-			idx.Spec().Fields[0].Key, 
-			anyToLiteralString(idx.Spec().Fields[0].Value),
+	case index.TypeHashed:
+		res += fmt.Sprintf(`index.HashedIndex(index.Field("%s"))`,
+			idx.Spec().Fields[0].Key,
 		)
 	case index.TypeRaw:
 		fArgs := AnyToLiteral(fieldsToMap())
@@ -165,9 +160,48 @@ func (sas SubActionSchema) getIndexDeclarationLiteral(idx collection.Index) stri
 
 	// if custom index name is declared
 	if idx.Spec().Name != nil {
-		res += fmt.Sprintf(`.SetCustomIndexName("%s")`, 
+		res += fmt.Sprintf(`.SetCustomIndexName("%s")`,
 			*idx.Spec().Name,
 		)
+	}
+
+	// add options if not a raw index
+	if idx.Spec().Type != index.TypeRaw {
+		if idx.Spec().HasRule(index.OptionSparse) {
+			res += ".AsSparse()"
+		}
+
+		if idx.Spec().HasRule(index.OptionBackground) {
+			res += ".AsBackground()"
+		}
+
+		if idx.Spec().HasRule(index.OptionUnique) {
+			res += ".AsUnique()"
+		}
+
+		if idx.Spec().HasRule(index.OptionHidden) {
+			res += ".AsHidden()"
+		}
+
+		if idx.Spec().HasRule(index.OptionPartialFilterExp) {
+			fArgs := AnyToLiteral((*idx.Spec().Rules)[index.OptionPartialFilterExp])
+			res += fmt.Sprintf(`.SetPartialExpression(%s)`,
+				fArgs,
+			)
+		}
+
+		if idx.Spec().HasRule(index.OptionTTL) {
+			res += fmt.Sprintf(`.SetTTL(%s)`,
+				(*idx.Spec().Rules)[index.OptionTTL],
+			)
+		}
+		
+		if idx.Spec().HasRule(index.OptionCollation) {
+			fArgs := AnyToLiteral((*idx.Spec().Rules)[index.OptionCollation])
+			res += fmt.Sprintf(`.SetCollation(%s)`,
+				fArgs,
+			)
+		}
 	}
 
 	return res
