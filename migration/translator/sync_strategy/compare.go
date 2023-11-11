@@ -14,9 +14,9 @@ package sync_strategy
 
 import (
 	"fmt"
-	dt "internal/data_type"
-	"internal/util"
-
+	
+	dt "github.com/amirkode/go-mongr8/internal/data_type"
+	"github.com/amirkode/go-mongr8/internal/util"
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
 )

@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"internal/config"
-	"internal/validation"
+	"github.com/amirkode/go-mongr8/internal/config"
+	"github.com/amirkode/go-mongr8/internal/validation"
 )
 
 const (

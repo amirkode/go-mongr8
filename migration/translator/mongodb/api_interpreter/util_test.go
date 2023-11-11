@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"testing"
 
-	"internal/test"
+	"github.com/amirkode/go-mongr8/internal/test"
 
 	"github.com/amirkode/go-mongr8/collection/field"
 

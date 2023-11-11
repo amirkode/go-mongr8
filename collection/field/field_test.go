@@ -9,7 +9,7 @@ package field
 
 import (
 	"testing"
-	"internal/test"
+	"github.com/amirkode/go-mongr8/internal/test"
 )
 
 func fieldsAreEqual(a, b *Spec) bool {

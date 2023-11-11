@@ -17,10 +17,10 @@ import (
 	"testing"
 	//"time"
 
-	"internal/convert"
-	dt "internal/data_type"
-	"internal/test"
-	"internal/util"
+	"github.com/amirkode/go-mongr8/internal/convert"
+	dt "github.com/amirkode/go-mongr8/internal/data_type"
+	"github.com/amirkode/go-mongr8/internal/test"
+	"github.com/amirkode/go-mongr8/internal/util"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"

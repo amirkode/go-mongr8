@@ -9,10 +9,10 @@ package generator
 
 import (
 	"fmt"
-	"internal/config"
 	"regexp"
 	"strings"
 
+	"github.com/amirkode/go-mongr8/internal/config"
 	"github.com/amirkode/go-mongr8/collection"
 )
 

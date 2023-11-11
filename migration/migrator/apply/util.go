@@ -11,7 +11,7 @@ import (
 	"context"
 	"time"
 
-	"internal/constant"
+	"github.com/amirkode/go-mongr8/internal/constant"
 
 	"github.com/amirkode/go-mongr8/migration/common"
 	"github.com/amirkode/go-mongr8/migration/migrator"

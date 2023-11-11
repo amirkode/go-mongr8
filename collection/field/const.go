@@ -8,7 +8,7 @@ Licensed under the MIT License
 package field
 
 import (
-	"internal/util"
+	"github.com/amirkode/go-mongr8/internal/util"
 )
 
 type (

@@ -10,9 +10,8 @@ package sync_strategy
 import (
 	"testing"
 
-	"internal/test"
-	"internal/util"
-
+	"github.com/amirkode/go-mongr8/internal/test"
+	"github.com/amirkode/go-mongr8/internal/util"
 	"github.com/amirkode/go-mongr8/collection/field"
 	"github.com/amirkode/go-mongr8/collection/index"
 	"github.com/amirkode/go-mongr8/collection/metadata"
