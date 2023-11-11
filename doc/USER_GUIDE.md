@@ -315,7 +315,7 @@ To apply this index key:
 ```go
 // you can basically declare
 index.Field("other.info.value", 1)
-// or you can chain this method many times to make more idiomatic
+// or you can chain this method many times to make it more idiomatic
 index.Field("other", 1).NestedField("info").NestedField("info")
 ```
 
