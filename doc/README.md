@@ -72,7 +72,10 @@ You can run the migration by executing:
 This should apply all migrations with new IDs.
 
 ### Command: `consolidate-migration`
-Soon
+Coming soon
+
+### Command: `rollback-migration`
+Coming soon
 
 ### Open Command
 Some commands can be directly run from `mongr8/cmd` folder. This allows pre-built commands  are made to execute later, and makes benefit of some usecases such running the pre-built commands on the deployment.

@@ -192,6 +192,10 @@ func SubActionApiCreateField(subAction dt.Pair[migrator.Migration, si.SubAction]
 func SubActionApiConvertField(subAction dt.Pair[migrator.Migration, si.SubAction]) SubActionApi {
 	collectionName := subAction.Second.ActionSchema.Collection.Spec().Name
 	exec := func(ctx context.Context, db *mongo.Database) error {
+		if subAction.Second.ActionSchema.FieldConvertFrom == nil {
+			return fmt.Errorf("FieldConvertFrom is not provided")
+		}
+
 		return convertField(ctx, db, collectionName, subAction.Second.ActionSchema.Fields[0], *subAction.Second.ActionSchema.FieldConvertFrom)
 	}
 

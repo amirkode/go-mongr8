@@ -158,7 +158,10 @@ func newTranslatedHashedIndex(index collection.Index) translatedHashed {
 
 func (t translatedHashed) GetObject() map[string]interface{} {
 	t.hasAtLeastFieldsLengthValidation(1)
-	return t.getFieldsObject()
+	field := t.index.Spec().Fields[0]
+	return map[string]interface{}{
+		field.Key: String("hashed"),
+	}
 }
 
 func (t translatedHashed) GetRules() *map[string]interface{} {

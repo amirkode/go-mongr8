@@ -28,6 +28,46 @@ func (Users) Indexes() []collection.Index {
 
 As shown above, you can declare basic schema definition such as collection **Metadata**, **Fields**, and **Indexes**.
 
+### Supported MongoDB Operations
+- [x] Create collection with options:
+  - [x] Capped
+  - [x] Expiration (TTL)
+  - others coming soon
+- [x] Create field (in any depth):
+  - [x] String
+  - [x] Int32
+  - [x] Int64
+  - [x] Double
+  - [x] Boolean
+  - [x] Array
+  - [x] Date (Timestamp)
+  - [x] Geo JSON Point
+  - [x] Geo JSON Line String
+  - [x] Geo JSON Polygon Single Ring
+  - [x] Geo JSON Polygon Multiple Ring
+  - [x] Geo JSON Multi Point
+  - [x] Geo JSON Multi Line String
+  - [x] Geo JSON Multi Polygon
+  - [x] Geo JSON Geometry Collection
+  - [x] Legacy Coordinate Array
+- [x] Create index:
+  - [x] Single Field
+  - [x] Compound
+  - [x] Text
+  - [x] Geospatial 2dsphere
+  - [x] Unique
+  - [x] Partial
+  - [x] Collation
+  - [x] Raw Expression
+- [x] Field type conversion (in any depth):
+    - [x] Number to number
+    - [x] Any to string
+    - [ ] String to any (in usecase validation)
+- [x] Drop Collection
+- [x] Drop Field (in any depth)
+- [x] Drop Index
+- [ ] Auto Apply Schema Validation (soon)
+
 ## Getting Started
 Please ensure that you have already initiated the `go-mongr8` in your project. Complete documentation can be found [here]().
 
@@ -113,54 +153,144 @@ metadata.InitMetadata("[collection name]")
 ```
 
 All Options:
-- **Capped**, declaration: `[base metadata].Capped([capped size])`.
-- **TTL**, declaration: `[base metadata].TTL([expired after seconds])`.
+- **Capped**
 
-Example:
-```go
-func (Users) Collection() collection.Metadata {
-	return metadata.InitMetadata("users").Capped(1000).TTL(60)
-}
-```
+	Declaration:
+	```go
+	[base metadata].Capped([capped size])
+	```
+- **TTL**
+
+	Declaration: 
+	```go
+	[base metadata].TTL([expired after seconds])
+	```
+
+- Example:
+	```go
+	func (Users) Collection() collection.Metadata {
+		return metadata.InitMetadata("users").Capped(1000).TTL(60)
+	}
+	```
 ### Field
 import: `github.com/amirkode/collection/field`
 
 Available Fields:
-- **String**, declaration: `field.StringField("[field name]")`.
-- **Int32**, declaration: `field.Int32Field("[field name]")`.
-- **Int64**, declaration: `field.Int64Field("[field name]")`.
-- **Double**, declaration: `field.DoubleField("[field name]")`.
-- **Boolean**, declaration: `field.BooleanField("[field name]")`.
-- **Array**, declaration: `field.ArrayField("[field name]", [child field as array type])`.
+- **String**
+	
+	Declaration:
+	```go
+	field.StringField("[field name]")
+	```
+- **Int32**
+	
+	Declaration:
+	```go
+	field.Int32Field("[field name]")
+	```
+- **Int64**
+	
+	Declaration:
+	```go
+	field.Int64Field("[field name]")
+	```
+- **Double**
+	
+	Declaration:
+	```go
+	field.DoubleField("[field name]")
+	```
+- **Boolean**
+	
+	Declaration:
+	```go
+	field.BooleanField("[field name]")
+	```
+- **Array**
+	
+	Declaration:
+	```go
+	field.ArrayField("[field name]", [child field as array type])
+	```
 
-  for example:
-  ```go
-   field.ArrayField("login_history", 
-     field.StringField(""),
-   )
-  ```
-  Note that the child field does not require field name.
-- **Object**, declaration: `field.ObjectField("[field name]", [children]) `
-  for example:
-  ```go
-  field.ObjectField("other_info",
-      field.StringField("full_address"),
-	  field.StringField("city"),
-	  field.StringField("country"),
-	  field.ArrayField("scores",
-		  field.Int32Field(""),
+	For example:
+	```go
+	field.ArrayField("login_history", 
+		field.StringField(""),
+	)
+	```
+	Note that the child field does not require field name.
+- **Object**
+	
+	Declaration:
+	```go
+	field.ObjectField("[field name]", [children])
+	```
+	For example:
+	```go
+	field.ObjectField("other_info",
+		field.StringField("full_address"),
+		field.StringField("city"),
+		field.StringField("country"),
+		field.ArrayField("scores",
+			field.Int32Field(""),
 	),
-  )
-  ```  
-- **Timestamp**, declaration: `field.TimestampField("[field name]")`.
-- **Geo JSON Point**, declaration: `field.GeoJSONPointField("[field name]")`.
-- **Geo JSON Line String**, declaration: `field.GeoJSONLineStringField("[field name]")`.
-- **Geo JSON Polygon Single Ring**, declaration: `field.GeoJSONPolygonSingleRingField("[field name]")`.
-- **Geo JSON Polygon Multiple Ring**, declaration: `field.GeoJSONPolygonMultipleRingField("[field name]")`.
-- **Geo JSON Multi Point**, declaration: `field.GeoJSONMultiPointField("[field name]")`.
-- **Geo JSON Multi Line String**, declaration: `field.GeoJSONMultiLineStringField("[field name]")`.
-- **Geo JSON Geometry**, declaration: `field.GeoJSONGeometryCollectionField("[field name]")`.
-- **Legacy Coordinate Array**, declaration: `field.LegacyCoordinateArrayField("[field name]")`.
+	)
+	```  
+- **Timestamp**
+	
+	Declaration:
+	```go
+	field.TimestampField("[field name]")
+	```
+- **Geo JSON Point**
+	
+	Declaration:
+	```go
+	field.GeoJSONPointField("[field name]")
+	```
+- **Geo JSON Line String**
+	
+	Declaration:
+	```go
+	field.GeoJSONLineStringField("[field name]")
+	```
+- **Geo JSON Polygon Single Ring**
+	
+	Declaration:
+	```go
+	field.GeoJSONPolygonSingleRingField("[field name]")
+	```
+- **Geo JSON Polygon Multiple Ring**
+	
+	Declaration:
+	```go
+	field.GeoJSONPolygonMultipleRingField("[field name]")
+	```
+- **Geo JSON Multi Point**
+	
+	Declaration:
+	```go
+	field.GeoJSONMultiPointField("[field name]")
+	```
+- **Geo JSON Multi Line String**
+	
+	Declaration:
+	```go
+	field.GeoJSONMultiLineStringField("[field name]")
+	```
+- **Geo JSON Geometry**
+
+	Declaration:
+	```go
+	field.GeoJSONGeometryCollectionField("[field name]")
+	```
+- **Legacy Coordinate Array**
+	
+	Declaration:
+	```go
+	field.LegacyCoordinateArrayField("[field name]")
+	```
 
 ### Index
 import: `github.com/amirkode/collection/index`
@@ -175,19 +305,195 @@ index.Field("field name", "[value]")
 // for example:
 index.Field("name", 1)
 ```
+Sometimes, we need to create an index for nested field. You can use this chaining method:
+To apply this index key:
+```json
+{
+	"other.info": 1,
+}
+```
+```go
+// you can basically declare
+index.Field("other.info.value", 1)
+// or you can chain this method many times to make more idiomatic
+index.Field("other", 1).NestedField("info").NestedField("info")
+```
 
-Available Indexes:
-- **Single Field Index**, declaration: `index.SingleFieldIndex(index.Field("field name", [value]))`
-- **Compound Index**, declaration: `index.CompoundIndex([fields/keys definition])`
+#### Available Indexes
+- **Single Field Index**
+	
+	Declaration:
+	```go
+	index.SingleFieldIndex(index.Field("field name", [value]))
+	```
+	To create a single field index, you don't necessarily declare using this function. You may also declare using Compound Index or Raw Index API.
 
-  for example:
-  ```go
-  index.CompoundIndex(
-      index.Field("name", -1),
-	  index.Field("age", 1),
-  ),
-  ```
-- **Text Index**, declaration: `index.TextIndex(index.Field("field name", [value]))`
-- **Geospatial 2dsphere Index**, declaration: `index.Geospatial2dsphereIndex(index.Field("field name", [value does not matter]))`
-- **Unique Index**, declaration: `index.UniqueIndex(index.Field("field name", [value]))`
-- Coming soon for Partial and Collation
+- **Compound Index**
+	
+	Declaration:
+	```go
+	index.CompoundIndex([fields/keys definition])
+	```
+	For example:
+	```go
+	index.CompoundIndex(
+		index.Field("name", -1),
+		index.Field("age", 1),
+	),
+	```
+- **Text Index**
+	
+	Declaration:
+	```go
+	index.TextIndex(index.Field("field name"))
+	```
+- **Geospatial 2dsphere Index**
+	
+	Declaration:
+	```go
+	index.Geospatial2dsphereIndex(index.Field("field name"))
+	```
+- **Hashed Index**
+	
+	Declaration:
+	```go
+	index.HashedIndex(index.Field("field name"))
+	```
+
+#### Option
+You may also set several options on the index. Our API also provide most options.
+
+The option can added by method chanining, here's the format:
+```go
+// [index declaration].[option method]
+index.SingleFieldIndex(index.Field("name", 1)).AsSparse()
+```
+Available Options:
+- **Sparse**
+	
+	Declaration:
+	```go
+	[index].AsSparse()
+	```
+	It will add this to the option map:
+	```json
+	{
+		"sparse": true
+	}
+	```
+- **Background**
+
+	Declaration:
+	```go
+	[index].AsBackground()
+	```
+	It will add this to the option map:
+	```json
+	{
+		"background": true
+	}
+	```
+- **Hidden**
+
+	Declaration:
+	```go
+	[index].AsHidden()
+	```
+	It will add this to the option map:
+	```json
+	{
+		"hidden": true
+	}
+	```
+- **Partial Expression**
+	
+	Declaration:
+	```go
+	[index].SetPartialExpression([a map of interface])
+	```
+	For example:
+	```go
+	[index].SetPartialExpression(map[string]interface{}{
+		"score": map[string]interface{}{
+			"$gt": 70,
+		},
+	})
+	```
+	It will add this to the option map:
+	```json
+	{
+		"partialFilterExpression": [argument as a map of interface]
+	}
+	```
+- **TTL**
+	
+	Declaration:
+	```go
+	[index].SetTTL([an integer])
+	```
+	For example:
+	```go
+	[index].SetTTL(60)
+	```
+	It will add this to the option map:
+	```json
+	{
+		"expireAfterSeconds": [an integer value]
+	}
+	```
+- **Collation**
+	
+	Declaration:
+	```go
+	[index].SetCollation([a map of interface])
+	```
+	For example:
+	```go
+	[index].SetCollation(map[string]interface{}{
+		"locale": "en_US",
+	})
+	```
+	It will add this to the option map:
+	```json
+	{
+		"collation": [argument as a map of interface]
+	}
+	```
+- **Index Name**
+
+	By default, our index API will generated an index name based on an arrangement of index keys and options. But, We also provide custom index name setting.
+	Declaration:
+	```go
+	[index].SetCustomIndexName("index name goes here")
+	```
+
+The provided APIs might not be enough for a few cases. You can also declare a raw expression of an index:
+- **Raw Index Expression**
+	
+	Declaration:
+	```go
+	[index].RawIndex([a map of interface for index keys], [a pointer map of interface for index options])
+	```
+	For example:
+	```go
+	// without option
+	[index].RawIndex(
+		map[string]interface{}{
+			"name": 1,
+			"age": -1,
+		},
+		nil,
+	)
+	
+	// with option
+	[index].RawIndex(
+		map[string]interface{}{
+			"name": 1,
+			"age": -1,
+		},
+		&map[string]interface{}{
+			"unique": true,
+			"background": true,
+		},
+	)
+	```

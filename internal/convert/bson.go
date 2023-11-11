@@ -1,9 +1,17 @@
+/*
+Copyright (c) 2023 the go-mongr8 Authors and Contributors
+[@see Authors file]
+
+Licensed under the MIT License
+(https://opensource.org/licenses/MIT)
+*/
 package convert
 
 import (
 	"reflect"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func ArrToBsonA(arr []interface{}, isD bool) bson.A {
@@ -85,4 +93,22 @@ func MapToBsonD(mp map[string]interface{}) bson.D {
 	}
 
 	return res
+}
+
+func ConvertBsonPrimitiveToDefaultType(value interface{}) interface{} {
+	switch reflect.TypeOf(value) {
+	case reflect.TypeOf(primitive.DateTime(0)):
+		return value.(primitive.DateTime).Time()
+	case reflect.TypeOf(primitive.ObjectID{}):
+		return value.(primitive.ObjectID).Hex()
+	case reflect.TypeOf(primitive.Binary{}):
+		org := value.(primitive.Binary)
+		data := make([]byte, len(org.Data))
+		copy(data, org.Data)
+		return data
+	case reflect.TypeOf(primitive.Decimal128{}):
+		return value.(primitive.Decimal128).String() // convert to string because it can be too long
+	}
+
+	return value
 }

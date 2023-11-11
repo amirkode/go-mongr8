@@ -292,3 +292,7 @@ func Geospatial2dsphereIndex(field IndexField) *IndexSpec {
 func HashedIndex(field IndexField) *IndexSpec {
 	return defaultIndex(TypeHashed, []IndexField{field}, nil)
 }
+
+func RawIndex(fields map[string]interface{}, rules *map[string]interface{}) *IndexSpec {
+	return customValueIndex(TypeRaw, fields, rules)
+}

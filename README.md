@@ -65,46 +65,7 @@ Complete documentation can be found [here]().
 - [ ] Consolidate migration
 - [ ] Rollback migration
 
-#### Supported MongoDB Operations
-- [x] Create collection with options:
-  - [x] Capped
-  - [x] Expiration (TTL)
-  - others coming soon
-- [x] Create field (in any depth):
-  - [x] String
-  - [x] Int32
-  - [x] Int64
-  - [x] Double
-  - [x] Boolean
-  - [x] Array
-  - [x] Date (Timestamp)
-  - [x] Geo JSON Point
-  - [x] Geo JSON Line String
-  - [x] Geo JSON Polygon Single Ring
-  - [x] Geo JSON Polygon Multiple Ring
-  - [x] Geo JSON Multi Point
-  - [x] Geo JSON Multi Line String
-  - [x] Geo JSON Multi Polygon
-  - [x] Geo JSON Geometry Collection
-  - [x] Legacy Coordinate Array
-  - [x] Legacy Coordinate Embedded Doc
-- [x] Create index:
-  - [x] Single Field
-  - [x] Compound
-  - [x] Text
-  - [x] Geospatial 2dsphere
-  - [x] Unique
-  - [x] Partial
-  - [x] Collation
-  - [x] Raw Expression
-- [x] Field type conversion (in any depth):
-    - [x] Number to number
-    - [x] Any to string
-    - [ ] String to any (in usecase validation)
-- [x] Drop Collection
-- [x] Drop Field (in any depth)
-- [x] Drop Index
-- [ ] Auto Apply Schema Validation (soon)
+For supported MongoDB operations, you can see [here]().
 
 ## Limitations
 As a disclaimer, This is an unofficial package designed for MongoDB Migration written in golang. As it relies on the MongoDB golang API, please be aware that some functionalities may evolve over time, potentially affecting compatibility with future MongoDB versions.
