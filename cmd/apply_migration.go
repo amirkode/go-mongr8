@@ -61,7 +61,7 @@ var applyMigrationCmd = &cobra.Command{
 		}
 
 		// print original output
-		fmt.Printf("%s\n", output)
+		fmt.Printf("%s", output)
 	},
 }
 

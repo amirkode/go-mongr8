@@ -71,17 +71,17 @@ func InitMigration() error {
 	}
 
 	// init combined collections
-	if err = initCombinedCollections(*packagePath, tplPath); err != nil {
+	if err = initCombinedCollections(*projectPath, tplPath); err != nil {
 		return err
 	}
 
 	// init migration sub action schemas
-	if err = initMigrationSubActionSchemas(*packagePath, tplPath); err != nil {
+	if err = initMigrationSubActionSchemas(*projectPath, tplPath); err != nil {
 		return err
 	}
 
 	// init cmds
-	err = initCmd(*packagePath, tplPath)
+	err = initCmd(*projectPath, tplPath)
 
 	// TODO: might add something in the future
 
