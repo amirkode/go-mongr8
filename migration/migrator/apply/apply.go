@@ -24,26 +24,35 @@ func execSubActions(ctx context.Context, db *mongo.Database, apis []ai.SubAction
 		return err
 	}
 
-	migrations := []migrator.Migration{}
-	added := map[string]bool{}
-	for _, api := range *filteredApis {
-		// execute the action api synchronously
-		err := api.Execute(ctx, db)
+	if len(*filteredApis) > 0 {
+		migrations := []migrator.Migration{}
+		added := map[string]bool{}
+		for _, api := range *filteredApis {
+			// execute the action api synchronously
+			err := api.Execute(ctx, db)
+			if err != nil {
+				return err
+			}
+
+			_, exists := added[api.Migration.ID]
+			if !exists {
+				migrations = append(migrations, api.Migration)
+				added[api.Migration.ID] = true
+			}
+		}
+
+		// update migration history
+		err = updateMigrationHistory(migrations, ctx, db)
 		if err != nil {
 			return err
 		}
 
-		_, exists := added[api.Migration.ID]
-		if !exists {
-			migrations = append(migrations, api.Migration)
-			added[api.Migration.ID] = true
-		}
-	}
-
-	// update migration history
-	err = updateMigrationHistory(migrations, ctx, db)
-	if err != nil {
-		return err
+		fmt.Printf("All Migration files has been migrated with IDs %s..%s", 
+			(*filteredApis)[0].Migration.ID, 
+			(*filteredApis)[len(*filteredApis) - 1].Migration.ID,
+		)
+	} else {
+		fmt.Printf("Nothing to migrate.")
 	}
 
 	return nil

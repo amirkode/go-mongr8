@@ -9,7 +9,7 @@ package generate
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"time"
 
 	dt "github.com/amirkode/go-mongr8/internal/data_type"
@@ -22,7 +22,7 @@ import (
 
 func Run(ctx *context.Context, actions dt.Pair[[]si.Action, []si.Action]) error {
 	if len(actions.First) == 0 {
-		fmt.Println("Migration files are already up to date")
+		log.Println("Migration files are already up-to-date")
 		return nil
 	}
 
@@ -35,5 +35,10 @@ func Run(ctx *context.Context, actions dt.Pair[[]si.Action, []si.Action]) error 
 		Down: actions.Second,
 	}
 
-	return writer.Write(migration)
+	err := writer.Write(migration)
+	if err == nil {
+		log.Println("A new migraiton file has been generated")
+	}
+
+	return err
 }

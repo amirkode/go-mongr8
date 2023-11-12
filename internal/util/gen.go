@@ -9,7 +9,7 @@ package util
 
 import (
 	"bytes"
-	"fmt"
+	"log"
 	"os"
 
 	"go/format"
@@ -19,7 +19,6 @@ import (
 )
 
 func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface {}, formatSource bool) error {
-	fmt.Println("file path: " + tplPath)
 	data, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return err
@@ -49,5 +48,10 @@ func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface {}, 
 		return err
 	}
 
-	return os.WriteFile(outputPath, formattedOutput, 0644)
+	err = os.WriteFile(outputPath, formattedOutput, 0644)
+	if err == nil {
+		log.Println("File was generated:", outputPath)
+	}
+
+	return err
 }
