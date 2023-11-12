@@ -368,3 +368,5 @@ func validateIndexes(collectionName string, fields []collection.Field, indexes [
 
 	return nil
 }
+
+// TODO: validation for "(InvalidOptions) 'expireAfterSeconds' is only supported on time-series collections"
