@@ -9,6 +9,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os/exec"
 
 	"github.com/amirkode/go-mongr8/internal/config"
@@ -25,7 +26,7 @@ var generateMigrationCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		projectPath, err := config.GetProjectRootDir()
 		if err != nil {
-			fmt.Printf("Error generating migration: %s", err.Error())
+			log.Printf("Error generating migration: %s", err.Error())
 			return
 		}
 
@@ -53,11 +54,12 @@ var generateMigrationCmd = &cobra.Command{
 		migrationCmd.Dir = migrationCmdPath
 		output, err := migrationCmd.CombinedOutput()
 		if err != nil {
-			fmt.Printf("Error generating migration: %s: %s", err.Error(), output)
+			log.Printf("Error generating migration: %s: %s\n", err.Error(), output)
 			return
 		}
 
-		fmt.Printf("%s", output)
+		// print original output
+		fmt.Printf("%s\n", output)
 	},
 }
 

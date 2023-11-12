@@ -8,7 +8,7 @@ Licensed under the MIT License
 package cmd
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/amirkode/go-mongr8/collection/generator"
 	"github.com/spf13/cobra"
@@ -21,7 +21,7 @@ var createCollectionCmd = &cobra.Command{
 	Long:  `Create collection entity with `,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			fmt.Println("Error creating collection: Invalid collection name")
+			log.Println("Error creating collection: Invalid collection name")
 			return
 		}
 
@@ -29,7 +29,9 @@ var createCollectionCmd = &cobra.Command{
 		name := args[0]
 		err := generator.GenerateMigrationTemplate(name)
 		if err != nil {
-			fmt.Println("Error creating collection: " + err.Error())
+			log.Println("Error creating collection: " + err.Error())
+		} else {
+			log.Printf("Collection '%s' has been created", name)
 		}
 	},
 }

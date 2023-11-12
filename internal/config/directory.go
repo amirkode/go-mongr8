@@ -24,7 +24,7 @@ func GetPackageDir() (*string, error) {
 	pkgName := "github.com/amirkode/go-mongr8"
 
 	// get path using golang command "go list {{.Dir}} packageName"
-	cmd := exec.Command("go", "list", "{{.Dir}}", pkgName)
+	cmd := exec.Command("go", "list", "-f", "{{.Dir}}", pkgName)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Printf("Error getting directory: %v\n", err)
@@ -45,8 +45,6 @@ func GetProjectRootDir() (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("curr dir: " + currDir)
 
 	// continue moving up the directory tree until we find a marker file or reach the root
 	for {

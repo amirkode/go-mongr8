@@ -9,6 +9,7 @@ package init
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -39,23 +40,11 @@ const (
 // |       ├── contains some setup files
 // |   ├── migration/
 // |       ├── contains some migration files
-func InitMigration(applyRootDirValidation bool) error {
+func InitMigration() error {
 	/// projectPath should be the root project directory
 	projectPath, err := config.GetProjectRootDir()
 	if err != nil {
-		if !applyRootDirValidation {
-			// if validation is not required
-			// just take current working directory
-			wd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-
-			// set current working directory to currDirr
-			projectPath = &wd
-		} else {
-			return fmt.Errorf("You're not woking in any go project.")
-		}
+		return fmt.Errorf("You're not woking in any go project.")
 	}
 	// packagePath should be the root go-mongr8 package directory
 	packagePath, err := config.GetPackageDir()
@@ -64,7 +53,7 @@ func InitMigration(applyRootDirValidation bool) error {
 	}
 
 	// init folder structure
-	if err = initFolderStructure(*projectPath, applyRootDirValidation); err != nil {
+	if err = initFolderStructure(*projectPath); err != nil {
 		return err
 	}
 
@@ -99,11 +88,11 @@ func InitMigration(applyRootDirValidation bool) error {
 	return err
 }
 
-func initFolderStructure(projectPath string, applyRootDirValidation bool) error {
+func initFolderStructure(projectPath string) error {
 	mainDir := fmt.Sprintf("%s/mongr8", projectPath)
 	mongr8InfoDir := fmt.Sprintf("%s/mongr8.info", mainDir)
 	if config.DoesPathExist(mongr8InfoDir) {
-		return fmt.Errorf("The mongr8.lock file was already iniated. Please delete this file to continue.")
+		return fmt.Errorf("The mongr8.info file was already iniated. Please delete this file to continue.")
 	}
 
 	childrenDir := []string{
@@ -121,6 +110,8 @@ func initFolderStructure(projectPath string, applyRootDirValidation bool) error 
 		if err != nil {
 			return err
 		}
+
+		log.Println("Directory was initiated:", dir)
 	}
 
 	return nil

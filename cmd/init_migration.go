@@ -8,7 +8,7 @@ Licensed under the MIT License
 package cmd
 
 import (
-	"fmt"
+	"log"
 
 	migration_init "github.com/amirkode/go-mongr8/migration/init"
 	"github.com/spf13/cobra"
@@ -20,13 +20,11 @@ var initMigrationCmd = &cobra.Command{
 	Short: "Initialize migration components",
 	Long: `Initialize all migration components in the main working project directory`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("init-migration called")
-		fmt.Println(args)
-		applyRootDirValidation := cmd.Flags().Lookup("apply-root-dir-validation").Value.String() == "true"
-		fmt.Println(applyRootDirValidation)
-		err := migration_init.InitMigration(applyRootDirValidation)
+		err := migration_init.InitMigration()
 		if err != nil {
-			fmt.Printf("Error initiating migration: %v", err)
+			log.Printf("Error initiating migration: %v", err)
+		} else {
+			log.Println("Migration folder 'mongr8' has been initiated")
 		}
 	},
 }
