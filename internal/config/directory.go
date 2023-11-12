@@ -27,11 +27,15 @@ func GetPackageDir() (*string, error) {
 	cmd := exec.Command("go", "list", "-f", "{{.Dir}}", pkgName)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("Error getting directory: %v\n", err)
-		// get project root directory instead, it might be for internal testing
-		return GetProjectRootDir()
+		if isDev, ok := os.LookupEnv("DEV_ENV"); ok && isDev != "" {
+			fmt.Printf("Error getting go-mongr8 package directory: %v, use project directory instead for development\n", err)
+			// get project root directory instead, it might be for internal testing
+			return GetProjectRootDir()
+		} else {
+			return nil, fmt.Errorf("Error getting go-mongr8 package directory: %v\n", err)
+		}
 	}
-	
+
 	path := strings.TrimSpace(string(output))
 
 	return &path, err
