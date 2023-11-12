@@ -9,6 +9,7 @@ package cmd
 
 import (
 	"log"
+	"os/exec"
 
 	migration_init "github.com/amirkode/go-mongr8/migration/init"
 	"github.com/spf13/cobra"
@@ -21,10 +22,25 @@ var initMigrationCmd = &cobra.Command{
 	Long: `Initialize all migration components in the main working project directory`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := migration_init.InitMigration()
+		// add go-mongr8 to current project
+		output, err := exec.Command("go", "get", "-u", "github.com/amirkode/go-mongr8@latest").CombinedOutput()
+		if err != nil {
+			log.Printf("Error initiating migration: %s: %s\n", err.Error(), output)
+			return
+		}
+
+		err = migration_init.InitMigration()
 		if err != nil {
 			log.Printf("Error initiating migration: %v", err)
 		} else {
 			log.Println("Migration folder 'mongr8' has been initiated")
+		}
+
+		// tidy everything up
+		output, err = exec.Command("go", "mod", "tidy").CombinedOutput()
+		if err != nil {
+			log.Printf("Error initiating migration: %s: %s\n", err.Error(), output)
+			return
 		}
 	},
 }

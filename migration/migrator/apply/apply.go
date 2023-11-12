@@ -10,6 +10,7 @@ package apply
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/amirkode/go-mongr8/migration/migrator"
 	"github.com/amirkode/go-mongr8/migration/option"
@@ -47,12 +48,12 @@ func execSubActions(ctx context.Context, db *mongo.Database, apis []ai.SubAction
 			return err
 		}
 
-		fmt.Printf("All Migration files has been migrated with IDs %s..%s", 
+		log.Printf("All Migration files has been migrated with IDs: %s..%s\n", 
 			(*filteredApis)[0].Migration.ID, 
 			(*filteredApis)[len(*filteredApis) - 1].Migration.ID,
 		)
 	} else {
-		fmt.Printf("Nothing to migrate.")
+		log.Printf("Nothing to migrate.\n")
 	}
 
 	return nil
