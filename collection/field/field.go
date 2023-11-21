@@ -9,6 +9,7 @@ package field
 
 import "fmt"
 
+// TODO: add default value
 type Spec struct {
 	Name string
 	// Type of the field

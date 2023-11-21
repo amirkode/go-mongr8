@@ -43,6 +43,12 @@ func (f IndexField) NestedField(name string) IndexField {
 	return f
 }
 
+func (f IndexField) MustHaveValue(_for string) {
+	if f.Value == nil {
+		panic(fmt.Sprintf("%s: Value should be provided for %s", f.Key, _for))
+	}
+}
+
 type Spec struct {
 	Type   IndexType
 	Fields []IndexField
@@ -236,6 +242,10 @@ func (b *IndexSpec) SetCustomIndexName(name string) *IndexSpec {
 }
 
 func baseIndex(_type IndexType, fields []IndexField, rules *map[string]interface{}) *IndexSpec {
+	if len(fields) == 0 {
+		panic("Index must have at least a field")
+	}
+
 	index := &IndexSpec{
 		&Spec{
 			Type:   _type,
@@ -245,6 +255,12 @@ func baseIndex(_type IndexType, fields []IndexField, rules *map[string]interface
 	}
 
 	return index
+}
+
+func FromIndexSpec(spec *Spec) *IndexSpec {
+	return &IndexSpec{
+		spec,
+	}
 }
 
 func defaultIndex(_type IndexType, fields []IndexField, rules *map[string]interface{}) *IndexSpec {
@@ -274,10 +290,15 @@ func NewIndexField(key string, value interface{}) IndexField {
 }
 
 func SingleFieldIndex(field IndexField) *IndexSpec {
+	field.MustHaveValue("Single Field Index")
 	return defaultIndex(TypeSingleField, []IndexField{field}, nil)
 }
 
 func CompoundIndex(fields ...IndexField) *IndexSpec {
+	for _, _field := range fields {
+		_field.MustHaveValue("Compound Index")
+	}
+
 	return defaultIndex(TypeCompound, fields, nil)
 }
 
