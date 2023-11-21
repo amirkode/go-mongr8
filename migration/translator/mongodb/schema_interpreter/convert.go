@@ -47,6 +47,8 @@ func anyToLiteralString(value interface{}) string {
 		v = value.(dictionary.ValueType).Value
 	}
 
+	// TODO: handle nil values
+
 	// handle primitives
 	switch reflect.TypeOf(v).Kind() {
 	case reflect.Int:

@@ -39,6 +39,7 @@ func getCollectionTemplateVar(collectionName string) (*CollectionTemplateVar, er
 	}
 
 	createDate := time.Now().Format("2006-01-02")
+	// TODO: supports camelcase naming
 	entityName := util.ToCapitalizedCamelCase(collectionName)
 	templateVar := &CollectionTemplateVar{
 		CreateDate: createDate,
