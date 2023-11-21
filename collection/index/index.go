@@ -242,6 +242,10 @@ func (b *IndexSpec) SetCustomIndexName(name string) *IndexSpec {
 }
 
 func baseIndex(_type IndexType, fields []IndexField, rules *map[string]interface{}) *IndexSpec {
+	if len(fields) == 0 {
+		panic("Index must have at least a field")
+	}
+
 	index := &IndexSpec{
 		&Spec{
 			Type:   _type,
@@ -251,6 +255,12 @@ func baseIndex(_type IndexType, fields []IndexField, rules *map[string]interface
 	}
 
 	return index
+}
+
+func FromIndexSpec(spec *Spec) *IndexSpec {
+	return &IndexSpec{
+		spec,
+	}
 }
 
 func defaultIndex(_type IndexType, fields []IndexField, rules *map[string]interface{}) *IndexSpec {

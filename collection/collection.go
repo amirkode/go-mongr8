@@ -132,6 +132,10 @@ func FieldsFromSpecs(arrFields *[]field.Spec) []Field {
 	return res
 }
 
+func FieldFromSpec(spec *field.Spec) Field {
+	return field.FromFieldSpec(spec)
+}
+
 func SpecsFromFields(fields []Field) []field.Spec {
 	specs := make([]field.Spec, len(fields))
 	for index, _field := range fields {
@@ -139,4 +143,8 @@ func SpecsFromFields(fields []Field) []field.Spec {
 	}
 
 	return specs
+}
+
+func IndexFromSpec(spec *index.Spec) Index {
+	return index.FromIndexSpec(spec)
 }

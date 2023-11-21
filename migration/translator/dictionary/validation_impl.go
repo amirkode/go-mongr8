@@ -153,7 +153,7 @@ func validateIndividualField(collectionName, path string, _field collection.Fiel
 		}
 
 		for _, child := range *_field.Spec().ArrayFields {
-			err := validateIndividualField(collectionName, path + _field.Spec().Name, collection.FieldsFromSpecs(&[]field.Spec{child})[0], true)
+			err := validateIndividualField(collectionName, path + _field.Spec().Name, collection.FieldFromSpec(&child), true)
 			if err != nil {
 				return err
 			}
@@ -164,7 +164,7 @@ func validateIndividualField(collectionName, path string, _field collection.Fiel
 		}
 
 		for _, child := range *_field.Spec().Object {
-			err := validateIndividualField(collectionName, path + _field.Spec().Name, collection.FieldsFromSpecs(&[]field.Spec{child})[0], false)
+			err := validateIndividualField(collectionName, path + _field.Spec().Name, collection.FieldFromSpec(&child), false)
 			if err != nil {
 				return err
 			}
@@ -226,7 +226,7 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 			case field.TypeArray:
 				if _field.Spec().ArrayFields != nil {
 					for _, child := range *_field.Spec().ArrayFields {
-						res = fieldExists(path[1:], collection.FieldsFromSpecs(&[]field.Spec{child})[0])
+						res = fieldExists(path[1:], collection.FieldFromSpec(&child))
 						if res {
 							break
 						}
@@ -235,7 +235,7 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 			case field.TypeObject:
 				if _field.Spec().Object != nil {
 					for _, child := range *_field.Spec().Object {
-						res = fieldExists(path[1:], collection.FieldsFromSpecs(&[]field.Spec{child})[0])
+						res = fieldExists(path[1:], collection.FieldFromSpec(&child))
 						if res {
 							break
 						}
@@ -262,7 +262,7 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 			case field.TypeArray:
 				if _field.Spec().ArrayFields != nil {
 					for _, child := range *_field.Spec().ArrayFields {
-						res := checkFieldType(path[1:], collection.FieldsFromSpecs(&[]field.Spec{child})[0], expectedType)
+						res := checkFieldType(path[1:], collection.FieldFromSpec(&child), expectedType)
 						if res {
 							return true
 						}
@@ -271,7 +271,7 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 			case field.TypeObject:
 				if _field.Spec().Object != nil {
 					for _, child := range *_field.Spec().Object {
-						res := checkFieldType(path[1:], collection.FieldsFromSpecs(&[]field.Spec{child})[0], expectedType)
+						res := checkFieldType(path[1:], collection.FieldFromSpec(&child), expectedType)
 						if res {
 							return true
 						}
@@ -319,6 +319,8 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 	// validate by index type
 	switch _index.Spec().Type {
 		// TODO: complete if the usecase is clear
+		// related to this commit, migt be moved here:
+		// https://github.com/amirkode/go-mongr8/commit/45060b493e03b7631b5c81b2684f760d10305d09
 	}
 
 	// validate index options

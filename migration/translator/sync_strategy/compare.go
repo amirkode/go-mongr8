@@ -376,7 +376,7 @@ func (f SignedField) RefreshFieldAddresses() SignedField {
 		return &newField
 	}
 
-	newField := collection.FieldsFromSpecs(&[]field.Spec{*deepCopyField(f.Field.Spec())})[0]
+	newField := collection.FieldFromSpec(deepCopyField(f.Field.Spec()))
 	f.Field = newField
 
 	return f
