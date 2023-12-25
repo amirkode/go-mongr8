@@ -8,6 +8,7 @@ Licensed under the MIT License
 package api_interpreter
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -16,6 +17,8 @@ import (
 	"github.com/amirkode/go-mongr8/collection/field"
 
 	"go.mongodb.org/mongo-driver/bson"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func bsonAAreEqual(arr1, arr2 bson.A) bool {
@@ -268,6 +271,52 @@ func TestDropFieldUnsetPayload(t *testing.T) {
 	test.AssertTrue(t, bsonMAreEqual(case4Payload, case4ExpectedPayload), "Case 4: Unexpected Payload")
 
 	// TODO: add more cases
+}
+
+func TestConvertFunction(t *testing.T) {
+	// case 1: default
+	Convey("Case 1: Default", t, func() {
+		functionMap := map[field.FieldType]string{
+			field.TypeString: "$toString",
+			field.TypeBoolean: "$toBool",
+			field.TypeTimestamp: "$toDate",
+			field.TypeInt32: "$toInt",
+			field.TypeInt64: "$toLong",
+			field.TypeDouble: "$toDouble",
+		}
+
+		Convey("String Conversion", func() {
+			So(functionMap[field.TypeString], ShouldEqual, convertFunction(field.TypeString, field.TypeString))
+		})
+		Convey("Boolean Conversion", func() {
+			So(functionMap[field.TypeBoolean], ShouldEqual, convertFunction(field.TypeBoolean, field.TypeString))
+		})
+		Convey("Timestamp Conversion", func() {
+			So(functionMap[field.TypeTimestamp], ShouldEqual, convertFunction(field.TypeTimestamp, field.TypeString))
+		})
+		Convey("Int32 Conversion", func() {
+			So(functionMap[field.TypeInt32], ShouldEqual, convertFunction(field.TypeInt32, field.TypeString))
+		})
+		Convey("Int64 Conversion", func() {
+			So(functionMap[field.TypeInt64], ShouldEqual, convertFunction(field.TypeInt64, field.TypeString))
+		})
+		Convey("Double Conversion", func() {
+			So(functionMap[field.TypeDouble], ShouldEqual, convertFunction(field.TypeDouble, field.TypeString))
+		})
+	})
+
+	// case 2: unsupported conversion
+	Convey("Case 2: Unsupported conversion", t, func() {
+		defer func() {
+			if r := recover(); r != nil {
+				Convey("Unexpected panic", func() {
+					So(fmt.Sprintf("%v", r), ShouldContainSubstring, "Conversion is not supported")
+				})
+			}
+		}()
+	
+		convertFunction(field.TypeGeoJSONPoint, field.TypeString)
+	})
 }
 
 func TestConvertFieldObjectPayload(t *testing.T) {

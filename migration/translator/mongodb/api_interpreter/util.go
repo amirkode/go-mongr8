@@ -69,13 +69,15 @@ func convertFunction(to field.FieldType, from field.FieldType) string {
 	case field.TypeString:
 		return "$toString"
 	case field.TypeBoolean:
-		return "$toBoolean"
+		return "$toBool"
 	case field.TypeTimestamp:
 		return "$toDate"
 	case field.TypeInt32:
 		return "$toInt"
 	case field.TypeInt64:
 		return "$toLong"
+	case field.TypeDouble:
+		return "$toDouble"
 	// TODO: complete for the future usecases
 	}
 
