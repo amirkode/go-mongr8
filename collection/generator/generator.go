@@ -34,13 +34,22 @@ type CombinedCollectionsTemplateVar struct {
 }
 
 func getCollectionTemplateVar(collectionName string) (*CollectionTemplateVar, error) {
+	// convert any collectionName input into a snake case string
+	collectionName = util.ToSnakeCase(collectionName)
 	if len(collectionName) == 0 {
-		return nil, errors.New("An empty string provided")
+		return nil, errors.New("an empty string provided")
+	}
+
+	allCollectionNames := getAllCollectionNames()
+	for _, name := range allCollectionNames {
+		if collectionName == name {
+			return nil, errors.New("the provided collection name already exists")
+		}
 	}
 
 	createDate := time.Now().Format("2006-01-02")
-	// TODO: supports camelcase naming
 	entityName := util.ToCapitalizedCamelCase(collectionName)
+
 	templateVar := &CollectionTemplateVar{
 		CreateDate: createDate,
 		Entity:     entityName,
@@ -76,6 +85,10 @@ func GenerateMigrationTemplate(collectionName string) error {
 	}
 
 	rootPath, err := config.GetProjectRootDir()
+	if err != nil {
+		return err
+	}
+
 	packagePath, err := config.GetPackageDir()
 	if err != nil {
 		return err
@@ -83,9 +96,12 @@ func GenerateMigrationTemplate(collectionName string) error {
 
 	tplPath := fmt.Sprintf("%s/collection/generator/template.tpl", *packagePath)
 
-	// genenrate collection
+	// generate collection
 	outputPath := fmt.Sprintf("%s/mongr8/collection/%s.go", *rootPath, collectionName)
 	err = util.GenerateTemplate(tplCollection, tplPath, outputPath, collTemplateVar, true)
+	if err != nil {
+		return err
+	}
 
 	// generate combined collections
 	combinedCollsTemplateVar, err := getCombinedCollectionsTemplateVar(*rootPath)
