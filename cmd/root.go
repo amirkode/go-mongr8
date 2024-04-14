@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -13,13 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "go-mongr8",
 	Short: "A simple MongoDB migration tool for Go",
-	Long: `go-mongr8, a lightweight yet robust package for MongoDB migration management. Simplify the management of MongoDB schema changes.`,
+	Long:  `go-mongr8, a lightweight yet robust package for MongoDB migration management. Simplify the management of MongoDB schema changes.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -37,5 +35,3 @@ func Execute() {
 func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
-
-

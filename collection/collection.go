@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -87,13 +87,9 @@ func FieldFromType(name string, _type field.FieldType) Field {
 	case field.TypeBoolean:
 		return field.BooleanField(name)
 	case field.TypeArray:
-		return field.ArrayField(name,
-			// since no child provided, we don't need to pass any field
-		)
+		return field.ArrayField(name) // since no child provided, we don't need to pass any field
 	case field.TypeObject:
-		return field.ObjectField(name,
-			// since no child provided, we don't need to pass any field
-		)
+		return field.ObjectField(name) // since no child provided, we don't need to pass any field
 	case field.TypeTimestamp:
 		return field.TimestampField(name)
 	case field.TypeGeoJSONPoint:
@@ -116,7 +112,6 @@ func FieldFromType(name string, _type field.FieldType) Field {
 
 	return &field.FieldSpec{}
 }
-
 
 func FieldsFromSpecs(arrFields *[]field.Spec) []Field {
 	if arrFields == nil {

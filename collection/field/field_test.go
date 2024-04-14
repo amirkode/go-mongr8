@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -9,6 +9,7 @@ package field
 
 import (
 	"testing"
+
 	"github.com/amirkode/go-mongr8/internal/test"
 )
 
@@ -63,7 +64,7 @@ func fieldsAreEqual(a, b *Spec) bool {
 		if len(*a.ArrayFields) != len(*b.ArrayFields) {
 			return false
 		}
-		
+
 		aArr := map[string]Spec{}
 		bArr := map[string]Spec{}
 		for _, arr := range *a.ArrayFields {
@@ -173,7 +174,7 @@ func TestArrayField(t *testing.T) {
 
 	// case 3: array of object
 	case3Actual := ArrayField("name",
-		ObjectField("", 
+		ObjectField("",
 			StringField("name"),
 			Int32Field("score"),
 		),
@@ -204,7 +205,7 @@ func TestArrayField(t *testing.T) {
 
 func TestObjectField(t *testing.T) {
 	// case 1: default
-	case1Actual := ObjectField("name", 
+	case1Actual := ObjectField("name",
 		StringField("name"),
 		Int32Field("score"),
 	)
@@ -252,7 +253,7 @@ func TestObjectField(t *testing.T) {
 
 	// case 3: Object of object
 	case3Actual := ObjectField("name",
-		ObjectField("child_name", 
+		ObjectField("child_name",
 			StringField("name"),
 			Int32Field("score"),
 		),

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/amirkode/go-mongr8/internal/util"
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
 	"github.com/amirkode/go-mongr8/collection/index"
+	"github.com/amirkode/go-mongr8/internal/util"
 	"github.com/amirkode/go-mongr8/migration/common"
 )
 
@@ -31,7 +31,7 @@ func (v *Validation) Validate() error {
 }
 
 func (v *Validation) initValidationFunctions() {
-	v.validationFuncs = []func() error {
+	v.validationFuncs = []func() error{
 		func() error {
 			return validateCollections(v.Collections)
 		},
@@ -63,7 +63,7 @@ func validateCollections(collections []collection.Collection) error {
 		if ok {
 			return fmt.Errorf("Duplicate collection found with name: %s", coll.Collection().Spec().Name)
 		}
-		
+
 		dup[coll.Collection().Spec().Name] = true
 	}
 
@@ -153,7 +153,7 @@ func validateIndividualField(collectionName, path string, _field collection.Fiel
 		}
 
 		for _, child := range *_field.Spec().ArrayFields {
-			err := validateIndividualField(collectionName, path + _field.Spec().Name, collection.FieldFromSpec(&child), true)
+			err := validateIndividualField(collectionName, path+_field.Spec().Name, collection.FieldFromSpec(&child), true)
 			if err != nil {
 				return err
 			}
@@ -164,7 +164,7 @@ func validateIndividualField(collectionName, path string, _field collection.Fiel
 		}
 
 		for _, child := range *_field.Spec().Object {
-			err := validateIndividualField(collectionName, path + _field.Spec().Name, collection.FieldFromSpec(&child), false)
+			err := validateIndividualField(collectionName, path+_field.Spec().Name, collection.FieldFromSpec(&child), false)
 			if err != nil {
 				return err
 			}
@@ -283,7 +283,6 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 		return _field.Spec().Type == expectedType
 	}
 
-
 	pathExists := func(path []string) bool {
 		ok := false
 		for _, _field := range fields {
@@ -318,9 +317,9 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 
 	// validate by index type
 	switch _index.Spec().Type {
-		// TODO: complete if the usecase is clear
-		// related to this commit, migt be moved here:
-		// https://github.com/amirkode/go-mongr8/commit/45060b493e03b7631b5c81b2684f760d10305d09
+	// TODO: complete if the usecase is clear
+	// related to this commit, migt be moved here:
+	// https://github.com/amirkode/go-mongr8/commit/45060b493e03b7631b5c81b2684f760d10305d09
 	}
 
 	// validate index options
@@ -332,7 +331,7 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 				path := strings.Split(key, ".")
 				if !pathExists(path) {
 					return fmt.Errorf("%s: Partial filter key is invalid: %s", collectionName, key)
-				}		
+				}
 			}
 		}
 

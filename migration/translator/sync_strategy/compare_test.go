@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -10,11 +10,11 @@ package sync_strategy
 import (
 	"testing"
 
-	"github.com/amirkode/go-mongr8/internal/test"
-	"github.com/amirkode/go-mongr8/internal/util"
 	"github.com/amirkode/go-mongr8/collection/field"
 	"github.com/amirkode/go-mongr8/collection/index"
 	"github.com/amirkode/go-mongr8/collection/metadata"
+	"github.com/amirkode/go-mongr8/internal/test"
+	"github.com/amirkode/go-mongr8/internal/util"
 )
 
 func TestSignedFieldGetKey(t *testing.T) {
@@ -31,31 +31,31 @@ func TestSignedFieldGetKey(t *testing.T) {
 func TestSignedFieldIntersect(t *testing.T) {
 	// test intersect on array with different children
 	case1Field1 := SignedField{
-		Field: field.ArrayField("array_field", 
-			field.ObjectField("name not required", 
+		Field: field.ArrayField("array_field",
+			field.ObjectField("name not required",
 				field.BooleanField("state1"),
 				field.BooleanField("state3"),
 			),
 		),
-			// TODO: update this
-			// for now, we do not support multipe types array
-			// AddArrayField(field.StringField("string")),
-			// AddArrayField(field.Int32Field("int32")).
-			// AddArrayField(field.BooleanField("boolean")),
+		// TODO: update this
+		// for now, we do not support multipe types array
+		// AddArrayField(field.StringField("string")),
+		// AddArrayField(field.Int32Field("int32")).
+		// AddArrayField(field.BooleanField("boolean")),
 		Sign: SignPlus,
 	}
 	case1Field2 := SignedField{
-		Field: field.ArrayField("array_field", 
-			field.ObjectField("name not required", 
+		Field: field.ArrayField("array_field",
+			field.ObjectField("name not required",
 				field.BooleanField("state1"),
 				field.BooleanField("state2"),
 			),
 		),
-			// TODO: update this
-			// for now, we do not support multipe types array
-			// AddArrayField(field.StringField("string")).
-			// AddArrayField(field.StringField("string_2")).
-			// AddArrayField(field.Int32Field("int32")),
+		// TODO: update this
+		// for now, we do not support multipe types array
+		// AddArrayField(field.StringField("string")).
+		// AddArrayField(field.StringField("string_2")).
+		// AddArrayField(field.Int32Field("int32")),
 		Sign: SignPlus,
 	}
 
@@ -76,7 +76,7 @@ func TestSignedFieldIntersect(t *testing.T) {
 		test.AssertEqual(t, (*i.Field.Spec().ArrayFields)[0].Type, field.TypeObject, "Case 1: Unexpected child type")
 		test.AssertTrue(t, (*i.Field.Spec().ArrayFields)[0].Object != nil, "Case 1: Object children not found")
 		test.AssertEqual(t, (*(*i.Field.Spec().ArrayFields)[0].Object)[0].Type, field.TypeBoolean, "Case 1: Unexpected object child type")
-		test.AssertTrue(t, util.InListEq((*(*i.Field.Spec().ArrayFields)[0].Object)[0].Name, []string{"state2", "state3"}) , "Case 1: Unexpected object child name")
+		test.AssertTrue(t, util.InListEq((*(*i.Field.Spec().ArrayFields)[0].Object)[0].Name, []string{"state2", "state3"}), "Case 1: Unexpected object child name")
 	}
 
 	// test intersect on object with different children

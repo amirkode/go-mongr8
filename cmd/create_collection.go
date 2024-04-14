@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -38,6 +38,6 @@ var createCollectionCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(createCollectionCmd)
-	
+
 	// createCollectionCmd.PersistentFlags().String("name", "", "MongoDB Collection Entity")
 }

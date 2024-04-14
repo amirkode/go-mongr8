@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -77,6 +77,185 @@ func bsonMAreEqual(obj1, obj2 bson.M) bool {
 	return true
 }
 
+func TestAppendPath(t *testing.T) {
+	// case 1: default
+	Convey("Case 1: Default", t, func() {
+		Convey("Single Parent appended to a child", func() {
+			parentPath := "field1"
+			childPath := "child1"
+			actualPath := appendPath(parentPath, childPath)
+			expectedPath := "field1.child1"
+			So(actualPath, ShouldEqual, expectedPath)
+		})
+
+		Convey("Multi ancestor appended to a child", func() {
+			parentPath := "field1.field2"
+			childPath := "child1"
+			actualPath := appendPath(parentPath, childPath)
+			expectedPath := "field1.field2.child1"
+			So(actualPath, ShouldEqual, expectedPath)
+		})
+	})
+
+	// case 2: empty parent
+	Convey("Case 2: Empty parent", t, func() {
+		Convey("No parent appended to a child", func() {
+			parentPath := ""
+			childPath := "child1"
+			actualPath := appendPath(parentPath, childPath)
+			expectedPath := "child1"
+			So(actualPath, ShouldEqual, expectedPath)
+		})
+	})
+}
+
+func TestConvertToUpsertPath(t *testing.T) {
+	// case 1: default
+	Convey("Case 1: Default", t, func() {
+		Convey("Array path with zero index", func() {
+			originalPath := "field1.0.0.field2"
+			actualPath := convertToUpsertPath(originalPath)
+			expectedPath := "field1.$[].$[].field2"
+			So(actualPath, ShouldEqual, expectedPath)
+		})
+
+		Convey("Array path with non zero index", func() {
+			originalPath := "field1.4.24.field2"
+			actualPath := convertToUpsertPath(originalPath)
+			expectedPath := "field1.$[].$[].field2"
+			So(actualPath, ShouldEqual, expectedPath)
+		})
+	})
+
+	// case 2: Unexpected array index
+	Convey("Case 2: Unexpected array index", t, func() {
+		defer func() {
+			if r := recover(); r != nil {
+				Convey("Unexpected panic", func() {
+					So(fmt.Sprintf("%v", r), ShouldContainSubstring, "Unexpected array index")
+				})
+			}
+		}()
+
+		originalPath := "field1.-1.10.field2"
+		convertToUpsertPath(originalPath)
+	})
+}
+
+func TestGetParentPath(t *testing.T) {
+	// case 1: default
+	Convey("Case 1: Default", t, func() {
+		Convey("With parent", func() {
+			originalPath := "field1.0"
+			actualPath := getParentPath(originalPath)
+			expectedPath := "field1"
+			So(actualPath, ShouldEqual, expectedPath)
+		})
+
+		Convey("Without parent", func() {
+			originalPath := "field1"
+			actualPath := getParentPath(originalPath)
+			expectedPath := ""
+			So(actualPath, ShouldEqual, expectedPath)
+		})
+	})
+}
+
+func TestCheckPathExistPayloads(t *testing.T) {
+	comparePaths := func(path1, path2 *[]bson.D) bool {
+		if path1 == nil || path2 == nil {
+			return path1 == nil && path2 == nil
+		}
+
+		if len(*path1) != len(*path2) {
+			return false
+		}
+
+		for idx, path := range *path1 {
+			if path[0].Key != (*path2)[idx][0].Key ||
+				path[1].Value != (*path2)[idx][1].Value ||
+				path[2].Value != (*path2)[idx][2].Value {
+				return false
+			}
+		}
+
+		return true
+	}
+	// case 1: Default
+	Convey("Case 1: Default", t, func() {
+		Convey("Nesting array with object", func() {
+			payload := bson.D{
+				{Key: "arr", Value: bson.A{
+					bson.D{
+						{Key: "inner_arr", Value: bson.A{
+							bson.D{
+								{Key: "new_field", Value: ""},
+							},
+						}},
+					},
+				}},
+			}
+			actualPaths := []bson.D{}
+			checkPathExistPayloads(payload, "", &actualPaths)
+			expectedPaths := []bson.D{
+				{
+					{Key: "arr", Value: bson.M{"$exists": true}},
+					{Key: "is_array", Value: false},
+					{Key: "wants_array", Value: true},
+				},
+				{
+					{Key: "arr.0", Value: bson.M{"$exists": true}},
+					{Key: "is_array", Value: true},
+					{Key: "wants_array", Value: false},
+				},
+				{
+					{Key: "arr.0.inner_arr", Value: bson.M{"$exists": true}},
+					{Key: "is_array", Value: false},
+					{Key: "wants_array", Value: true},
+				},
+				{
+					{Key: "arr.0.inner_arr.0", Value: bson.M{"$exists": true}},
+					{Key: "is_array", Value: true},
+					{Key: "wants_array", Value: false},
+				},
+			}
+			So(comparePaths(&actualPaths, &expectedPaths), ShouldBeTrue)
+		})
+
+		Convey("Nesting array with another array", func() {
+			payload := bson.D{
+				{Key: "arr", Value: bson.A{
+					bson.A{
+						bson.D{
+							{Key: "new_field", Value: ""},
+						},
+					},
+				}},
+			}
+			actualPaths := []bson.D{}
+			checkPathExistPayloads(payload, "", &actualPaths)
+			expectedPaths := []bson.D{
+				{
+					{Key: "arr", Value: bson.M{"$exists": true}},
+					{Key: "is_array", Value: false},
+					{Key: "wants_array", Value: true},
+				},
+				{
+					{Key: "arr.0", Value: bson.M{"$exists": true}},
+					{Key: "is_array", Value: true},
+					{Key: "wants_array", Value: true},
+				},
+				{
+					{Key: "arr.0.0", Value: bson.M{"$exists": true}},
+					{Key: "is_array", Value: true},
+					{Key: "wants_array", Value: false},
+				},
+			}
+			So(comparePaths(&actualPaths, &expectedPaths), ShouldBeTrue)
+		})
+	})
+}
+
 func TestCreateFieldSetPayload(t *testing.T) {
 	// case 1: simple addition
 	// {
@@ -87,7 +266,7 @@ func TestCreateFieldSetPayload(t *testing.T) {
 	case1ExpectedPayload := bson.M{
 		"new_string_field": "",
 	}
-	
+
 	test.AssertTrue(t, bsonMAreEqual(case1Payload, case1ExpectedPayload), "Case 1: Unexpected Payload")
 
 	// case 2: addition inside array
@@ -109,7 +288,7 @@ func TestCreateFieldSetPayload(t *testing.T) {
 	case2ExpectedPayload := bson.M{
 		"arr.$[].new_field": true,
 	}
-	
+
 	test.AssertTrue(t, bsonMAreEqual(case2Payload, case2ExpectedPayload), "Case 2: Unexpected Payload")
 
 	// case 3: addition inside nested array
@@ -139,7 +318,7 @@ func TestCreateFieldSetPayload(t *testing.T) {
 	case3ExpectedPayload := bson.M{
 		"arr.$[].inner_arr.$[].new_field": "",
 	}
-	
+
 	test.AssertTrue(t, bsonMAreEqual(case3Payload, case3ExpectedPayload), "Case 3: Unexpected Payload")
 
 	// case 4: addition of array field inside nested array
@@ -169,8 +348,30 @@ func TestCreateFieldSetPayload(t *testing.T) {
 	case4ExpectedPayload := bson.M{
 		"arr.$[].inner_arr.$[].new_field": bson.A{0},
 	}
-	
+
 	test.AssertTrue(t, bsonMAreEqual(case4Payload, case4ExpectedPayload), "Case 4: Unexpected Payload")
+
+	// case 4: array of array
+	// {
+	// 	 "arr": [
+	//	    [
+	// 		     [0]
+	// 		]
+	// 	 ]
+	// }
+	case5Field := bson.D{
+		{Key: "arr", Value: bson.A{
+			bson.A{
+				bson.A{0},
+			},
+		}},
+	}
+	case5Payload := createFieldSetPayload(case5Field, "")
+	case5ExpectedPayload := bson.M{
+		"arr.$[].$[]": bson.A{0},
+	}
+
+	test.AssertTrue(t, bsonMAreEqual(case5Payload, case5ExpectedPayload), "Case 5: Unexpected Payload")
 
 	// TODO: add more cases
 }
@@ -185,7 +386,7 @@ func TestDropFieldUnsetPayload(t *testing.T) {
 	case1ExpectedPayload := bson.M{
 		"new_string_field": "",
 	}
-	
+
 	test.AssertTrue(t, bsonMAreEqual(case1Payload, case1ExpectedPayload), "Case 1: Unexpected Payload")
 
 	// case 2: addition inside array
@@ -207,7 +408,7 @@ func TestDropFieldUnsetPayload(t *testing.T) {
 	case2ExpectedPayload := bson.M{
 		"arr.$[].new_field": "",
 	}
-	
+
 	test.AssertTrue(t, bsonMAreEqual(case2Payload, case2ExpectedPayload), "Case 2: Unexpected Payload")
 
 	// case 3: addition inside nested array
@@ -237,7 +438,7 @@ func TestDropFieldUnsetPayload(t *testing.T) {
 	case3ExpectedPayload := bson.M{
 		"arr.$[].inner_arr.$[].new_field": "",
 	}
-	
+
 	test.AssertTrue(t, bsonMAreEqual(case3Payload, case3ExpectedPayload), "Case 3: Unexpected Payload")
 
 	// case 4: addition of array field inside nested array
@@ -267,7 +468,7 @@ func TestDropFieldUnsetPayload(t *testing.T) {
 	case4ExpectedPayload := bson.M{
 		"arr.$[].inner_arr.$[].new_field": "",
 	}
-	
+
 	test.AssertTrue(t, bsonMAreEqual(case4Payload, case4ExpectedPayload), "Case 4: Unexpected Payload")
 
 	// TODO: add more cases
@@ -277,12 +478,12 @@ func TestConvertFunction(t *testing.T) {
 	// case 1: default
 	Convey("Case 1: Default", t, func() {
 		functionMap := map[field.FieldType]string{
-			field.TypeString: "$toString",
-			field.TypeBoolean: "$toBool",
+			field.TypeString:    "$toString",
+			field.TypeBoolean:   "$toBool",
 			field.TypeTimestamp: "$toDate",
-			field.TypeInt32: "$toInt",
-			field.TypeInt64: "$toLong",
-			field.TypeDouble: "$toDouble",
+			field.TypeInt32:     "$toInt",
+			field.TypeInt64:     "$toLong",
+			field.TypeDouble:    "$toDouble",
 		}
 
 		Convey("String Conversion", func() {
@@ -310,11 +511,11 @@ func TestConvertFunction(t *testing.T) {
 		defer func() {
 			if r := recover(); r != nil {
 				Convey("Unexpected panic", func() {
-					So(fmt.Sprintf("%v", r), ShouldContainSubstring, "Conversion is not supported")
+					So(fmt.Sprintf("%v", r), ShouldContainSubstring, "not supported")
 				})
 			}
 		}()
-	
+
 		convertFunction(field.TypeGeoJSONPoint, field.TypeString)
 	})
 }

@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  mongodb.one:
+    image: mongo:latest
+    container_name: mongodb-one
+    ports:
+      - 127.0.11.1:27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongr8
+      MONGO_INITDB_ROOT_PASSWORD: mongr8
+    volumes:
+      - ./data/mongodb1:/data/db
+      - ./mock-mongo-keyfile:/opt/mongo-keyfile
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs", "--auth", "--keyFile", "/opt/mongo-keyfile/keyfile"]
+
+  mongodb.two:
+    image: mongo:latest
+    container_name: mongodb-two
+    ports:
+      - 127.0.11.2:27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongr8
+      MONGO_INITDB_ROOT_PASSWORD: mongr8
+    volumes:
+      - ./data/mongodb2:/data/db
+      - ./mock-mongo-keyfile:/opt/mongo-keyfile
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs", "--auth", "--keyFile", "/opt/mongo-keyfile/keyfile"]
+  

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -22,7 +22,7 @@ import (
 var generateMigrationCmd = &cobra.Command{
 	Use:   "generate-migration",
 	Short: "Generate migration files",
-	Long: `Generate migration files based on defined collections`,
+	Long:  `Generate migration files based on defined collections`,
 	Run: func(cmd *cobra.Command, args []string) {
 		projectPath, err := config.GetProjectRootDir()
 		if err != nil {
@@ -69,5 +69,5 @@ func init() {
 	generateMigrationCmd.PersistentFlags().Bool(option.MigrationOptionArgUseSortedSchema, true, "Use sorted schema on migration")
 	generateMigrationCmd.PersistentFlags().Bool(option.MigrationOptionArgUseForceConversion, true, "Force on type convertion on migration")
 	generateMigrationCmd.PersistentFlags().Bool(option.MigrationOptionArgUseSchemaValidation, true, "Apply schema validation on migration")
-	generateMigrationCmd.PersistentFlags().String(option.MigrationOptionArgDesc, "", "Description for current migration")	
+	generateMigrationCmd.PersistentFlags().String(option.MigrationOptionArgDesc, "", "Description for current migration")
 }

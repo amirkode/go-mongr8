@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -48,9 +48,9 @@ func execSubActions(ctx context.Context, db *mongo.Database, apis []ai.SubAction
 			return err
 		}
 
-		log.Printf("All Migration files has been migrated with IDs: %s..%s\n", 
-			(*filteredApis)[0].Migration.ID, 
-			(*filteredApis)[len(*filteredApis) - 1].Migration.ID,
+		log.Printf("All Migration files has been migrated with IDs: %s..%s\n",
+			(*filteredApis)[0].Migration.ID,
+			(*filteredApis)[len(*filteredApis)-1].Migration.ID,
 		)
 	} else {
 		log.Printf("Nothing to migrate.\n")

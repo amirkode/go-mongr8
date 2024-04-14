@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -195,7 +195,7 @@ func (sas SubActionSchema) getIndexDeclarationLiteral(idx collection.Index) stri
 				(*idx.Spec().Rules)[index.OptionTTL],
 			)
 		}
-		
+
 		if idx.Spec().HasRule(index.OptionCollation) {
 			fArgs := AnyToLiteral((*idx.Spec().Rules)[index.OptionCollation])
 			res += fmt.Sprintf(`.SetCollation(%s)`,

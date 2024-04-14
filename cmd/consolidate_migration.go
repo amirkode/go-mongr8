@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -17,7 +17,7 @@ import (
 var consolidateMigrationCmd = &cobra.Command{
 	Use:   "consolidate-migration",
 	Short: "Consolidate migration with current database schema",
-	Long: `This command will consolidate current migration files with current schema/data in database`,
+	Long:  `This command will consolidate current migration files with current schema/data in database`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("consolidateMigration called")
 	},

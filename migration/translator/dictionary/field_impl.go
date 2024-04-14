@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -9,6 +9,7 @@ package dictionary
 
 import (
 	"time"
+	"fmt"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
@@ -96,6 +97,7 @@ type (
 
 // translation for string field type
 func newTranslatedString(field collection.Field) translatedString {
+	fmt.Println("this one")
 	return translatedString{
 		TranslatedField: TranslatedField{
 			field: field,

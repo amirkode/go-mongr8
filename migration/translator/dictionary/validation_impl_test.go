@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -11,11 +11,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/amirkode/go-mongr8/internal/test"
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
 	"github.com/amirkode/go-mongr8/collection/index"
 	"github.com/amirkode/go-mongr8/collection/metadata"
+	"github.com/amirkode/go-mongr8/internal/test"
 	"github.com/amirkode/go-mongr8/migration/common"
 )
 
@@ -47,22 +47,22 @@ func TestValidateCollections(t *testing.T) {
 func TestValidateID(t *testing.T) {
 	// Case 1: Unallowed type object
 	case1Err := validateID("collection_name", []collection.Field{field.ObjectField("_id")})
-	
+
 	test.AssertTrue(t, case1Err != nil && strings.Contains(case1Err.Error(), "ID field type invalid"), "Case 1: Unexpected error")
-	
+
 	// Case 2: Unallowed type geo json point
 	case2Err := validateID("collection_name", []collection.Field{field.GeoJSONPointField("_id")})
-	
+
 	test.AssertTrue(t, case2Err != nil && strings.Contains(case2Err.Error(), "ID field type invalid"), "Case 2: Unexpected error")
 
 	// Case 3: Allowed field string
 	case3Err := validateID("collection_name", []collection.Field{field.StringField("_id")})
-	
+
 	test.AssertTrue(t, case3Err == nil, "Case 3: Unexpected error")
 
 	// Case 4: Allowed field double
 	case4Err := validateID("collection_name", []collection.Field{field.DoubleField("_id")})
-	
+
 	test.AssertTrue(t, case4Err == nil, "Case 4: Unexpected error")
 }
 
@@ -85,7 +85,7 @@ func TestValidateFieldDuplication(t *testing.T) {
 
 	// Case 3: duplicate two array of object fields
 	case3Err := validateFieldDuplication("collection_name", []collection.Field{
-		field.ArrayField("name", field.ObjectField("", 
+		field.ArrayField("name", field.ObjectField("",
 			field.StringField("first_name"),
 			field.StringField("first_name"),
 		)),
@@ -95,7 +95,7 @@ func TestValidateFieldDuplication(t *testing.T) {
 
 	// Case 4: two array of object fields
 	case4Err := validateFieldDuplication("collection_name", []collection.Field{
-		field.ArrayField("name", field.ObjectField("", 
+		field.ArrayField("name", field.ObjectField("",
 			field.StringField("first_name"),
 			field.StringField("second_name"),
 		)),
@@ -124,14 +124,14 @@ func TestValidateIndividualField(t *testing.T) {
 	test.AssertTrue(t, case2Err != nil && strings.Contains(case2Err.Error(), "Field name must not be empty"), "Case 2: Unexpected error")
 
 	// Case 3: Array of object field with exceeded max name length
-	case3Err := validateIndividualField("collection_name", "", field.ArrayField("arr", 
+	case3Err := validateIndividualField("collection_name", "", field.ArrayField("arr",
 		field.ObjectField("", field.StringField("gvpzqwjlnbpptaiejcrpzzwjeqsoyxawhaprxnlbtbpiwzvrwvuqljajqpjxkjsrraxligwopgvhkzfkfajlrlefoujscbbfdemirnmbviolxpucrccrisiwcyloxuhtx")),
 	), false)
 
 	test.AssertTrue(t, case3Err != nil && strings.Contains(case3Err.Error(), "field name more than 128 characters len"), "Case 3: Unexpected error")
 
 	// Case 4: Array of object field with empty name
-	case4Err := validateIndividualField("collection_name", "", field.ArrayField("arr", 
+	case4Err := validateIndividualField("collection_name", "", field.ArrayField("arr",
 		field.ObjectField("", field.StringField("")),
 	), false)
 
@@ -143,7 +143,7 @@ func TestValidateIndividualField(t *testing.T) {
 	test.AssertTrue(t, case5Err == nil, "Case 5: Unexpected error")
 
 	// Case 6: Array of object field
-	case6Err := validateIndividualField("collection_name", "", field.ArrayField("arr", 
+	case6Err := validateIndividualField("collection_name", "", field.ArrayField("arr",
 		field.ObjectField("", field.StringField("name")),
 	), false)
 
@@ -158,14 +158,14 @@ func TestValidateFields(t *testing.T) {
 	})
 
 	test.AssertTrue(t, case1Err != nil && strings.Contains(case1Err.Error(), "duplicate field found"), "Case 1: Unexpected error")
-	
+
 	// Case 2: String field with empty name
 	case2Err := validateFields("collection_name", []collection.Field{field.StringField("")})
 
 	test.AssertTrue(t, case2Err != nil && strings.Contains(case2Err.Error(), "Field name must not be empty"), "Case 2: Unexpected error")
 
 	// Case 3: Array of object field
-	case3Err := validateFields("collection_name", []collection.Field{field.ArrayField("arr", 
+	case3Err := validateFields("collection_name", []collection.Field{field.ArrayField("arr",
 		field.ObjectField("", field.StringField("name")),
 	)})
 
@@ -232,7 +232,7 @@ func TestValidateIndexWithFields(t *testing.T) {
 	test.AssertTrue(t, case2Err != nil && strings.Contains(case2Err.Error(), "index key is invalid"), "Case 2: Unexpected error")
 
 	// Case 3: index field does not present in collection field - Array of Object
-	case3Err := validateIndexWithFields("collection_name", 
+	case3Err := validateIndexWithFields("collection_name",
 		[]collection.Field{field.ArrayField("values", field.ObjectField("", field.Int32Field("score")))},
 		index.SingleFieldIndex(index.Field("values.name", 1)),
 	)
@@ -240,7 +240,7 @@ func TestValidateIndexWithFields(t *testing.T) {
 	test.AssertTrue(t, case3Err != nil && strings.Contains(case3Err.Error(), "index key is invalid"), "Case 3: Unexpected error")
 
 	// Case 4: index field does not present in collection field - Object of Object
-	case4Err := validateIndexWithFields("collection_name", 
+	case4Err := validateIndexWithFields("collection_name",
 		[]collection.Field{field.ObjectField("field", field.ObjectField("child_field", field.Int32Field("child_child_field")))},
 		index.SingleFieldIndex(index.Field("field.child_field.name", 1)),
 	)
@@ -253,7 +253,7 @@ func TestValidateIndexWithFields(t *testing.T) {
 	test.AssertTrue(t, case5Err == nil, "Case 5: Unexpected error")
 
 	// Case 6: index field presents in collection field - Array of Object
-	case6Err := validateIndexWithFields("collection_name", 
+	case6Err := validateIndexWithFields("collection_name",
 		[]collection.Field{field.ArrayField("values", field.ObjectField("", field.Int32Field("score")))},
 		index.SingleFieldIndex(index.Field("values.score", 1)),
 	)
@@ -261,7 +261,7 @@ func TestValidateIndexWithFields(t *testing.T) {
 	test.AssertTrue(t, case6Err != nil, "Case 6: Unexpected error")
 
 	// Case 7: index field presents in collection field - Object of Object
-	case7Err := validateIndexWithFields("collection_name", 
+	case7Err := validateIndexWithFields("collection_name",
 		[]collection.Field{field.ObjectField("field", field.ObjectField("child_field", field.Int32Field("child_child_field")))},
 		index.SingleFieldIndex(index.Field("field.child_field.child_child_field", 1)),
 	)
@@ -269,36 +269,36 @@ func TestValidateIndexWithFields(t *testing.T) {
 	test.AssertTrue(t, case7Err == nil, "Case 7: Unexpected error")
 
 	// Case 8: partial expression key does not present in field
-	case8Err := validateIndexWithFields("collection_name", 
-		[]collection.Field{field.StringField("name"), field.StringField("address")}, 
+	case8Err := validateIndexWithFields("collection_name",
+		[]collection.Field{field.StringField("name"), field.StringField("address")},
 		index.SingleFieldIndex(index.Field("address", 1)).SetPartialExpression(map[string]interface{}{"wrong_field": "some value"}),
 	)
 
-	test.AssertTrue(t, case8Err != nil && strings.Contains(case8Err.Error(), "Partial filter key is invalid"), "Case 8: Unexpected error")	
+	test.AssertTrue(t, case8Err != nil && strings.Contains(case8Err.Error(), "Partial filter key is invalid"), "Case 8: Unexpected error")
 
 	// Case 9: partial expression key presents in field
-	case9Err := validateIndexWithFields("collection_name", 
-		[]collection.Field{field.StringField("name"), field.StringField("address")}, 
+	case9Err := validateIndexWithFields("collection_name",
+		[]collection.Field{field.StringField("name"), field.StringField("address")},
 		index.SingleFieldIndex(index.Field("address", 1)).SetPartialExpression(map[string]interface{}{"name": "some value"}),
 	)
 
-	test.AssertTrue(t, case9Err == nil, "Case 9: Unexpected error")	
+	test.AssertTrue(t, case9Err == nil, "Case 9: Unexpected error")
 
 	// Case 10: TTL option with no timestamp field
-	case10Err := validateIndexWithFields("collection_name", 
-		[]collection.Field{field.StringField("name"), field.StringField("address")}, 
+	case10Err := validateIndexWithFields("collection_name",
+		[]collection.Field{field.StringField("name"), field.StringField("address")},
 		index.SingleFieldIndex(index.Field("address", 1)).SetTTL(3600),
 	)
 
-	test.AssertTrue(t, case10Err != nil && strings.Contains(case10Err.Error(), "Timestamp field must exist in TTL index"), "Case 10: Unexpected error")	
+	test.AssertTrue(t, case10Err != nil && strings.Contains(case10Err.Error(), "Timestamp field must exist in TTL index"), "Case 10: Unexpected error")
 
 	// Case 11: TTL option with timestamp field
-	case11Err := validateIndexWithFields("collection_name", 
-		[]collection.Field{field.StringField("name"), field.TimestampField("updated_at")}, 
+	case11Err := validateIndexWithFields("collection_name",
+		[]collection.Field{field.StringField("name"), field.TimestampField("updated_at")},
 		index.CompoundIndex(index.Field("name", 1), index.Field("updated_at", 1)).SetTTL(3600),
 	)
 
-	test.AssertTrue(t, case11Err == nil, "Case 11: Unexpected error")	
+	test.AssertTrue(t, case11Err == nil, "Case 11: Unexpected error")
 }
 
 func TestValidateIndexes(t *testing.T) {

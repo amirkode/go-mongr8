@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -19,7 +19,7 @@ import (
 var initMigrationCmd = &cobra.Command{
 	Use:   "init-migration",
 	Short: "Initialize migration components",
-	Long: `Initialize all migration components in the main working project directory`,
+	Long:  `Initialize all migration components in the main working project directory`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := migration_init.InitMigration()
 		// add go-mongr8 to current project
@@ -56,6 +56,6 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	
+
 	initMigrationCmd.Flags().BoolP("apply-root-dir-validation", "v", false, "Help message for toggle")
 }

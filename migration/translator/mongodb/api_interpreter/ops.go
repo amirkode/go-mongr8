@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -27,6 +27,63 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// This will check the path if exists or create the new one if does not
+// if those conditions are not available, it expects to return an error
+func checkOrCreatePath(ctx context.Context, collection *mongo.Collection, payload bson.D) error {
+	// all possible path to check, sorted from higher level
+	availablePaths := []bson.D{}
+	checkPathExistPayloads(payload, "", &availablePaths)
+	startCreate := false
+
+	// TODO: optimize this, since it gradually creates the parent path by one level
+	for _, path := range availablePaths {
+		if !startCreate {
+			checkPayload := bson.D{path[0]}
+			count, _ := collection.CountDocuments(ctx, checkPayload)
+			startCreate = count == 0
+		}
+
+		if startCreate {
+			upsertPath := convertToUpsertPath(path[0].Key)
+			currPath := path[0].Key
+			isArray := path[1].Value.(bool)
+			wantsArray := path[2].Value.(bool)
+			var value interface{}
+			if wantsArray {
+				value = bson.A{}
+			} else {
+				value = bson.M{}
+			}
+
+			createPayload := bson.M{
+				"$set": bson.M{
+					upsertPath: value,
+				},
+			}
+			// if current path is an array, then it must be empty and a new item needs to be pushed
+			if isArray {
+				parentPath := getParentPath(currPath)
+				createPayload = bson.M{
+					"$push": bson.M{
+						parentPath: value,
+					},
+				}
+			}
+			_, err := collection.UpdateMany(ctx, bson.M{}, createPayload)
+			if err != nil {
+				return fmt.Errorf("error while creating path %s: %s", currPath, err.Error())
+			}
+		}
+	}
+
+	return nil
+}
+
+func sanatizePayload(ctx context.Context, collection *mongo.Collection, payload bson.D) error {
+	// for now, the validation is only for the field path
+	return checkOrCreatePath(ctx, collection, payload)
+}
+
 func createField(ctx context.Context, db *mongo.Database, collName string, payload bson.D, update bool) error {
 	collection := db.Collection(collName)
 	// if it's not an update, then create/insert entire documents
@@ -38,12 +95,20 @@ func createField(ctx context.Context, db *mongo.Database, collName string, paylo
 		return nil
 	}
 
+	err := sanatizePayload(ctx, collection, payload)
+	if err != nil {
+		return err
+	}
+
 	// set field expects 1 path
 	updatePayload := bson.M{
 		"$set": createFieldSetPayload(payload, ""),
 	}
-
-	_, err := collection.UpdateMany(ctx, bson.M{}, updatePayload)
+	upsert := true
+	opt := options.UpdateOptions{
+		Upsert: &upsert,
+	}
+	_, err = collection.UpdateMany(ctx, bson.M{}, updatePayload, &opt)
 
 	return err
 }
@@ -138,10 +203,11 @@ func SubActionApiCreateCollection(subAction dt.Pair[migrator.Migration, si.SubAc
 		if schemaOption != nil {
 			_, capped := (*schemaOption)[metadata.CollectionOptionCapped]
 			if capped {
-				cappedSize, _ := (*schemaOption)[metadata.CollectionOptionCappedSize]
-
-				opt.SetCapped(true)
-				opt.SetSizeInBytes(cappedSize.(int64))
+				cappedSize, ok := (*schemaOption)[metadata.CollectionOptionCappedSize]
+				if ok {
+					opt.SetCapped(true)
+					opt.SetSizeInBytes(cappedSize.(int64))
+				}
 			}
 
 			ttl, useTTL := (*schemaOption)[metadata.CollectionOptionExpiredAfterSeconds]

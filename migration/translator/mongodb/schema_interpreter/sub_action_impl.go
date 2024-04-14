@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -83,7 +83,7 @@ func (sa SubAction) GetIndexesBsonM() []dt.Pair[string, dt.Pair[bson.M, bson.M]]
 	if sa.validate != nil {
 		sa.validate()
 	}
-	
+
 	res := []dt.Pair[string, dt.Pair[bson.M, bson.M]]{}
 	for _, index := range sa.ActionSchema.Indexes {
 		translated := dictionary.GetTranslatedIndex(index)
@@ -105,7 +105,7 @@ func (sa SubAction) GetFieldsBsonD() bson.D {
 	if sa.validate != nil {
 		sa.validate()
 	}
-	
+
 	return fieldsToBsonD(sa.ActionSchema.Fields)
 }
 
@@ -148,7 +148,7 @@ func (sa SubAction) GetLiteralInstance(prefix string, isArrayItem bool) string {
 		if !isArrayItem {
 			res += fmt.Sprintf("%sSubAction", prefix)
 		}
-	
+
 		res += "{\n"
 		res += fmt.Sprintf("Type: %s%s,\n", prefix, sa.Type.ToString())
 		res += fmt.Sprintf("ActionSchema: %s,\n", actionSchema)

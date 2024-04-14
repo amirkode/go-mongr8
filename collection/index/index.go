@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -37,7 +37,7 @@ func (f IndexField) NestedField(name string) IndexField {
 	if f.Key != "" {
 		f.Key += "."
 	}
-	
+
 	f.Key += name
 
 	return f

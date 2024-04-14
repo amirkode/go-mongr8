@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -32,7 +32,7 @@ func fieldsAreEqual(a, b collection.Field) bool {
 			fmt.Println("ArrayFields length are different")
 			return false
 		}
-		
+
 		aArr := map[string]collection.Field{}
 		bArr := map[string]collection.Field{}
 		for _, aA := range *a.Spec().ArrayFields {
@@ -80,7 +80,7 @@ func fieldsAreEqual(a, b collection.Field) bool {
 			fmt.Println("Object Fields length are different")
 			return false
 		}
-		
+
 		aObj := map[string]collection.Field{}
 		bObj := map[string]collection.Field{}
 		for _, aA := range *a.Spec().Object {
@@ -120,7 +120,7 @@ func fieldsAreEqual(a, b collection.Field) bool {
 			}
 		}
 	}
-	
+
 	return true
 }
 
@@ -130,7 +130,7 @@ func collectionsAreEqual(a, b collection.Collection) bool {
 		fmt.Println("collection name are different")
 		return false
 	}
-	
+
 	// check type
 	if a.Collection().Spec().Type != b.Collection().Spec().Type {
 		fmt.Println("collection type are different")
@@ -168,7 +168,7 @@ func collectionsAreEqual(a, b collection.Collection) bool {
 		fmt.Println("Fields length are different", len(a.Fields()), "and", len(b.Fields()))
 		return false
 	}
-	
+
 	aFields := map[string]collection.Field{}
 	bFields := map[string]collection.Field{}
 	for _, aField := range a.Fields() {

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -18,7 +18,7 @@ func TestSingleFieldIndex(t *testing.T) {
 	Convey("Case 1: Normal", t, func() {
 		// Case 1: normal
 		case1Index := SingleFieldIndex(Field("name", 1))
-		
+
 		Convey("Unexpected index type", func() {
 			So(case1Index.spec.Type, ShouldEqual, TypeSingleField)
 		})
@@ -57,14 +57,13 @@ func TestCompoundIndex(t *testing.T) {
 				})
 			}
 		}()
-	
+
 		CompoundIndex(
 			Field("name"),
 			Field("age"),
 		)
 	})
 
-	
 	Convey("Case 3: index with no field", t, func() {
 		defer func() {
 			if r := recover(); r != nil {
