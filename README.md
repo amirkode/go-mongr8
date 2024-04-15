@@ -75,6 +75,6 @@ However, we will continue our efforts to provide support for future updates.
 ## Contribution
 Coming soon
 ## License
-Copyright (c) 2023-present [Authors](https://github.com/amirkode/go-mongr8/blob/main/AUTHORS) and Contributors. Logo was created by [Bing Chat](https://bing.com).
+Copyright (c) 2023-present-present [Authors](https://github.com/amirkode/go-mongr8/blob/main/AUTHORS) and Contributors. Logo was created by [Bing Chat](https://bing.com).
 
 Go-mongr8 is distributed under the [MIT License](https://opensource.org/license/mit/).

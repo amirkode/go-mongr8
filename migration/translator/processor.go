@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -10,12 +10,12 @@ package translator
 import (
 	"context"
 
-	dt "github.com/amirkode/go-mongr8/internal/data_type"
 	"github.com/amirkode/go-mongr8/collection"
+	dt "github.com/amirkode/go-mongr8/internal/data_type"
 	"github.com/amirkode/go-mongr8/migration/migrator"
 	"github.com/amirkode/go-mongr8/migration/translator/dictionary"
-	si "github.com/amirkode/go-mongr8/migration/translator/mongodb/schema_interpreter"
 	ai "github.com/amirkode/go-mongr8/migration/translator/mongodb/api_interpreter"
+	si "github.com/amirkode/go-mongr8/migration/translator/mongodb/schema_interpreter"
 	"github.com/amirkode/go-mongr8/migration/translator/sync_strategy"
 )
 

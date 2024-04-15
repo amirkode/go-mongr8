@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -35,12 +35,11 @@ func GetPackageDir() (*string, error) {
 			return nil, fmt.Errorf("Error getting go-mongr8 package directory: %v\n", err)
 		}
 	}
-	
+
 	path := strings.TrimSpace(string(output))
 
 	return &path, err
 }
-
 
 // this function retrieves the root directory of working project
 func GetProjectRootDir() (*string, error) {

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -23,7 +23,7 @@ import (
 var applyMigrationCmd = &cobra.Command{
 	Use:   "apply-migration",
 	Short: "Apply all migrations",
-	Long: `Apply migration changes to MongoDB`,
+	Long:  `Apply migration changes to MongoDB`,
 	Run: func(cmd *cobra.Command, args []string) {
 		projectPath, err := config.GetProjectRootDir()
 		if err != nil {

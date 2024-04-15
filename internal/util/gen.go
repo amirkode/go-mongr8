@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -18,7 +18,7 @@ import (
 	"text/template"
 )
 
-func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface {}, formatSource bool) error {
+func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface{}, formatSource bool) error {
 	data, err := ioutil.ReadFile(tplPath)
 	if err != nil {
 		return err
@@ -28,7 +28,7 @@ func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface {}, 
 	if err != nil {
 		return err
 	}
-	
+
 	output := &bytes.Buffer{}
 	err = t.Execute(output, tplVar)
 	if err != nil {
@@ -40,7 +40,7 @@ func GenerateTemplate(tplName, tplPath, outputPath string, tplVar interface {}, 
 
 	// skip source formatting
 	if !formatSource {
-		return os.WriteFile(outputPath, output.Bytes(), 0644)	
+		return os.WriteFile(outputPath, output.Bytes(), 0644)
 	}
 
 	formattedOutput, err := format.Source(output.Bytes())

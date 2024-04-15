@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -46,7 +46,7 @@ func TestGetLiteralInstance(t *testing.T) {
 
 	// if no panic, then it should work properly
 	case1SubAction.GetLiteralInstance("", false)
-	
+
 	// TODO: add value checking
 }
 

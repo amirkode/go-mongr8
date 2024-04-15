@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -14,11 +14,11 @@ package sync_strategy
 
 import (
 	"fmt"
-	
-	dt "github.com/amirkode/go-mongr8/internal/data_type"
-	"github.com/amirkode/go-mongr8/internal/util"
+
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
+	dt "github.com/amirkode/go-mongr8/internal/data_type"
+	"github.com/amirkode/go-mongr8/internal/util"
 )
 
 type EntitySign int8

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -12,8 +12,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/amirkode/go-mongr8/internal/config"
 	"github.com/amirkode/go-mongr8/collection"
+	"github.com/amirkode/go-mongr8/internal/config"
 )
 
 const (

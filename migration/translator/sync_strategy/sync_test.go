@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/amirkode/go-mongr8/internal/util"
 	"github.com/amirkode/go-mongr8/internal/test"
+	"github.com/amirkode/go-mongr8/internal/util"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
@@ -85,7 +85,7 @@ func TestSyncCollections(t *testing.T) {
 	}
 	case1Origin := []collection.Collection{}
 	case1Synced := SyncCollections(case1Incoming, case1Origin)
-	
+
 	test.AssertEqual(t, len(case1Incoming), len(case1Synced),
 		"Case 1: Synced collection length must be equal to incoming on new collection",
 	)
@@ -118,7 +118,7 @@ func TestSyncCollections(t *testing.T) {
 		),
 	}
 	case2Synced := SyncCollections(case2Incoming, case2Origin)
-	
+
 	test.AssertEqual(t, len(case2Origin), len(case2Synced),
 		"Case 1: Synced collection length must be equal to origin on new collection",
 	)
@@ -173,7 +173,7 @@ func TestGetActions(t *testing.T) {
 		),
 	}
 	case1Actions := GetActions(case1Incoming, case1Origin)
-	
+
 	// check the actions length, it must be 3 SubActions:
 	// - create new collection `Users`
 	// - create new field `bio` on collection `customers`
@@ -197,7 +197,7 @@ func TestGetActions(t *testing.T) {
 				}) {
 					msg := "Case 1: Sub Action Type for customers collection must SubActionTypeCreateField or SubActionTypeCreateIndex"
 					t.Errorf(msg)
-					panic(msg)		
+					panic(msg)
 				}
 			}
 		} else {
@@ -261,7 +261,7 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 	// Case 1: migrations of different actions: create collection, field, and index
 	case1Migrations := []migrator.Migration{
 		{
-			ID: "1",
+			ID:   "1",
 			Desc: "a description",
 			Up: []si.Action{
 				{
@@ -340,7 +340,7 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 			},
 		},
 		{
-			ID: "2",
+			ID:   "2",
 			Desc: "a description",
 			Up: []si.Action{
 				{
@@ -405,7 +405,7 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 		if !ok {
 			msg := "Case 1: Collection name must be users or customers"
 			t.Errorf(msg)
-			panic(msg)	
+			panic(msg)
 		}
 
 		test.AssertTrue(t, collectionsAreEqual(collection, compCollection), fmt.Sprintf("Case 1: Unexpected Collection %s", collection.Collection().Spec().Name))
@@ -414,7 +414,7 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 	// Case 2: migrations of different actions with drop field action
 	case2Migrations := []migrator.Migration{
 		{
-			ID: "1",
+			ID:   "1",
 			Desc: "a description",
 			Up: []si.Action{
 				{
@@ -434,7 +434,7 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 			},
 		},
 		{
-			ID: "2",
+			ID:   "2",
 			Desc: "a description",
 			Up: []si.Action{
 				{
@@ -462,7 +462,7 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 			},
 		},
 		{
-			ID: "3",
+			ID:   "3",
 			Desc: "a description",
 			Up: []si.Action{
 				{
@@ -490,7 +490,7 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 			},
 		},
 		{
-			ID: "4",
+			ID:   "4",
 			Desc: "a description",
 			Up: []si.Action{
 				{
@@ -555,7 +555,7 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 		if !ok {
 			msg := "Case 2: Collection name must be users or customers"
 			t.Errorf(msg)
-			panic(msg)	
+			panic(msg)
 		}
 
 		test.AssertTrue(t, collectionsAreEqual(collection, compCollection), fmt.Sprintf("Case 2: Unexpected Collection %s", collection.Collection().Spec().Name))

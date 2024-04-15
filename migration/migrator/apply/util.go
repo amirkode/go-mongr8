@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -35,7 +35,7 @@ func getLatestMigrationID(ctx context.Context, db *mongo.Database) (*string, err
 		return nil, err
 	}
 
-	for cursor.Next(ctx){
+	for cursor.Next(ctx) {
 		var history MigrationHistory
 		err = cursor.Decode(&history)
 		if err != nil {
@@ -56,14 +56,14 @@ func updateMigrationHistory(migrations []migrator.Migration, ctx context.Context
 	for _, m := range migrations {
 		payload = append(payload, MigrationHistory{
 			MigrationID: m.ID,
-			Desc: m.Desc,
-			MigratedAt: migratedAt,
+			Desc:        m.Desc,
+			MigratedAt:  migratedAt,
 		})
 	}
 
 	coll := db.Collection(common.MigrationHistoryCollection)
 	_, err := coll.InsertMany(ctx, payload)
-	
+
 	return err
 }
 

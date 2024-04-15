@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -35,6 +35,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	mim "github.com/ONSdigital/dp-mongodb-in-memory"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 const MockDb = "mock-db"
@@ -108,7 +109,6 @@ func collectionExists(ctx context.Context, db *mongo.Database, name string) bool
 }
 
 func fieldsAreValid(ctx context.Context, db *mongo.Database, collectionName string, mustExist, mustNotExist []collection.Field) bool {
-	var res []bson.M
 	coll := db.Collection(collectionName)
 	cursor, err := coll.Find(ctx, bson.D{})
 	if err != nil {
@@ -116,6 +116,7 @@ func fieldsAreValid(ctx context.Context, db *mongo.Database, collectionName stri
 		return false
 	}
 
+	var res []bson.M
 	err = cursor.All(ctx, &res)
 	if err != nil {
 		fmt.Println(res)
@@ -181,17 +182,17 @@ func fieldsAreValid(ctx context.Context, db *mongo.Database, collectionName stri
 					return false
 				}
 			}
-		}
+		} else {
+			translatedOrg := dictionary.GetTranslatedField(origin)
+			orgObj := translatedOrg.GetObject()
+			item := orgObj[origin.Spec().Name]
+			if reflect.TypeOf(item) != reflect.TypeOf(dictionary.ValueType{}) {
+				return false
+			}
 
-		translatedOrg := dictionary.GetTranslatedField(origin)
-		orgObj := translatedOrg.GetObject()
-		item := orgObj[origin.Spec().Name]
-		if reflect.TypeOf(item) != reflect.TypeOf(dictionary.ValueType{}) {
-			return false
-		}
-
-		if reflect.TypeOf(convert.ConvertBsonPrimitiveToDefaultType(inc)) != reflect.TypeOf(item.(dictionary.ValueType).Value) {
-			return false
+			if reflect.TypeOf(convert.ConvertBsonPrimitiveToDefaultType(inc)) != reflect.TypeOf(item.(dictionary.ValueType).Value) {
+				return false
+			}
 		}
 
 		return true
@@ -264,7 +265,7 @@ func indexesAreValid(ctx context.Context, db *mongo.Database, collectionName str
 
 	// var names []string
 	// for _, index := range res {
-	// 	names = append(names, index["name"].(string)) 
+	// 	names = append(names, index["name"].(string))
 	// }
 
 	return true
@@ -295,9 +296,9 @@ func setupCollection(ctx context.Context, db *mongo.Database) error {
 
 	// init few fields and indexes
 	err = createField(ctx, db, MockCollection, subAction.GetFieldsBsonD(), false)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
 	return createIndexes(ctx, db, MockCollection, subAction.GetIndexesBsonD())
 }
@@ -329,16 +330,16 @@ func TestSubActionApiCreateCollection(t *testing.T) {
 
 	test.AssertTrue(t, case1Err == nil, "Case 1: Unexpected error")
 	// check created collection
-	test.AssertTrue(t, collectionExists(*ctx, db, 
+	test.AssertTrue(t, collectionExists(*ctx, db,
 		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
 	), "Case 1: Collection does not exist")
-	test.AssertTrue(t, fieldsAreValid(*ctx, db, 
-		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name, 
+	test.AssertTrue(t, fieldsAreValid(*ctx, db,
+		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
 		case1SubActionApi.SubAction.ActionSchema.Fields,
 		[]collection.Field{},
 	), "Case 1: Unexpected Fields")
-	test.AssertTrue(t, indexesAreValid(*ctx, db, 
-		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name, 
+	test.AssertTrue(t, indexesAreValid(*ctx, db,
+		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
 		case1SubActionApi.SubAction.ActionSchema.Indexes,
 		[]collection.Index{},
 	), "Case 1: Unexpected Indexes")
@@ -352,7 +353,7 @@ func TestSubActionApiCreateIndex(t *testing.T) {
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
-	
+
 	// Case 1: create single field index on name
 	case1SubActionApi := SubActionApiCreateIndex(dt.NewPair(
 		migrator.Migration{},
@@ -369,8 +370,8 @@ func TestSubActionApiCreateIndex(t *testing.T) {
 
 	test.AssertTrue(t, case1Err == nil, "Case 1: Unexpected error")
 	// check created index
-	test.AssertTrue(t, indexesAreValid(*ctx, db, 
-		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name, 
+	test.AssertTrue(t, indexesAreValid(*ctx, db,
+		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
 		case1SubActionApi.SubAction.ActionSchema.Indexes,
 		[]collection.Index{},
 	), "Case 1: Unexpected Indexes")
@@ -391,8 +392,8 @@ func TestSubActionApiCreateIndex(t *testing.T) {
 
 	test.AssertTrue(t, case2Err == nil, "Case 2: Unexpected error")
 	// check created index
-	test.AssertTrue(t, indexesAreValid(*ctx, db, 
-		case2SubActionApi.SubAction.ActionSchema.Collection.Spec().Name, 
+	test.AssertTrue(t, indexesAreValid(*ctx, db,
+		case2SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
 		case2SubActionApi.SubAction.ActionSchema.Indexes,
 		[]collection.Index{},
 	), "Case 2: Unexpected Indexes")
@@ -406,28 +407,72 @@ func TestSubActionApiCreateField(t *testing.T) {
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
-	
-	// Case 1: create a new timestamp field
-	case1SubActionApi := SubActionApiCreateField(dt.NewPair(
-		migrator.Migration{},
-		*si.SubActionCreateField(si.SubActionSchema{
-			Collection: metadata.InitMetadata(MockCollection),
-			Fields: []collection.Field{
-				field.TimestampField("created_at"),
-			},
-		}),
-	))
-	case1Err := case1SubActionApi.Execute(*ctx, db)
 
-	test.AssertTrue(t, case1Err == nil, "Case 1: Unexpected error")
-	// check created index
-	test.AssertTrue(t, fieldsAreValid(*ctx, db, 
-		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name, 
-		case1SubActionApi.SubAction.ActionSchema.Fields,
-		[]collection.Field{},
-	), "Case 1: Unexpected Fields")
+	// case 1: default
+	Convey("Case 1: Default", t, func() {
+		Convey("Create a new timestamp field", func() {
+			// Case 1: create a new timestamp field
+			subActionApi := SubActionApiCreateField(dt.NewPair(
+				migrator.Migration{},
+				*si.SubActionCreateField(si.SubActionSchema{
+					Collection: metadata.InitMetadata(MockCollection),
+					Fields: []collection.Field{
+						field.TimestampField("created_at"),
+					},
+				}),
+			))
+			err := subActionApi.Execute(*ctx, db)
 
-	// TODO: add more cases
+			Convey("Must not return an error", func() {
+				So(err == nil, ShouldBeTrue)
+			})
+			Convey("Fields must be valid", func() {
+				So(fieldsAreValid(*ctx, db,
+					subActionApi.SubAction.ActionSchema.Collection.Spec().Name,
+					subActionApi.SubAction.ActionSchema.Fields,
+					[]collection.Field{},
+				), ShouldBeTrue)
+			})
+		})
+
+		// TODO: add more default cases
+	})
+
+	// case 2: nested field
+	Convey("Case 2: Nested Field", t, func() {
+		Convey("Nesting object with array of array ", func() {
+			// Case 1: create a new timestamp field
+			subActionApi := SubActionApiCreateField(dt.NewPair(
+				migrator.Migration{},
+				*si.SubActionCreateField(si.SubActionSchema{
+					Collection: metadata.InitMetadata(MockCollection),
+					Fields: []collection.Field{
+						field.ArrayField("arr1", 
+							field.ArrayField("",
+								field.ObjectField("", 
+									field.StringField("name"),
+								),
+							),
+						),
+					},
+				}),
+			))
+			err := subActionApi.Execute(*ctx, db)
+
+			Convey("Must not return an error", func() {
+				So(err == nil, ShouldBeTrue)
+			})
+			Convey("Fields must be valid", func() {
+				So(fieldsAreValid(*ctx, db,
+					subActionApi.SubAction.ActionSchema.Collection.Spec().Name,
+					subActionApi.SubAction.ActionSchema.Fields,
+					[]collection.Field{},
+				), ShouldBeTrue)
+			})
+		})
+
+		// TODO: add more default cases
+	})
 }
 
 func TestSubActionApiConvertField(t *testing.T) {
@@ -436,7 +481,7 @@ func TestSubActionApiConvertField(t *testing.T) {
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
-	
+
 	// Case 1: convert age field to string
 	case1SubActionApi := SubActionApiConvertField(dt.NewPair(
 		migrator.Migration{},
@@ -452,8 +497,8 @@ func TestSubActionApiConvertField(t *testing.T) {
 
 	test.AssertTrue(t, case1Err == nil, "Case 1: Unexpected error")
 	// check created index
-	test.AssertTrue(t, fieldsAreValid(*ctx, db, 
-		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name, 
+	test.AssertTrue(t, fieldsAreValid(*ctx, db,
+		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
 		case1SubActionApi.SubAction.ActionSchema.Fields,
 		[]collection.Field{},
 	), "Case 1: Unexpected Fields")
@@ -476,9 +521,9 @@ func TestSubActionApiDropCollection(t *testing.T) {
 		}),
 	))
 	case1Err := case1SubActionApi.Execute(*ctx, db)
-	
+
 	test.AssertTrue(t, case1Err == nil, "Case 1: Unexpected error")
-	test.AssertTrue(t, !collectionExists(*ctx, db, 
+	test.AssertTrue(t, !collectionExists(*ctx, db,
 		MockCollection,
 	), "Case 1: Collection exists")
 
@@ -491,7 +536,7 @@ func TestSubActionApiDropIndex(t *testing.T) {
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
-	
+
 	// Case 1: drop compound fields of name and age
 	case1SubActionApi := SubActionApiDropIndex(dt.NewPair(
 		migrator.Migration{},
@@ -509,8 +554,8 @@ func TestSubActionApiDropIndex(t *testing.T) {
 
 	test.AssertTrue(t, case1Err == nil, "Case 1: Unexpected error")
 	// check dropped index
-	test.AssertTrue(t, indexesAreValid(*ctx, db, 
-		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name, 
+	test.AssertTrue(t, indexesAreValid(*ctx, db,
+		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
 		[]collection.Index{},
 		case1SubActionApi.SubAction.ActionSchema.Indexes,
 	), "Case 1: Unexpected Indexes")
@@ -524,7 +569,7 @@ func TestSubActionApiDropField(t *testing.T) {
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
-	
+
 	// Case 1: drop name field
 	case1SubActionApi := SubActionApiDropField(dt.NewPair(
 		migrator.Migration{},
@@ -539,8 +584,8 @@ func TestSubActionApiDropField(t *testing.T) {
 
 	test.AssertTrue(t, case1Err == nil, "Case 1: Unexpected error")
 	// check created index
-	test.AssertTrue(t, fieldsAreValid(*ctx, db, 
-		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name, 
+	test.AssertTrue(t, fieldsAreValid(*ctx, db,
+		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
 		[]collection.Field{},
 		case1SubActionApi.SubAction.ActionSchema.Fields,
 	), "Case 1: Unexpected Fields")
@@ -559,8 +604,8 @@ func TestSubActionApiDropField(t *testing.T) {
 
 	test.AssertTrue(t, case2Err == nil, "Case 2: Unexpected error")
 	// check created index
-	test.AssertTrue(t, fieldsAreValid(*ctx, db, 
-		case2SubActionApi.SubAction.ActionSchema.Collection.Spec().Name, 
+	test.AssertTrue(t, fieldsAreValid(*ctx, db,
+		case2SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
 		[]collection.Field{},
 		case2SubActionApi.SubAction.ActionSchema.Fields,
 	), "Case 2: Unexpected Fields")

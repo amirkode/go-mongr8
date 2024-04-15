@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 the go-mongr8 Authors and Contributors
+Copyright (c) 2023-present the go-mongr8 Authors and Contributors
 [@see Authors file]
 
 Licensed under the MIT License
@@ -37,7 +37,7 @@ func Run(ctx *context.Context, actions dt.Pair[[]si.Action, []si.Action]) error 
 
 	err := writer.Write(migration)
 	if err == nil {
-		log.Println("A new migraiton file has been generated")
+		log.Println("A new migration file has been generated")
 	}
 
 	return err
