@@ -429,7 +429,7 @@ func GetCollectionFromMigrations(migrations []migrator.Migration) []collection.C
 					for _, currIndex := range coll.Indexes() {
 						found := false
 						for _, index := range subAction.ActionSchema.Indexes {
-							if index.Spec().GetKey() == index.Spec().GetKey() {
+							if index.Spec().GetKey() == currIndex.Spec().GetKey() {
 								found = true
 								break
 							}
@@ -474,6 +474,11 @@ func GetCollectionFromMigrations(migrations []migrator.Migration) []collection.C
 			panic(fmt.Sprintf("Inconsitent migration found (%s) with action: %s\n", migrationID, subAction.Type.ToString()))
 		}
 	}
+
+	// make sure all the collections are the correct order
+	sort.Slice(migrations, func(i, j int) bool {
+		return migrations[i].ID < migrations[j].ID
+	})
 
 	for _, migration := range migrations {
 		// we only care of UP actions

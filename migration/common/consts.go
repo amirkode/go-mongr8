@@ -8,6 +8,6 @@ Licensed under the MIT License
 package common
 
 const (
-	Mongr8Version              = "v0.1.0-alpha"
+	Mongr8Version              = "v0.1.1-alpha-rc"
 	MigrationHistoryCollection = "mongr8_migration_history"
 )

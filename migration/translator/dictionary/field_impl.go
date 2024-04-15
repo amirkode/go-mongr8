@@ -9,7 +9,6 @@ package dictionary
 
 import (
 	"time"
-	"fmt"
 
 	"github.com/amirkode/go-mongr8/collection"
 	"github.com/amirkode/go-mongr8/collection/field"
@@ -97,7 +96,6 @@ type (
 
 // translation for string field type
 func newTranslatedString(field collection.Field) translatedString {
-	fmt.Println("this one")
 	return translatedString{
 		TranslatedField: TranslatedField{
 			field: field,
