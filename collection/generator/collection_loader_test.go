@@ -29,14 +29,22 @@ func testSetupCollectionFolder() {
 
 	// init combined collection
 	tplVar := struct {
-		CreateDate string
+		Collections []string
+		CreateDate  string
+		ModuleName  string
 	}{
-		CreateDate: time.Now().Format("2006-01-02"),
+		Collections: []string{},
+		CreateDate:  time.Now().Format("2006-01-02"),
+		ModuleName:  "go-mongr8",
 	}
 
-	tplPath := fmt.Sprintf("%s/migration/init/template.tpl", *rootPath)
+	tplPath, err := config.GetTemplatePath("collection", "generator.tpl")
+	if err != nil {
+		panic(err)
+	}
+
 	outputPath := fmt.Sprintf("%s/mongr8/collection/no_edit/combined_collections.go", *rootPath)
-	err = util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, tplVar, true)
+	err = util.GenerateTemplate(tplCombinedCollections, *tplPath, outputPath, tplVar, true)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +58,11 @@ func testSetupCollection(collectionName string) {
 		panic(err)
 	}
 
-	tplPath := fmt.Sprintf("%s/collection/generator/template.tpl", *rootPath)
+	tplPath, err := config.GetTemplatePath("collection", "generator.tpl")
+	if err != nil {
+		panic(err)
+	}
+
 	collectionName = util.ToSnakeCase(collectionName)
 	templateVar := &CollectionTemplateVar{
 		CreateDate: time.Now().Format("2006-01-02"),
@@ -60,7 +72,7 @@ func testSetupCollection(collectionName string) {
 
 	// genenrate collection
 	outputPath := fmt.Sprintf("%s/mongr8/collection/%s.go", *rootPath, collectionName)
-	err = util.GenerateTemplate(tplCollection, tplPath, outputPath, templateVar, true)
+	err = util.GenerateTemplate(tplCollection, *tplPath, outputPath, templateVar, true)
 	if err != nil {
 		panic(err)
 	}
@@ -72,7 +84,7 @@ func testSetupCollection(collectionName string) {
 	}
 
 	outputPath = fmt.Sprintf("%s/mongr8/collection/no_edit/combined_collections.go", *rootPath)
-	err = util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, combinedCollsTemplateVar, true)
+	err = util.GenerateTemplate(tplCombinedCollections, *tplPath, outputPath, combinedCollsTemplateVar, true)
 	if err != nil {
 		panic(err)
 	}
@@ -84,7 +96,7 @@ func testTearDown() {
 		panic(err)
 	}
 
-	path := fmt.Sprintf("%s/%s", *rootPath, baseCollectionPath)
+	path := fmt.Sprintf("%s/%s", *rootPath, mongr8Path)
 	if err := os.RemoveAll(path); err != nil {
 		panic(err)
 	}
@@ -95,14 +107,14 @@ func TestGetAllCollectionStructs(t *testing.T) {
 		testTearDown()
 		testSetupCollection("first_collection")
 		testSetupCollection("second_collection")
-		
+
 		collectionStructs := getAllCollectionStructs()
 		Convey("Unexpected collection structs length", func() {
 			So(len(collectionStructs), ShouldEqual, 2)
 		})
 
 		expectedStructs := map[string]bool{
-			"FirstCollection": true,
+			"FirstCollection":  true,
 			"SecondCollection": true,
 		}
 
@@ -117,7 +129,6 @@ func TestGetAllCollectionStructs(t *testing.T) {
 
 func TestGetCollectionStructName(t *testing.T) {
 	Convey("Case 1: Normal", t, func() {
-		testTearDown()
 		rootPath, err := config.GetProjectRootDir()
 		if err != nil {
 			panic(err)
@@ -143,22 +154,23 @@ func TestGetCollectionStructName(t *testing.T) {
 
 			So(*name2, ShouldEqual, "SecondCollection")
 		})
+
+		testTearDown()
 	})
 }
 
 func TestGetAllCollectionNames(t *testing.T) {
 	Convey("Case 1: Normal snake case input", t, func() {
-		testTearDown()
 		testSetupCollection("first_collection")
 		testSetupCollection("second_collection")
-		
+
 		collectionNames := getAllCollectionNames()
 		Convey("Unexpected collection names length", func() {
 			So(len(collectionNames), ShouldEqual, 2)
 		})
 
 		expectedNames := map[string]bool{
-			"first_collection": true,
+			"first_collection":  true,
 			"second_collection": true,
 		}
 
@@ -168,20 +180,21 @@ func TestGetAllCollectionNames(t *testing.T) {
 				So(ok, ShouldBeTrue)
 			}
 		})
+
+		testTearDown()
 	})
 
 	Convey("Case 2: Camel case input", t, func() {
-		testTearDown()
 		testSetupCollection("FirstCollection")
 		testSetupCollection("SecondCollection")
-		
+
 		collectionNames := getAllCollectionNames()
 		Convey("Unexpected collection names length", func() {
 			So(len(collectionNames), ShouldEqual, 2)
 		})
 
 		expectedNames := map[string]bool{
-			"firstcollection": true,
+			"firstcollection":  true,
 			"secondcollection": true,
 		}
 
@@ -191,12 +204,13 @@ func TestGetAllCollectionNames(t *testing.T) {
 				So(ok, ShouldBeTrue)
 			}
 		})
+
+		testTearDown()
 	})
 }
 
 func TestGetCollectionName(t *testing.T) {
 	Convey("Case 1: Normal snake case input", t, func() {
-		testTearDown()
 		rootPath, err := config.GetProjectRootDir()
 		if err != nil {
 			panic(err)
@@ -222,10 +236,11 @@ func TestGetCollectionName(t *testing.T) {
 
 			So(*name2, ShouldEqual, "second_collection")
 		})
+
+		testTearDown()
 	})
 
 	Convey("Case 2: Camel case input", t, func() {
-		testTearDown()
 		rootPath, err := config.GetProjectRootDir()
 		if err != nil {
 			panic(err)
@@ -251,5 +266,7 @@ func TestGetCollectionName(t *testing.T) {
 
 			So(*name2, ShouldEqual, "secondcollection")
 		})
+
+		testTearDown()
 	})
 }

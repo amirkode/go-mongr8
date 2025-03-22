@@ -68,6 +68,30 @@ func GetProjectRootDir() (*string, error) {
 	}
 }
 
+// the templates directory, stores all the templates for the project
+func GetTemplatesDir() (*string, error) {
+	rootPath, err := GetPackageDir()
+	if err != nil {
+		return nil, err
+	}
+
+	dir := filepath.Join(*rootPath, "templates")
+
+	return &dir, nil
+}
+
+// the template path based on category and template name
+func GetTemplatePath(category string, fileName string) (*string, error) {
+	templatesDir, err := GetTemplatesDir()
+	if err != nil {
+		return nil, err
+	}
+
+	path := filepath.Join(*templatesDir, category, fileName)
+
+	return &path, nil
+}
+
 func DoesPathExist(path string) bool {
 	_, err := os.Stat(path)
 

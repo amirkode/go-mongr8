@@ -21,7 +21,7 @@ go install github.com/amirkode/go-mongr8@latest
 ```
 
 ## Usage
-Basic operation can be done by using `go-mongr8` CLI command. Complete documentation can be found [here](https://github.com/amirkode/go-mongr8/blob/main/doc/README.md).
+Basic operation can be done by using `go-mongr8` CLI command. Complete documentation can be found [here](https://github.com/amirkode/go-mongr8/blob/main/docs/README.md).
 
 Users can easily define their schema with provided APis in this package. Here's the example of simple schema definition:
 
@@ -48,7 +48,7 @@ func (Users) Indexes() []collection.Index {
 }
 
 ```
-Complete documentation can be found [here](https://github.com/amirkode/go-mongr8/blob/main/doc/USER_GUIDE.md).
+Complete documentation can be found [here](https://github.com/amirkode/go-mongr8/blob/main/docs/USER_GUIDE.md).
 
 ## Features
 - Dual-purpose: Use as CLI and as library.
@@ -65,7 +65,7 @@ Complete documentation can be found [here](https://github.com/amirkode/go-mongr8
 - [ ] Consolidate migration
 - [ ] Rollback migration
 
-For supported MongoDB operations, you can see [here](https://github.com/amirkode/go-mongr8/blob/main/doc/USER_GUIDE.md).
+For supported MongoDB operations, you can see [here](https://github.com/amirkode/go-mongr8/blob/main/docs/USER_GUIDE.md).
 
 ## Limitations
 As a disclaimer, This is an unofficial package designed for MongoDB Migration written in golang. As it relies on the MongoDB golang API, please be aware that some functionalities may evolve over time, potentially affecting compatibility with future MongoDB versions.
@@ -73,8 +73,9 @@ As a disclaimer, This is an unofficial package designed for MongoDB Migration wr
 However, we will continue our efforts to provide support for future updates.
 
 ## Contribution
-Coming soon
+We welcome contributions to **go-mongr8**! If you'd like to contribute, please submit a pull request with your changes. If you find any issues, please report them in the issue tracker.
+
 ## License
-Copyright (c) 2023-present-present [Authors](https://github.com/amirkode/go-mongr8/blob/main/AUTHORS) and Contributors. Logo was created by [Bing Chat](https://bing.com).
+Copyright (c) 2023-present [Authors](https://github.com/amirkode/go-mongr8/blob/main/AUTHORS) and Contributors. Logo was created by [Bing Chat](https://bing.com).
 
 Go-mongr8 is distributed under the [MIT License](https://opensource.org/license/mit/).

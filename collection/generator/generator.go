@@ -10,6 +10,7 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/amirkode/go-mongr8/internal/config"
@@ -17,8 +18,8 @@ import (
 )
 
 const (
-	tplCollection           = "collection"
-	tplCombainedCollections = "combined_collections"
+	tplCollection          = "collection"
+	tplCombinedCollections = "combined_collections"
 )
 
 type CollectionTemplateVar struct {
@@ -41,10 +42,8 @@ func getCollectionTemplateVar(collectionName string) (*CollectionTemplateVar, er
 	}
 
 	allCollectionNames := getAllCollectionNames()
-	for _, name := range allCollectionNames {
-		if collectionName == name {
-			return nil, errors.New("the provided collection name already exists")
-		}
+	if slices.Contains(allCollectionNames, collectionName) {
+		return nil, errors.New("the provided collection name already exists")
 	}
 
 	createDate := time.Now().Format("2006-01-02")
@@ -89,27 +88,25 @@ func GenerateMigrationTemplate(collectionName string) error {
 		return err
 	}
 
-	packagePath, err := config.GetPackageDir()
+	tplPath, err := config.GetTemplatePath("collection", "generator.tpl")
 	if err != nil {
 		return err
 	}
 
-	tplPath := fmt.Sprintf("%s/collection/generator/template.tpl", *packagePath)
-
 	// generate collection
 	outputPath := fmt.Sprintf("%s/mongr8/collection/%s.go", *rootPath, collectionName)
-	err = util.GenerateTemplate(tplCollection, tplPath, outputPath, collTemplateVar, true)
+	err = util.GenerateTemplate(tplCollection, *tplPath, outputPath, collTemplateVar, true)
 	if err != nil {
 		return err
 	}
 
 	// generate combined collections
 	combinedCollsTemplateVar, err := getCombinedCollectionsTemplateVar(*rootPath)
-	if err != nil {
+	if err != nil { 
 		return err
 	}
 
 	outputPath = fmt.Sprintf("%s/mongr8/collection/no_edit/combined_collections.go", *rootPath)
 
-	return util.GenerateTemplate(tplCombainedCollections, tplPath, outputPath, combinedCollsTemplateVar, true)
+	return util.GenerateTemplate(tplCombinedCollections, *tplPath, outputPath, combinedCollsTemplateVar, true)
 }
