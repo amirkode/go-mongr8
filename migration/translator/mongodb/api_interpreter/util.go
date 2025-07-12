@@ -89,24 +89,24 @@ func checkPathExistPayloads(curr interface{}, path string, res *[]bson.D) {
 //
 //	{
 //		 "field": {
-//	    "sub_field1": {
-//	       "sub_field2": "a value goes here"
+//	     	"sub_field1": {
+//	       		"sub_field1_1": "a value goes here"
+//	     	}
 //	     }
-//	  }
 //	}
 //
 // wrong:
 //
 //	{
 //		 "field": {
-//	    "sub_field1": {
-//	       "sub_field2": "a value goes here"
-//	     }
-//	    "sub_field1": {
-//	       "sub_field2_1": "a value goes here",
-//	       "sub_field2_2": 0
-//	     }
-//	  }
+//	    	"sub_field1": {
+//	      	 	"sub_field1_1": "a value goes here"
+//	     	},
+//	    	"sub_field2": {
+//	       		"sub_field2_1": "a value goes here",
+//	       		"sub_field2_2": 0,
+//	    	}
+//	  	}
 //	}
 //
 // this because it's guaranteed that any payload passed here
@@ -116,9 +116,12 @@ func checkPathExistPayloads(curr interface{}, path string, res *[]bson.D) {
 // Parameters:
 // `curr` represents the current payload yet to explore
 // `path` represents the path has been explored so far
+// TODO: support more than one way path in the future
+// - we can split up the path and apply individually ?
 func createFieldSetPayload(curr interface{}, path string) bson.M {
 	if reflect.TypeOf(curr) == reflect.TypeOf(bson.D{}) {
 		d := curr.(bson.D)
+		fmt.Println("createfieldSetPayload d: ", d)
 		test.Assert(len(d) == 1, "createFieldSetPayload", "Object is not one way path")
 		return createFieldSetPayload(d[0].Value, appendPath(path, d[0].Key))
 	} else if reflect.TypeOf(curr) == reflect.TypeOf(bson.A{}) {

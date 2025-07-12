@@ -75,19 +75,19 @@ func GetTemplatesDir() (*string, error) {
 		return nil, err
 	}
 
-	dir := filepath.Join(*rootPath, "templates")
+	dir := filepath.Join(*rootPath, "internal", "templates")
 
 	return &dir, nil
 }
 
 // the template path based on category and template name
-func GetTemplatePath(category string, fileName string) (*string, error) {
+func GetTemplatePath(category string, pathToFile string) (*string, error) {
 	templatesDir, err := GetTemplatesDir()
 	if err != nil {
 		return nil, err
 	}
 
-	path := filepath.Join(*templatesDir, category, fileName)
+	path := filepath.Join(*templatesDir, category, pathToFile)
 
 	return &path, nil
 }

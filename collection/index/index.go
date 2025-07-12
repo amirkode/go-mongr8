@@ -49,6 +49,18 @@ func (f IndexField) MustHaveValue(_for string) {
 	}
 }
 
+// We will convert this spec into MongoDB API
+// indexModel := mongo.IndexModel{
+// 	Keys:    keys,
+// 	Options: opt,
+// }
+// collection.Indexes().CreateOne(ctx, indexModel)
+// 
+// Each type basically has two things:
+// - Fields: a list of fields and its value, 
+//   e.g: `{"name": 1, "age": -1}` or in the text index case `{"name": "text"}`
+// - Rules: we generalize MongoDb options into "Rules"
+
 type Spec struct {
 	Type   IndexType
 	Fields []IndexField
@@ -289,11 +301,13 @@ func NewIndexField(key string, value interface{}) IndexField {
 	}
 }
 
+// reference: https://www.mongodb.com/docs/manual/core/indexes/index-types/index-single/create-single-field-index/
 func SingleFieldIndex(field IndexField) *IndexSpec {
 	field.MustHaveValue("Single Field Index")
 	return defaultIndex(TypeSingleField, []IndexField{field}, nil)
 }
 
+// reference: https://www.mongodb.com/docs/manual/core/indexes/index-types/index-compound/create-compound-index/
 func CompoundIndex(fields ...IndexField) *IndexSpec {
 	for _, _field := range fields {
 		_field.MustHaveValue("Compound Index")
