@@ -15,18 +15,14 @@ jobs:
 
     services:
       mongo:
-        image: mongo:7.0
+        image: mongo:8.0
         env:
           MONGO_INITDB_ROOT_USERNAME: mongr8
           MONGO_INITDB_ROOT_PASSWORD: mongr8
         ports:
           - 27017:27017
         options: >-
-          --health-cmd "bash -c 'echo \"db.adminCommand({ ping: 1 }).ok\" \
-            | mongosh mongodb://mongr8:mongr8@localhost:27017/admin --quiet'"
-          --health-interval 5s
-          --health-timeout 10s
-          --health-retries 10
+          --health-cmd 'bash -c "echo \"db.adminCommand({ ping: 1 }).ok\" | mongosh mongodb://mongr8:mongr8@localhost:27017/admin --quiet"' --health-interval=5s --health-timeout=10s --health-retries=10
 
     steps:
       - name: Checkout code
