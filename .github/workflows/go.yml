@@ -39,3 +39,4 @@ jobs:
         env:
           MONGO_TEST_URI: mongodb://mongr8:mongr8@localhost:27017
         run: go test -v ./...
+ 
