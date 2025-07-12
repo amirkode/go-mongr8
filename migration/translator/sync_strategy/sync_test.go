@@ -196,13 +196,13 @@ func TestGetActions(t *testing.T) {
 					si.SubActionTypeCreateIndex,
 				}) {
 					msg := "Case 1: Sub Action Type for customers collection must SubActionTypeCreateField or SubActionTypeCreateIndex"
-					t.Errorf(msg)
+					t.Errorf("%s", msg)
 					panic(msg)
 				}
 			}
 		} else {
 			msg := fmt.Sprintf("Case 1: Invalid action %s", action.ActionKey)
-			t.Errorf(msg)
+			t.Errorf("%s", msg)
 			panic(msg)
 		}
 	}
@@ -404,7 +404,7 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 		compCollection, ok := case1ExpectedCollections[collection.Collection().Spec().Name]
 		if !ok {
 			msg := "Case 1: Collection name must be users or customers"
-			t.Errorf(msg)
+			t.Errorf("%s", msg)
 			panic(msg)
 		}
 
@@ -554,7 +554,7 @@ func TestGetCollectionFromMigrations(t *testing.T) {
 		compCollection, ok := case2ExpectedCollections[collection.Collection().Spec().Name]
 		if !ok {
 			msg := "Case 2: Collection name must be users or customers"
-			t.Errorf(msg)
+			t.Errorf("%s", msg)
 			panic(msg)
 		}
 
