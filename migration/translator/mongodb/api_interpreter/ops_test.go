@@ -16,6 +16,7 @@ import (
 	//"strings"
 	"testing"
 	//"time"
+	"os"
 
 	"github.com/amirkode/go-mongr8/internal/convert"
 	dt "github.com/amirkode/go-mongr8/internal/data_type"
@@ -34,63 +35,33 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	mim "github.com/ONSdigital/dp-mongodb-in-memory"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 const MockDb = "mock-db"
 const MockCollection = "mock_collection"
 
-// NOTE: All these test are only
-func getMockDatabase() (*mim.Server, *mongo.Database, *context.Context) {
-	// server, err := memongo.StartWithOptions(&memongo.Options{
-	// 	MongoVersion: "4.2.0",
-	// 	MongodBin: ,
-	// 	ShouldUseReplica: true,
-	// })
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// mongoURI := server.URIWithRandomDB()
-	// splitedDatabaseName := strings.Split(mongoURI, "/")
-	// databaseName := splitedDatabaseName[len(splitedDatabaseName)-1]
-
-	// uri := fmt.Sprintf("%s%s", mongoURI, "?retryWrites=false")
-	// client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// ctx, _ := context.WithTimeout(context.Background(), 10 * time.Second)
-	// err = client.Connect(ctx)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// db := client.Database(databaseName)
-
-	// return server, db
+func getMockDatabase() (*mongo.Database, *context.Context) {
+	// we use actual mongodb connection for testing
+	// possibly using docker
 	testCtx := context.Background()
-	server, err := mim.StartWithOptions(testCtx, "5.0.2", mim.WithPort(27017))
-	if err != nil {
-		panic(err)
-	}
+    mongoURI := os.Getenv("MONGO_TEST_URI")
+    if mongoURI == "" {
+        panic("MONGO_TEST_URI environment variable not set")
+    }
 
-	client, err := mongo.Connect(testCtx, options.Client().ApplyURI(server.URI()))
-	if err != nil {
-		panic(err)
-	}
+    client, err := mongo.Connect(testCtx, options.Client().ApplyURI(mongoURI))
+    if err != nil {
+        panic(err)
+    }
 
-	//Use client as needed
-	err = client.Ping(testCtx, nil)
-	if err != nil {
-		panic(err)
-	}
+    err = client.Ping(testCtx, nil)
+    if err != nil {
+        panic(err)
+    }
 
-	db := client.Database(MockDb)
-
-	return server, db, &testCtx
+    db := client.Database(MockDb)
+    return db, &testCtx
 }
 
 func collectionExists(ctx context.Context, db *mongo.Database, name string) bool {
@@ -306,8 +277,7 @@ func setupCollection(ctx context.Context, db *mongo.Database) error {
 // Test exeuctor functions for all available SubActionApis
 
 func TestSubActionApiCreateCollection(t *testing.T) {
-	server, db, ctx := getMockDatabase()
-	defer server.Stop(*ctx)
+	db, ctx := getMockDatabase()
 
 	// Case 1: default
 	case1SubActionApi := SubActionApiCreateCollection(dt.NewPair(
@@ -348,8 +318,7 @@ func TestSubActionApiCreateCollection(t *testing.T) {
 }
 
 func TestSubActionApiCreateIndex(t *testing.T) {
-	server, db, ctx := getMockDatabase()
-	defer server.Stop(*ctx)
+	db, ctx := getMockDatabase()
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
@@ -402,8 +371,7 @@ func TestSubActionApiCreateIndex(t *testing.T) {
 }
 
 func TestSubActionApiCreateField(t *testing.T) {
-	server, db, ctx := getMockDatabase()
-	defer server.Stop(*ctx)
+	db, ctx := getMockDatabase()
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
@@ -476,8 +444,7 @@ func TestSubActionApiCreateField(t *testing.T) {
 }
 
 func TestSubActionApiConvertField(t *testing.T) {
-	server, db, ctx := getMockDatabase()
-	defer server.Stop(*ctx)
+	db, ctx := getMockDatabase()
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
@@ -507,8 +474,7 @@ func TestSubActionApiConvertField(t *testing.T) {
 }
 
 func TestSubActionApiDropCollection(t *testing.T) {
-	server, db, ctx := getMockDatabase()
-	defer server.Stop(*ctx)
+	db, ctx := getMockDatabase()
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
@@ -531,8 +497,7 @@ func TestSubActionApiDropCollection(t *testing.T) {
 }
 
 func TestSubActionApiDropIndex(t *testing.T) {
-	server, db, ctx := getMockDatabase()
-	defer server.Stop(*ctx)
+	db, ctx := getMockDatabase()
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
@@ -564,8 +529,7 @@ func TestSubActionApiDropIndex(t *testing.T) {
 }
 
 func TestSubActionApiDropField(t *testing.T) {
-	server, db, ctx := getMockDatabase()
-	defer server.Stop(*ctx)
+	db, ctx := getMockDatabase()
 
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")

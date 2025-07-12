@@ -10,19 +10,32 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: mongr8
+          MONGO_INITDB_ROOT_PASSWORD: mongr8
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongo --username mongr8 --password mongr8 --eval \"db.adminCommand('ping')\""
+          --health-interval 5s
+          --health-timeout 10s
+          --health-retries 5
+
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+      - name: Install Dependencies
+        run: go mod download
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.24'
-
-    - name: Install Dependencies
-      run: go mod download
-
-    - name: Test
-      run: go test -v ./...
+      - name: Test
+        env:
+          MONGO_TEST_URI: mongodb://mongr8:mongr8@localhost:27017
+        run: go test -v ./...
