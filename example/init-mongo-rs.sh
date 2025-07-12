@@ -1,1 +1,1 @@
-sudo docker exec -it mongodb-one mongosh --eval "rs.initiate({_id:'dbrs', members: [{_id:0, host: 'mongodb.one'},{_id:1, host: 'mongodb.two'}]})"
+sudo docker exec -it mongr8-mongodb-one mongosh --port 27117 -u mongr8 -p mongr8 --authenticationDatabase admin --eval "rs.initiate({_id:'dbrs', members: [{_id:0, host: 'mongr8.mongodb.one:27117'},{_id:1, host: 'mongr8.mongodb.two:27118'}]})"

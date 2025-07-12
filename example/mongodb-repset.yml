@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
-  mongodb.one:
+  mongr8.mongodb.one:
     image: mongo:latest
-    container_name: mongodb-one
+    container_name: mongr8-mongodb-one
     ports:
-      - 127.0.11.1:27017:27017
+      - 27117:27117
     environment:
       MONGO_INITDB_ROOT_USERNAME: mongr8
       MONGO_INITDB_ROOT_PASSWORD: mongr8
@@ -13,13 +11,13 @@ services:
       - ./data/mongodb1:/data/db
       - ./mock-mongo-keyfile:/opt/mongo-keyfile
     restart: always
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs", "--auth", "--keyFile", "/opt/mongo-keyfile/keyfile"]
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs", "--port", "27117", "--keyFile", "/opt/mongo-keyfile/keyfile"]
 
-  mongodb.two:
+  mongr8.mongodb.two:
     image: mongo:latest
-    container_name: mongodb-two
+    container_name: mongr8-mongodb-two
     ports:
-      - 127.0.11.2:27017:27017
+      - 27118:27118
     environment:
       MONGO_INITDB_ROOT_USERNAME: mongr8
       MONGO_INITDB_ROOT_PASSWORD: mongr8
@@ -27,5 +25,5 @@ services:
       - ./data/mongodb2:/data/db
       - ./mock-mongo-keyfile:/opt/mongo-keyfile
     restart: always
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs", "--auth", "--keyFile", "/opt/mongo-keyfile/keyfile"]
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs", "--port", "27118", "--keyFile", "/opt/mongo-keyfile/keyfile"]
   
