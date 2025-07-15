@@ -2,13 +2,6 @@ module github.com/amirkode/go-mongr8
 
 go 1.24.1
 
-replace github.com/ONSdigital/dp-mongodb-in-memory => github.com/amirkode/dp-mongodb-in-memory v1.8.0
-
-// internal module
-// TODO: enable again with proper usecase
-// require github.com/amirkode/go-mongr8/internal v0.0.0
-// replace github.com/amirkode/go-mongr8/internal => ./internal
-
 // external depedencies
 require (
 	github.com/golang/snappy v1.0.0 // indirect
