@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	baseCollectionPath = "mongr8/collection"
+	mongr8Path = "mongr8"
+	baseCollectionPath = mongr8Path + "/collection"
 )
 
 func LoadCollection() []collection.Collection {

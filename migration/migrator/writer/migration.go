@@ -54,11 +54,6 @@ func Write(migration migrator.Migration) error {
 	if err != nil {
 		return err
 	}
-	// packagePath should be the root go-mongr8 package directory
-	packagePath, err := config.GetPackageDir()
-	if err != nil {
-		return err
-	}
 
 	// check whether current migration uses field or/and index
 	useField := false
@@ -97,10 +92,13 @@ func Write(migration migrator.Migration) error {
 	}
 
 	// init templates
-	tplPath := fmt.Sprintf("%s/migration/migrator/writer/template.tpl", *packagePath)
+	tplPath, err := config.GetTemplatePath("migration", "version/template.tpl")
+	if err != nil {
+		return err
+	}	
 	outputPath := fmt.Sprintf("%s/mongr8/migration/%s.go", *projectPath, migration.ID)
 
-	err = util.GenerateTemplate("migration", tplPath, outputPath, tplVar, true)
+	err = util.GenerateTemplate("migration", *tplPath, outputPath, tplVar, true)
 	if err != nil {
 		return err
 	}
@@ -120,8 +118,7 @@ func Write(migration migrator.Migration) error {
 	}
 
 	// init templates
-	tplPath = fmt.Sprintf("%s/migration/migrator/writer/template.tpl", *packagePath)
 	outputPath = fmt.Sprintf("%s/mongr8/migration/base.go", *projectPath)
 
-	return util.GenerateTemplate("migrations", tplPath, outputPath, baseTplVar, true)
+	return util.GenerateTemplate("migrations", *tplPath, outputPath, baseTplVar, true)
 }

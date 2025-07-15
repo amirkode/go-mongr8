@@ -1,5 +1,6 @@
-mongr8
-mongr8_
+.vscode
+mongr8*
 .VSCodeCounter
 cover
 go-mongr8.code-workspace
+.Ds_Store

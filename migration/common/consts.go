@@ -7,7 +7,12 @@ Licensed under the MIT License
 */
 package common
 
+import "github.com/amirkode/go-mongr8/version"
+
 const (
-	Mongr8Version              = "v0.1.1-alpha-rc"
 	MigrationHistoryCollection = "mongr8_migration_history"
 )
+
+func Mongr8Version() string {
+	return version.Version
+}

@@ -46,11 +46,6 @@ func InitMigration() error {
 	if err != nil {
 		return fmt.Errorf("You're not woking in any go project.")
 	}
-	// packagePath should be the root go-mongr8 package directory
-	packagePath, err := config.GetPackageDir()
-	if err != nil {
-		return err
-	}
 
 	// init folder structure
 	if err = initFolderStructure(*projectPath); err != nil {
@@ -58,30 +53,33 @@ func InitMigration() error {
 	}
 
 	// init templates
-	tplPath := fmt.Sprintf("%s/migration/init/template.tpl", *packagePath)
+	tplPath, err := config.GetTemplatePath("migration", "init.tpl")
+	if err != nil {
+		return err
+	}
 
 	// init mongr8.info file
-	if err = initMongr8Info(*projectPath, tplPath); err != nil {
+	if err = initMongr8Info(*projectPath, *tplPath); err != nil {
 		return err
 	}
 
 	// init config file
-	if err = initConfig(*projectPath, tplPath); err != nil {
+	if err = initConfig(*projectPath, *tplPath); err != nil {
 		return err
 	}
 
 	// init combined collections
-	if err = initCombinedCollections(*projectPath, tplPath); err != nil {
+	if err = initCombinedCollections(*projectPath, *tplPath); err != nil {
 		return err
 	}
 
 	// init migration sub action schemas
-	if err = initMigrationSubActionSchemas(*projectPath, tplPath); err != nil {
+	if err = initMigrationSubActionSchemas(*projectPath, *tplPath); err != nil {
 		return err
 	}
 
 	// init cmds
-	err = initCmd(*projectPath, tplPath)
+	err = initCmd(*projectPath, *tplPath)
 
 	// TODO: might add something in the future
 
@@ -123,7 +121,7 @@ func initMongr8Info(projectPath, tplPath string) error {
 		Version    string
 	}{
 		CreateDate: time.Now().Format("2006-01-02"),
-		Version:    common.Mongr8Version,
+		Version:    common.Mongr8Version(),
 	}
 
 	outputPath := fmt.Sprintf("%s/mongr8/mongr8.info", projectPath)

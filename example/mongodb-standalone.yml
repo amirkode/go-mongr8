@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
-  mongodb:
+  mongr8-mongodb:
     image: mongo
-    container_name: mongodb-go-mongr8-test
+    container_name: mongr8-mongodb
     ports:
       - 27099:27017
     environment:
