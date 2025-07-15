@@ -455,6 +455,11 @@ func (f SignedIndex) Intersect(other SignedIndex) *[]SignedIndex {
 	return nil
 }
 
+func (f SignedIndex) SetDropCheckpoint() SignedIndex {
+	// do nothing
+	return f
+}
+
 func (f SignedIndex) ConvertFrom() *SignedIndex { return nil }
 
 func (f SignedIndex) SetSign(sign EntitySign) SignedIndex {
@@ -473,6 +478,12 @@ func (f SignedIndex) Key() string {
 func (f SignedMetadata) Intersect(other SignedMetadata) *[]SignedMetadata {
 	return nil
 }
+
+func (f SignedMetadata) SetDropCheckpoint() SignedMetadata {
+	// do nothing	
+	return f
+}
+
 
 func (f SignedMetadata) ConvertFrom() *SignedMetadata { return nil }
 
@@ -533,6 +544,11 @@ func (f SignedCollection) Intersect(other SignedCollection) *[]SignedCollection 
 	}
 
 	return &res
+}
+
+func (f SignedCollection) SetDropCheckpoint() SignedCollection {
+	// do nothing
+	return f
 }
 
 func (f SignedCollection) SetSign(sign EntitySign) SignedCollection {

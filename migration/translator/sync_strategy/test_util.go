@@ -84,14 +84,14 @@ func fieldsAreEqual(a, b collection.Field) bool {
 		aObj := map[string]collection.Field{}
 		bObj := map[string]collection.Field{}
 		for _, aA := range *a.Spec().Object {
-			fmt.Println("aA:", aA.Name)
-			fmt.Println("aA address:", &aA)
+			// fmt.Println("aA:", aA.Name)
+			// fmt.Println("aA address:", &aA)
 			curr := aA /// assign to new address
 			aObj[aA.Name] = field.FromFieldSpec(&curr)
 		}
 		for _, bA := range *b.Spec().Object {
-			fmt.Println("bA:", bA.Name)
-			fmt.Println("bA address:", &bA)
+			// fmt.Println("bA:", bA.Name)
+			// fmt.Println("bA address:", &bA)
 			curr := bA // assign to new address
 			bObj[bA.Name] = field.FromFieldSpec(&curr)
 		}
