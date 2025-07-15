@@ -121,7 +121,6 @@ func checkPathExistPayloads(curr interface{}, path string, res *[]bson.D) {
 func createFieldSetPayload(curr interface{}, path string) bson.M {
 	if reflect.TypeOf(curr) == reflect.TypeOf(bson.D{}) {
 		d := curr.(bson.D)
-		fmt.Println("createfieldSetPayload d: ", d)
 		test.Assert(len(d) == 1, "createFieldSetPayload", "Object is not one way path")
 		return createFieldSetPayload(d[0].Value, appendPath(path, d[0].Key))
 	} else if reflect.TypeOf(curr) == reflect.TypeOf(bson.A{}) {

@@ -153,7 +153,7 @@ func ArrayField(name string, fields ...*FieldSpec) *FieldSpec {
 	// since, there's a case that we field as a type representative only
 	// yet will eventually be validated again at the translation level
 	if len(fields) > 1 {
-		panic(fmt.Sprintf("ArrayField needs 1 field must be declared"))
+		panic("ArrayField needs 1 field must be declared")
 	}
 
 	field := baseField(name, TypeArray)

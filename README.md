@@ -76,7 +76,9 @@ Complete documentation can be found [here](https://github.com/amirkode/go-mongr8
 - [ ] Rollback migration
 #### Wish List
 - [ ] Simulate migration
-- [ ] Consolidate migration
+	- preview the planned queries to be executed
+- [ ] Consolidate migrations
+	- sync the schema with the current database state
 
 For supported MongoDB operations, you can see [here](https://github.com/amirkode/go-mongr8/blob/main/docs/USER_GUIDE.md).
 

@@ -317,6 +317,8 @@ func CompoundIndex(fields ...IndexField) *IndexSpec {
 }
 
 func TextIndex(field IndexField) *IndexSpec {
+	field.Value = "text" // used for index name sufix
+	// TODO: check other index too
 	return defaultIndex(TypeText, []IndexField{field}, nil)
 }
 

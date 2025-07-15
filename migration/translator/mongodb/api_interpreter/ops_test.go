@@ -61,6 +61,17 @@ func getMockDatabase() (*mongo.Database, *context.Context) {
     }
 
     db := client.Database(MockDb)
+	// delete all collections first
+	collections, err := db.ListCollectionNames(testCtx, bson.D{{}})
+	if err != nil {
+		panic(err)
+	}
+	for _, collName := range collections {
+		err = db.Collection(collName).Drop(testCtx)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to drop collection %s: %v", collName, err))
+		}
+	}
     return db, &testCtx
 }
 
@@ -93,6 +104,9 @@ func fieldsAreValid(ctx context.Context, db *mongo.Database, collectionName stri
 		fmt.Println(res)
 		return false
 	}
+
+	fmt.Println("collection:", collectionName)
+	fmt.Println("fields are valid res:", res)
 
 	if len(res) == 0 {
 		return false
@@ -249,9 +263,10 @@ func setupCollection(ctx context.Context, db *mongo.Database) error {
 		return err
 	}
 
+	// create sample collection with fields and indexes
 	subAction := si.SubAction{
 		ActionSchema: si.SubActionSchema{
-			Collection: metadata.InitMetadata("users"),
+			Collection: metadata.InitMetadata(MockCollection),
 			Fields: []collection.Field{
 				field.StringField("name"),
 				field.Int32Field("age"),
@@ -534,45 +549,155 @@ func TestSubActionApiDropField(t *testing.T) {
 	err := setupCollection(*ctx, db)
 	test.AssertTrue(t, err == nil, "Error while creating collection")
 
-	// Case 1: drop name field
-	case1SubActionApi := SubActionApiDropField(dt.NewPair(
-		migrator.Migration{},
-		*si.SubActionCreateField(si.SubActionSchema{
-			Collection: metadata.InitMetadata(MockCollection),
-			Fields: []collection.Field{
-				field.StringField("name"),
-			},
-		}),
-	))
-	case1Err := case1SubActionApi.Execute(*ctx, db)
+	Convey("Case 1: Default", t, func() {
+		Convey("Drop string field", func() {
+			subActionApi := SubActionApiDropField(dt.NewPair(
+				migrator.Migration{},
+				*si.SubActionDropField(si.SubActionSchema{
+					Collection: metadata.InitMetadata(MockCollection),
+					Fields: []collection.Field{
+						field.StringField("name"),
+					},
+				}),
+			))
+			case1Err := subActionApi.Execute(*ctx, db)
 
-	test.AssertTrue(t, case1Err == nil, "Case 1: Unexpected error")
-	// check created index
-	test.AssertTrue(t, fieldsAreValid(*ctx, db,
-		case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
-		[]collection.Field{},
-		case1SubActionApi.SubAction.ActionSchema.Fields,
-	), "Case 1: Unexpected Fields")
+			So(case1Err == nil, ShouldBeTrue)
+			// check latest schema
+			So(fieldsAreValid(*ctx, db,
+				subActionApi.SubAction.ActionSchema.Collection.Spec().Name,
+				[]collection.Field{
+					field.Int32Field("age"), // only this left
+				},
+				subActionApi.SubAction.ActionSchema.Fields,
+			), ShouldBeTrue)
+		})
 
-	// Case 2: drop age field
-	case2SubActionApi := SubActionApiDropField(dt.NewPair(
-		migrator.Migration{},
-		*si.SubActionCreateField(si.SubActionSchema{
-			Collection: metadata.InitMetadata(MockCollection),
-			Fields: []collection.Field{
-				field.Int32Field("name"),
-			},
-		}),
-	))
-	case2Err := case2SubActionApi.Execute(*ctx, db)
+		Convey("Drop int64 field", func() {
+			case1SubActionApi := SubActionApiDropField(dt.NewPair(
+				migrator.Migration{},
+				*si.SubActionDropField(si.SubActionSchema{
+					Collection: metadata.InitMetadata(MockCollection),
+					Fields: []collection.Field{
+						field.Int32Field("age"),
+					},
+				}),
+			))
+			case1Err := case1SubActionApi.Execute(*ctx, db)
+			So(case1Err == nil, ShouldBeTrue)
+			// check latest schema
+			So(fieldsAreValid(*ctx, db,
+				case1SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
+				[]collection.Field{}, // no fields left
+				case1SubActionApi.SubAction.ActionSchema.Fields,
+			), ShouldBeTrue)
+		})
 
-	test.AssertTrue(t, case2Err == nil, "Case 2: Unexpected error")
-	// check created index
-	test.AssertTrue(t, fieldsAreValid(*ctx, db,
-		case2SubActionApi.SubAction.ActionSchema.Collection.Spec().Name,
-		[]collection.Field{},
-		case2SubActionApi.SubAction.ActionSchema.Fields,
-	), "Case 2: Unexpected Fields")
+		// TODO: add more default cases
+	})
+
+	Convey("Case 2: Nested Field", t, func() {
+		Convey("Drop nested field in the middle", func() {
+			collectionName := "nested_col1"
+			// init the the fields
+			subAction := si.SubAction{
+				ActionSchema: si.SubActionSchema{
+					Collection: metadata.InitMetadata(collectionName),
+					Fields: []collection.Field{
+						field.ArrayField("path1",
+							field.ObjectField("", 
+								field.ArrayField("path2",
+									field.ObjectField("", field.StringField("path3")),
+								),
+								field.StringField("path4"),
+							),
+						),
+					},
+				},
+			}
+
+			// init few fields and indexes
+			err = createField(*ctx, db, collectionName, subAction.GetFieldsBsonD(), false)
+			So(err == nil, ShouldBeTrue)
+
+			subActionApi := SubActionApiDropField(dt.NewPair(
+				migrator.Migration{},
+				*si.SubActionDropField(si.SubActionSchema{
+					Collection: metadata.InitMetadata(collectionName),
+					Fields: []collection.Field{
+						field.ArrayField("path1",
+							field.ObjectField("", 
+								field.ArrayField("path2",
+									field.ObjectField("", field.StringField("path3")),
+								).SetExtra(field.ExtraDrop, true), // drop path2
+							),
+						),
+					},
+				}),
+			))
+			caseErr := subActionApi.Execute(*ctx, db)
+			So(caseErr == nil, ShouldBeTrue)
+			// check latest schema
+			So(fieldsAreValid(*ctx, db,
+				subActionApi.SubAction.ActionSchema.Collection.Spec().Name,
+				[]collection.Field{
+					field.ArrayField("path1",
+						field.ObjectField("",
+							field.StringField("path4"),
+						),
+					),
+				},
+				subActionApi.SubAction.ActionSchema.Fields,
+			), ShouldBeTrue)
+		})
+
+		Convey("Drop nested field entirely", func() {
+			collectionName := "nested_col2"
+			// init the the fields
+			subAction := si.SubAction{
+				ActionSchema: si.SubActionSchema{
+					Collection: metadata.InitMetadata(collectionName),
+					Fields: []collection.Field{
+						field.ArrayField("path1",
+							field.ObjectField("", 
+								field.ArrayField("path2",
+									field.ObjectField("", field.StringField("path3")),
+								),
+							),
+						),
+					},
+				},
+			}
+
+			// init few fields and indexes
+			err = createField(*ctx, db, collectionName, subAction.GetFieldsBsonD(), false)
+			So(err == nil, ShouldBeTrue)
+
+			subActionApi := SubActionApiDropField(dt.NewPair(
+				migrator.Migration{},
+				*si.SubActionDropField(si.SubActionSchema{
+					Collection: metadata.InitMetadata(collectionName),
+					Fields: []collection.Field{
+						field.ArrayField("path1",
+							field.ObjectField("", 
+								field.ArrayField("path2",
+									field.ObjectField("", field.StringField("path3")),
+								),
+							),
+						).SetExtra(field.ExtraDrop, true), // drop path1
+					},
+				}),
+			))
+			caseErr := subActionApi.Execute(*ctx, db)
+			So(caseErr == nil, ShouldBeTrue)
+			// check latest schema
+			So(fieldsAreValid(*ctx, db,
+				subActionApi.SubAction.ActionSchema.Collection.Spec().Name,
+				[]collection.Field{},
+				subActionApi.SubAction.ActionSchema.Fields,
+			), ShouldBeTrue)
+		})
+	})
 
 	// TODO: add more cases
 }
