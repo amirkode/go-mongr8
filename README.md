@@ -10,8 +10,13 @@ Go-mongr8 is a lightweight migration tool for [MongoDB](https://www.mongodb.com/
 The project's philosophy is simplicity and efficiency, achieved by keeping everything at a high level. It simplifies the schema change process in MongoDB, allowing users to focus solely on the latest schema.
 
 ## Idea
-MongoDB is flexible but lacks built-in migration tools. Go-mongr8 lets you manage schema changes as code. It uses a template document to define fields and indexes, which is then used to create collections and apply schema updates.
-### Inspired by:
+MongoDB offers flexibility but lacks built-in migration tools. Although it's a schemaless database, Go-mongr8 enables you to manage schema changes directly in your codebase.
+
+**Why use it?**
+- Define fields and indexes using a template document, making schema representation clear and consistent.
+- Keep an up-to-date schema example in your codebase for easier testing and development.
+
+**Inspired by**:
 - **Versioned migrations:** Inspired by the robust and reliable SQL migration management found in frameworks like [Django](https://www.djangoproject.com/).
 - **Schema definition:** Emphasizes simplicity, similar to the approach used by [Ent](https://entgo.io/).
 
@@ -63,13 +68,15 @@ Complete documentation can be found [here](https://github.com/amirkode/go-mongr8
 - Covers common MongoDB migration operations.
 - And much more coming soon.
 
-#### Functionalities
+#### Main Functionalities
 - [x] Init migration folder
 - [x] Init schema/collection
-- [x] Generate migration file
+- [x] Generate migration files
 - [x] Apply migration
-- [ ] Consolidate migration
 - [ ] Rollback migration
+#### Wish List
+- [ ] Simulate migration
+- [ ] Consolidate migration
 
 For supported MongoDB operations, you can see [here](https://github.com/amirkode/go-mongr8/blob/main/docs/USER_GUIDE.md).
 

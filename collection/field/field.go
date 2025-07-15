@@ -27,7 +27,12 @@ type Spec struct {
 
 	// Index required if schema is sorted
 	// for adding/setting new field
-	index int
+	Index int
+
+	// Extra data, storing additional information
+	// such as migration checkpoint to drop a field
+	// TOOD: reconsider placement of this field
+	Extra map[FieldExtra]any
 }
 
 type FieldSpec struct {
@@ -85,6 +90,16 @@ func (b *FieldSpec) ObjectHasKey(key string) bool {
 
 func (b *FieldSpec) SetNullable() *FieldSpec {
 	b.spec.Nullable = true
+
+	return b
+}
+
+func (b *FieldSpec) SetExtra(key FieldExtra, value any) *FieldSpec {
+	if b.spec.Extra == nil {
+		b.spec.Extra = make(map[FieldExtra]any)
+	}
+
+	b.spec.Extra[key] = value
 
 	return b
 }

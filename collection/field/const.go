@@ -13,6 +13,7 @@ import (
 
 type (
 	FieldType string
+	FieldExtra string
 )
 
 // make sure constant name is exactly same as it's value
@@ -37,6 +38,9 @@ const (
 	TypeLegacyCoordinateEmbeddedDoc FieldType = "TypeLegacyCoordinateEmbeddedDoc"
 	// other types such as Decimal128, etc.
 	// might be added in the future update
+
+	// extra keys
+	ExtraDrop FieldExtra = "drop"
 )
 
 func GetTypePointer(fieldType FieldType) *FieldType {

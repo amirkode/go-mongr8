@@ -317,9 +317,16 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 
 	// validate by index type
 	switch _index.Spec().Type {
-	// TODO: complete if the usecase is clear
-	// related to this commit, migt be moved here:
-	// https://github.com/amirkode/go-mongr8/commit/45060b493e03b7631b5c81b2684f760d10305d09
+		// TODO: complete if the usecase is clear
+		// related to this commit, migt be moved here:
+		// https://github.com/amirkode/go-mongr8/commit/45060b493e03b7631b5c81b2684f760d10305d09
+		//
+		// These cases should be handled:
+		// - 2 text indenxes on the same collection
+		//   source: https://www.mongodb.com/docs/manual/core/indexes/index-types/index-text/text-index-restrictions/?utm_source=chatgpt.com#text-index-restrictions-on-self-managed-deployments
+		// - compound indexes invalid type with text index
+		//   source: https://www.mongodb.com/docs/manual/core/indexes/index-types/index-text/text-index-restrictions/?utm_source=chatgpt.com#compound-text-index
+		// - ascending and descending index in the same field
 	}
 
 	// validate index options

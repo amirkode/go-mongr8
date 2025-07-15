@@ -42,6 +42,9 @@ type (
 		SetSign(sign EntitySign) T
 		// set flag denoting whether the entity is formed by intersection
 		SetIntersectionFlag(flag bool) T
+		// set drop checkpoint
+		// for now, it's used for field path drop check point
+		SetDropCheckpoint() T
 		// if the current entity sign is convert
 		// this function returns the original entity
 		// that will be converted from
@@ -99,25 +102,30 @@ func (incoming SignedField) Intersect(origin SignedField) *[]SignedField {
 	// restores field path returning a SignedField
 	restorePath := func(path []dt.Pair[string, field.FieldType]) (SignedField, *collection.Field) {
 		if len(path) < 1 {
-			panic("Path length must be more than 1")
+			panic("Path length cannot be empty")
 		}
+
+		// TODO: simplify the logic
+		// for now, restoring path is only used for a single depth (len(path) == 1)
 
 		// init field
 		headField := collection.FieldFromType(path[0].First, path[0].Second)
 		prevField := &headField
 		for i := 1; i < len(path); i++ {
-			if !util.InList((*prevField).Spec().Type, []field.FieldType{
+			prevType := (*prevField).Spec().Type
+			if !util.InList(prevType, []field.FieldType{
 				field.TypeArray,
 				field.TypeObject,
 			}) {
-				panic("Cannot add more child, previous field type is not Array or Object")
+				panic(fmt.Sprintf("Cannot add more child, previous field type (%s) is not Array or Object", prevType))
 			}
 
 			currField := collection.FieldFromType(path[i].First, path[i].Second)
-			if path[i].Second == field.TypeArray {
+			switch prevType {
+			case field.TypeArray:
 				// set current field as previous field's array field
 				(*prevField).Spec().ArrayFields = &[]field.Spec{*currField.Spec()}
-			} else if path[i].Second == field.TypeObject {
+			case field.TypeObject:
 				// set current field as previous field's object field
 				(*prevField).Spec().Object = &[]field.Spec{*currField.Spec()}
 			}
@@ -134,6 +142,9 @@ func (incoming SignedField) Intersect(origin SignedField) *[]SignedField {
 	}
 
 	// dfs function
+	// although this function is not necessarily recursive
+	// it will eventually call:
+	// Union -> Intersect -> dfs (itself)
 	dfs := func(path []dt.Pair[string, field.FieldType], this SignedField, other SignedField) {
 		// check type of both fields
 		// assuming if one of the field is not an array or an object
@@ -228,22 +239,30 @@ func (incoming SignedField) Intersect(origin SignedField) *[]SignedField {
 			union := Union(thisFields, otherArrFields)
 			for _, u := range union {
 				// create new instance of signed field each child
-				curr, prevField := restorePath(path)
+				curr, lastField := restorePath(path)
 				// the sign of curr based on nested child u
 				curr.Sign = u.Sign
 				// check whether current field sign is convert
-				// then, we need set the convertFrom in the current
-				if u.Sign == SignConvert {
-					convertFrom, cfPrevField := restorePath(path)
+				// then, we need to set the cenvertFrom in the current
+				// both current and convertFrom should have the same path
+				switch u.Sign {
+				case SignConvert:
+					convertFrom, cfLastField := restorePath(path)
 					cfCurrSpec := *u.convertFrom.Spec()
-					(*cfPrevField).Spec().ArrayFields = &[]field.Spec{cfCurrSpec}
+					(*cfLastField).Spec().ArrayFields = &[]field.Spec{cfCurrSpec}
 					// set curr.convertFrom
 					convertFrom.Sign = SignConvert
 					curr.convertFrom = &convertFrom
+				case SignMinus:
+					// // set this path level as drop checkpoint
+					// if (*lastField).Spec().Extra == nil {
+					// 	(*lastField).Spec().Extra = map[field.FieldExtra]any{}
+					// }
+					// (*lastField).Spec().Extra[field.ExtraDrop] = true
 				}
 				// join u.Collection as curr.Collection.ArrayFields
 				currSpec := *u.Spec()
-				(*prevField).Spec().ArrayFields = &[]field.Spec{currSpec}
+				(*lastField).Spec().ArrayFields = &[]field.Spec{currSpec}
 				// eventually, add curr to res
 				res = append(res, curr)
 			}
@@ -282,22 +301,30 @@ func (incoming SignedField) Intersect(origin SignedField) *[]SignedField {
 			union := Union(thisFields, otherObjFields)
 			for _, u := range union {
 				// create new instance of signed field each child
-				curr, prevField := restorePath(path)
+				curr, lastField := restorePath(path)
 				// the sign of curr based on nested child u
 				curr.Sign = u.Sign
 				// check whether current field sign is convert
-				// then, we need set the convertFrom in the current
-				if u.Sign == SignConvert {
-					convertFrom, cfPrevField := restorePath(path)
+				// then, we need to set the cenvertFrom in the current
+				// both current and convertFrom should have the same path
+				switch u.Sign {
+				case SignConvert:
+					convertFrom, cfLastField := restorePath(path)
 					cfCurrSpec := *u.convertFrom.Spec()
-					(*cfPrevField).Spec().Object = &[]field.Spec{cfCurrSpec}
+					(*cfLastField).Spec().Object = &[]field.Spec{cfCurrSpec}
 					// set curr.convertFrom
 					convertFrom.Sign = SignConvert
 					curr.convertFrom = &convertFrom
+				case SignMinus:
+					// set this path level as drop checkpoint
+					// if (*lastField).Spec().Extra == nil {
+					// 	(*lastField).Spec().Extra = map[field.FieldExtra]any{}
+					// }
+					// (*lastField).Spec().Extra[field.ExtraDrop] = true
 				}
 				// join u.Collection as curr.Collection.Object
 				currSpec := *u.Spec()
-				(*prevField).Spec().Object = &[]field.Spec{currSpec}
+				(*lastField).Spec().Object = &[]field.Spec{currSpec}
 				// eventually, add curr to res
 				res = append(res, curr)
 			}
@@ -310,6 +337,16 @@ func (incoming SignedField) Intersect(origin SignedField) *[]SignedField {
 	// this will also return an emtpy slice
 	// if there's no schema difference in deepest level
 	return &res
+}
+
+func (f SignedField) SetDropCheckpoint() SignedField {
+	if f.Field.Spec().Extra == nil {
+		f.Field.Spec().Extra = map[field.FieldExtra]any{}
+	}
+
+	f.Field.Spec().Extra[field.ExtraDrop] = true
+	
+	return f
 }
 
 func (f SignedField) ConvertFrom() *SignedField {
@@ -401,13 +438,18 @@ func (f SignedField) Key() string {
 // cases that might happen:
 //  1. index1 -> {"name": 1}
 //     index2 -> {"name": "text"}
-//     returns list of [dropping index1,  add index2]
+//     returns list of [dropping index1, add index2]
 //  2. index1 -> {"name": 1}
 func (f SignedIndex) Intersect(other SignedIndex) *[]SignedIndex {
 	// intersect only happens when keys of both indexes are same
-	// but, there's at at least 1 difference at their's nested level
-	// this case won't happen since, each kay is constructed
-	// by whole structure of the index
+	// but, there's at at least 1 difference at their nested level
+	// this case won't happen since, each key is constructed
+	// by the whole structure of the index (keys, values, and options)
+	// @see Spec.GetKey()
+	
+	// in other words, the key will be different in the Union process
+	// the old one will be dropped and the new one will be added
+	
 	// so, for now, all intersects in the "Union" process
 	// will be ignored
 	return nil
@@ -558,6 +600,7 @@ func Union[T operator[T]](source1 []T, source2 []T) []T {
 			// reverse sign to negative
 			new := item
 			new = new.SetSign(SignMinus)
+			new = new.SetDropCheckpoint()
 			res = append(res, new)
 		}
 	}

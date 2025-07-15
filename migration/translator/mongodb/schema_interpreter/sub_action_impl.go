@@ -40,7 +40,7 @@ func indexesToBsonM(indexes []index.IndexField) bson.M {
 
 func getFieldsMap(fields []collection.Field) map[string]interface{} {
 	res := map[string]interface{}{}
-	for _, field := range fields {
+	for _, field := range fields {  
 		// Translate
 		translatedObj := dictionary.GetTranslatedField(field).GetObject()
 		res[field.Spec().Name] = translatedObj[field.Spec().Name]

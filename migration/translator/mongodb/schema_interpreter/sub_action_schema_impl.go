@@ -87,6 +87,17 @@ func (sas SubActionSchema) getFieldDeclarationLiteral(f collection.Field) string
 			res += fmt.Sprintf(`field.LegacyCoordinateArrayField("%s")`, f.Spec().Name)
 		}
 
+		// check whether drop flag exists in the extra
+		if f.Spec().Extra != nil {
+			if val, ok := f.Spec().Extra[field.ExtraDrop]; ok {
+				drop, ok := val.(bool)
+				if !ok {
+					panic(fmt.Sprintf("ExtraDrop must be a boolean, got %T", val))
+				}
+				res += fmt.Sprintf(".SetExtra(field.ExtraDrop, %t)", drop)
+			}
+		}
+
 		return res
 	}
 

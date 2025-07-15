@@ -13,7 +13,7 @@ const (
 	Patch = 1
 
 	// version name
-	Version = "v0.1.1"
+	Version = "v0.1.1-rc.1"
 )
 
 // returns the full version string with additional info

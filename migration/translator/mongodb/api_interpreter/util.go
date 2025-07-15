@@ -140,10 +140,11 @@ func createFieldSetPayload(curr interface{}, path string) bson.M {
 }
 
 func dropFieldUnsetPayload(curr interface{}, path string) bson.M {
-	if reflect.TypeOf(curr) == reflect.TypeOf(bson.D{}) {
+	// check wether we need deeper drop path
+	if reflect.TypeOf(curr) == reflect.TypeOf(bson.D{}) && len(curr.(bson.D)) > 0 {
 		d := curr.(bson.D)
 		return dropFieldUnsetPayload(d[0].Value, appendPath(path, d[0].Key))
-	} else if reflect.TypeOf(curr) == reflect.TypeOf(bson.A{}) {
+	} else if reflect.TypeOf(curr) == reflect.TypeOf(bson.A{}) && len(curr.(bson.A)) > 0 {
 		a := curr.(bson.A)
 		// if there's no deeper search, then just set the current path to the array
 		if reflect.TypeOf(a[0]) == reflect.TypeOf(bson.A{}) ||

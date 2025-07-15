@@ -205,12 +205,26 @@ func newTranslatedArray(field collection.Field) translatedArray {
 
 func (t translatedArray) GetObject() map[string]interface{} {
 	key := t.field.Spec().Name
-	arrayFields := t.field.Spec().ArrayFields
+	dropField := false
+	if t.field.Spec().Extra != nil {
+		if val, ok := t.field.Spec().Extra[field.ExtraDrop]; ok {
+			dropField, ok = val.(bool)
+			if !ok {
+				panic("ExtraDrop must be a boolean")
+			}
+		}
+	}
+	
 	res := []interface{}{}
-	for _, _field := range *arrayFields {
-		currObj := GetTranslatedField(field.FromFieldSpec(&_field)).GetObject()
-		item := currObj[_field.Name]
-		res = append(res, item)
+	if !dropField {
+		// the current path is not a drop checkpoint
+		// we can go deeper into the array fields
+		arrayFields := t.field.Spec().ArrayFields
+		for _, _field := range *arrayFields {
+			currObj := GetTranslatedField(field.FromFieldSpec(&_field)).GetObject()
+			item := currObj[_field.Name]
+			res = append(res, item)
+		}
 	}
 
 	return map[string]interface{}{
@@ -233,9 +247,22 @@ func newTranslatedObject(field collection.Field) translatedObject {
 
 func (t translatedObject) GetObject() map[string]interface{} {
 	res := map[string]interface{}{}
-	for _, _field := range *t.field.Spec().Object {
-		currObj := GetTranslatedField(field.FromFieldSpec(&_field)).GetObject()
-		res[_field.Name] = currObj[_field.Name]
+	dropField := false
+	if t.field.Spec().Extra != nil {
+		if val, ok := t.field.Spec().Extra[field.ExtraDrop]; ok {
+			dropField, ok = val.(bool)
+			if !ok {
+				panic("ExtraDrop must be a boolean")
+			}
+		}
+	}
+	if !dropField {
+		// the current path is not a drop checkpoint
+		// we can go deeper into the object fields
+		for _, _field := range *t.field.Spec().Object {
+			currObj := GetTranslatedField(field.FromFieldSpec(&_field)).GetObject()
+			res[_field.Name] = currObj[_field.Name]
+		}
 	}
 
 	key := t.field.Spec().Name
