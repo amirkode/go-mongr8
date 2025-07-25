@@ -220,6 +220,26 @@ func TestValidateIndexDuplication(t *testing.T) {
 	test.AssertTrue(t, case5Err == nil, "Case 5: Unexpected error")
 }
 
+func TestValidateSpecialRestrictions(t *testing.T) {
+	// Case 1: index with empty fields
+	case1Err := validateSpecialRestrictions("collection_name", []collection.Index{})
+
+	test.AssertTrue(t, case1Err == nil, "Case 1: Unexpected error")
+
+	// Case 2: index with valid fields
+	case2Err := validateSpecialRestrictions("collection_name", []collection.Index{index.SingleFieldIndex(index.Field("name", 1))})
+
+	test.AssertTrue(t, case2Err == nil, "Case 2: Unexpected error")
+
+	// Case 3: index with two text indexes
+	case3Err := validateSpecialRestrictions("collection_name", []collection.Index{
+		index.TextIndex(index.Field("name1")),
+		index.TextIndex(index.Field("name2")),
+	})
+
+	test.AssertTrue(t, case3Err != nil && strings.Contains(case3Err.Error(), "Cannot have more than 1 text index on the same collection"), "Case 3: Unexpected error")
+}
+
 func TestValidateIndexWithFields(t *testing.T) {
 	// Case 1: index with empty fields
 	case1Err := validateIndexWithFields("collection_name", []collection.Field{}, collection.IndexFromSpec(&index.Spec{}))
@@ -299,6 +319,36 @@ func TestValidateIndexWithFields(t *testing.T) {
 	)
 
 	test.AssertTrue(t, case11Err == nil, "Case 11: Unexpected error")
+
+	// Case 12: Compound index with text index and invalid other index types
+	case12Err := validateIndexWithFields("collection_name",
+		[]collection.Field{field.StringField("name"), field.GeoJSONMultiPointField("multi_point")},
+		index.CompoundIndex(index.Field("name", "text"), index.Field("multi_point", 1)),
+	)
+
+	test.AssertTrue(t, case12Err != nil && strings.Contains(case12Err.Error(), "Compound text index cannot include other special index types"), "Case 12: Unexpected error")
+
+	// Case 13: Compound index with text indexes but not adjacent
+	case13Err := validateIndexWithFields("collection_name",
+		[]collection.Field{field.StringField("name"), field.Int32Field("age"), field.StringField("description")},
+		index.CompoundIndex(
+			index.Field("name", "text"),
+			index.Field("age", 1),
+			index.Field("description", "text"),
+		),
+	)
+
+	test.AssertTrue(t, case13Err != nil && strings.Contains(case13Err.Error(), "All text index keys must be listed adjacently"), "Case 13: Unexpected error")
+
+	// Case 14: Compound index with text indexe but invalid type
+	case14Err := validateIndexWithFields("collection_name",
+		[]collection.Field{field.Int32Field("name")},
+		index.CompoundIndex(
+			index.Field("name", "text"),
+		),
+	)
+
+	test.AssertTrue(t, case14Err != nil && strings.Contains(case14Err.Error(), "Text index key must be of type string"), "Case 14: Unexpected error")
 }
 
 func TestValidateIndexes(t *testing.T) {

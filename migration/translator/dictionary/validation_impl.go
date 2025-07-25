@@ -205,6 +205,25 @@ func validateIndexDuplication(collectionName string, indexes []collection.Index)
 	return nil
 }
 
+func validateSpecialRestrictions(collectionName string, indexes []collection.Index) error {
+	// - 2 text indenxes on the same collection
+	//   source: https://www.mongodb.com/docs/manual/core/indexes/index-types/index-text/text-index-restrictions/?utm_source=chatgpt.com#text-index-restrictions-on-self-managed-deployments
+
+	textIndexCnt := 0
+	for _, _index := range indexes {
+		if _index.Spec().Type == index.TypeText {
+			textIndexCnt++
+		}
+	}
+
+	if textIndexCnt > 1 {
+		return fmt.Errorf("%s: Cannot have more than 1 text index on the same collection", collectionName)
+	}
+
+
+	return nil
+}
+
 func validateIndexWithFields(collectionName string, fields []collection.Field, _index collection.Index) error {
 	// Index Fields cannot be empty
 	if len(_index.Spec().Fields) == 0 {
@@ -315,6 +334,53 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 		}
 	}
 
+	validateCompoundWithText := func(indexFields []index.IndexField) error {
+		textCnt := 0
+		invalidCnt := 0
+		prevText := false
+		for _, indexField := range indexFields {
+			strVal, ok := indexField.Value.(string)
+			if ok && strings.ToLower(strVal) == "text" {
+				if !pathHasType([]string{indexField.Key}, field.TypeString) { 
+					return fmt.Errorf("%s: Text index key must be of type string: %s", collectionName, indexField.Key)
+				}
+				if textCnt > 0 && !prevText {
+					return fmt.Errorf("%s: All text index keys must be listed adjacently", collectionName)
+				}
+
+				textCnt++
+				prevText = true
+			} else {
+				if pathHasType([]string{indexField.Key}, field.TypeGeoJSONGeometryCollection) ||
+					pathHasType([]string{indexField.Key}, field.TypeGeoJSONPoint) ||
+					pathHasType([]string{indexField.Key}, field.TypeGeoJSONLineString) ||
+					pathHasType([]string{indexField.Key}, field.TypeGeoJSONPolygonSingleRing) ||
+					pathHasType([]string{indexField.Key}, field.TypeGeoJSONPolygonMultipleRing) ||
+					pathHasType([]string{indexField.Key}, field.TypeGeoJSONMultiPoint) ||
+					pathHasType([]string{indexField.Key}, field.TypeGeoJSONMultiLineString) ||
+					pathHasType([]string{indexField.Key}, field.TypeGeoJSONMultiPolygon) ||
+					pathHasType([]string{indexField.Key}, field.TypeLegacyCoordinateArray) ||
+					pathHasType([]string{indexField.Key}, field.TypeLegacyCoordinateEmbeddedDoc) {
+					invalidCnt++
+				}
+				prevText = false
+			}
+		}
+
+		if textCnt == 0 {
+			return nil
+		}
+
+		// for now, the validation is simple, since, our compound index
+		// only takes the IndexField where it expects only 1 level (root path)
+		// so, we only validate the key and the value
+		if invalidCnt > 0 {
+			return fmt.Errorf("%s: Compound text index cannot include other special index types (e.g., multikey or geospatial fields)", collectionName)
+		}
+
+		return nil
+	}
+
 	// validate by index type
 	switch _index.Spec().Type {
 		// TODO: complete if the usecase is clear
@@ -322,11 +388,18 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 		// https://github.com/amirkode/go-mongr8/commit/45060b493e03b7631b5c81b2684f760d10305d09
 		//
 		// These cases should be handled:
-		// - 2 text indenxes on the same collection
-		//   source: https://www.mongodb.com/docs/manual/core/indexes/index-types/index-text/text-index-restrictions/?utm_source=chatgpt.com#text-index-restrictions-on-self-managed-deployments
 		// - compound indexes invalid type with text index
 		//   source: https://www.mongodb.com/docs/manual/core/indexes/index-types/index-text/text-index-restrictions/?utm_source=chatgpt.com#compound-text-index
 		// - ascending and descending index in the same field
+	case index.TypeCompound:
+		if err := validateCompoundWithText(_index.Spec().Fields); err != nil {
+			return err
+		}
+	case index.TypeText:
+		if !pathHasType([]string{_index.Spec().Fields[0].Key}, field.TypeString) {
+			return fmt.Errorf("%s: Text index key must be of type string: %s", collectionName, _index.Spec().Fields[0].Key)
+		}
+	// TODO: check other index types
 	}
 
 	// validate index options
@@ -334,7 +407,7 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 		rules := *_index.Spec().Rules
 		if _index.Spec().HasRule(index.OptionPartialFilterExp) {
 			filters := rules[index.OptionPartialFilterExp].(map[string]interface{})
-			for key, _ := range filters {
+			for key := range filters {
 				path := strings.Split(key, ".")
 				if !pathExists(path) {
 					return fmt.Errorf("%s: Partial filter key is invalid: %s", collectionName, key)
@@ -365,6 +438,11 @@ func validateIndexWithFields(collectionName string, fields []collection.Field, _
 func validateIndexes(collectionName string, fields []collection.Field, indexes []collection.Index) error {
 	err := validateIndexDuplication(collectionName, indexes)
 	if err != nil {
+		return err
+	}
+
+	// validate special restrictions
+	if err = validateSpecialRestrictions(collectionName, indexes); err != nil {
 		return err
 	}
 
